@@ -1,0 +1,453 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\A}{\mathcal A}
+\newcommand{\Y}{\mathcal Y}
+\newcommand{\Hh}{\mathcal H}
+\newcommand{\QQ}{\mathcal Q}
+\newcommand{\RR}{\mathcal R}
+\newcommand{\OPT}{\operatorname{OPT}}
+\newcommand{\Reg}{\operatorname{Reg}}
+\newcommand{\dom}{\operatorname{dom}}
+\newcommand{\sig}{\operatorname{sig}}
+\newcommand{\eps}{\varepsilon}
+
+\title{Newcombian Bandits}
+\author{Vinayak Pathak}
+\date{July 2026}
+
+\begin{document}
+\maketitle
+
+\section{The model}
+
+\subsection{Histories and policies}
+
+The action and reward sets are
+\[
+    \A=\Y=\{0,1\}.
+\]
+A finite history is a sequence of action--reward pairs,
+\[
+    h=((a_1,y_1),\ldots,(a_m,y_m))\in (\A\times\Y)^m.
+\]
+Let
+\[
+    \Hh=\bigcup_{m\geq 0}(\A\times\Y)^m,
+\]
+where the empty history is denoted by $\emptyset$.  The length $|h|$ is the number of action--reward pairs in $h$.  If $h,q\in\Hh$, then $h\circ q$ denotes their concatenation.  We write $h\circ(a,y)$ when the second history consists of the single pair $(a,y)$.
+
+A complete deterministic learner policy is a function
+\[
+    f:\Hh\to\A.
+\]
+% The policy is defined on histories of every finite length.  The horizon $T$ determines only how many realized rewards are counted; it does not truncate the counterfactual histories on which $f$ is defined.  This convention avoids an artificial end-of-horizon change in an otherwise stationary model.
+
+\subsection{A fixed set of relative queries}
+
+A \emph{relative query} is a finite action--reward history
+\[
+    q=\bigl((\tilde a_1,\tilde y_1),\ldots,
+            (\tilde a_j,\tilde y_j)\bigr)\in\Hh,
+    \qquad j\geq 1.
+\]
+At a current history $h$, the query $q$ asks for the action
+\[
+    f(h\circ q).
+\]
+For example, $q=((1,1))$ asks what action the learner would take next if it took action $1$ now and then received reward $1$.
+
+A \emph{relative query pattern} is a finite set
+\[
+    \QQ\subseteq\Hh\setminus\{\emptyset\}.
+\]
+The same set $\QQ$ is used at every actual round.  The action--reward pairs in $q$ are stipulated counterfactual events: they need not agree with the actions that $f$ would choose at the corresponding proper prefixes of $h\circ q$.  Only the terminal value $f(h\circ q)$ is queried.
+
+Write
+\[
+    K=|\QQ|,
+    \qquad
+    d=\max_{q\in\QQ}|q|,
+\]
+with $d=0$ when $\QQ=\varnothing$.  Thus $K$ is the number of queries and $d$ is their maximum length.
+
+Fix an arbitrary ordering of $\QQ$.
+For a policy $f$ and a current history $h$, the vector of query answers is
+\[
+    X^f_{\QQ}(h)
+    =\bigl(f(h\circ q)\bigr)_{q\in\QQ}
+    \in\{0,1\}^{K}.
+\]
+
+The \emph{local signature} of $f$ at $h$ is
+\[
+    \sig_{\QQ}(f,h)
+    =\bigl(f(h),X^f_{\QQ}(h)\bigr)
+    \in\{0,1\}^{K+1}.
+\]
+
+\subsection{The stateless adversary}
+
+The adversary is specified by the fixed query pattern $\QQ$ and a fixed deterministic reward function
+\[
+    r:\{0,1\}^{K+1}\to\{0,1\}.
+\]
+Neither $\QQ$ nor $r$ changes with time.  In particular, $r$ receives neither the time $t$, nor the realized history, nor the previous rewards, nor an internal adversarial state.
+
+Starting from $h_1=\emptyset$, at actual history $h_t$ the learner takes
+\[
+    a_t=f(h_t),
+\]
+the adversary obtains the answers $X^f_{\QQ}(h_t)$ by querying the policy at the fixed relative histories $h_t\circ q$, $q\in\QQ$, and the reward is
+\[
+    y_t=r\bigl(a_t,X^f_{\QQ}(h_t)\bigr)
+       =r\bigl(\sig_{\QQ}(f,h_t)\bigr).
+\]
+The actual history then becomes
+\[
+    h_{t+1}=h_t\circ(a_t,y_t).
+\]
+Thus the same local experiment is performed at every actual round.
+
+The adversary has black-box access to the learner's policy only at the current history and at the $K$ listed histories $h_t\circ q$.  The adversary does not inspect the learner's source code, and its reward function sees only the resulting $K+1$ action bits.
+
+Every queried action is a commitment: if a concrete history $h_t\circ q$ later becomes the actual history, the learner must take the action it returned when queried there.  Consequently, every later query to the same concrete history must receive the same answer.
+
+\subsection{Operational commitment protocol}
+
+For online learning it is useful to describe the same interaction without assuming that the learner has written down a complete policy in advance.  The learner maintains a partial dictionary
+\[
+    C:\Hh\rightharpoonup\{0,1\}.
+\]
+The interpretation of $C(h)=a$ is that the learner has irrevocably committed to action $a$ if history $h$ occurs.
+
+At round $t$:
+\begin{enumerate}[label=\arabic*.]
+    \item At the actual history $h_t$, if $h_t\in\dom(C)$, the learner must use $a_t=C(h_t)$.  Otherwise it chooses $a_t$ and sets $C(h_t)=a_t$.
+
+    \item In the fixed ordering of $\QQ$, for each $q\in\QQ$ the adversary queries the concrete history $g=h_t\circ q$.  If $g\in\dom(C)$, it receives the stored answer $C(g)$.  Otherwise the learner chooses an answer $a\in\{0,1\}$ and sets $C(g)=a$.
+
+    \item Let $x_t\in\{0,1\}^{K}$ be the resulting vector of answers.  The adversary returns
+    \[
+        y_t=r(a_t,x_t).
+    \]
+
+    \item The actual history becomes $h_{t+1}=h_t\circ(a_t,y_t)$.  The dictionary persists.
+\end{enumerate}
+
+The dictionary enforces these commitments.  Conversely, any finite transcript that assigns only one action to each concrete history extends to a complete policy $f$ by assigning arbitrary actions at histories that were never queried.
+
+\subsection{Information available to the learner}
+
+The learner knows:
+\begin{itemize}
+    \item the fixed query pattern $\QQ$, and hence $K$ and $d$;
+    \item the horizon $T$;
+    \item optionally, a known class $\RR$ containing $r$.
+\end{itemize}
+It does not know the selected reward function $r$.  It observes all concrete histories at which it is queried, its own committed answers, and each realized reward $y_t$.
+
+Our positive result allows the largest possible model class,
+\[
+    \RR_{\mathrm{all}}
+    =\bigl\{r:\{0,1\}^{K+1}\to\{0,1\}\bigr\}.
+\]
+Thus no structural assumption on $r$ is needed when $K$ is fixed.
+
+\subsection{Planning value and regret}
+
+For a complete policy $f$, let
+\[
+    R_T(f;r,\QQ)=\sum_{t=1}^T y_t
+\]
+be its total reward in the fresh interaction generated by $(r,\QQ)$.  The clairvoyant planning value is
+\[
+    \OPT_T(r;\QQ)
+    =\max_{f:\Hh\to\{0,1\}} R_T(f;r,\QQ).
+\]
+
+An online learner $L$ may choose new commitments as a function of everything it has observed.  Its regret is
+\[
+    \Reg_T(L,r;\QQ)
+    =\OPT_T(r;\QQ)
+     -\mathbb E\left[R_T(L;r,\QQ)\right],
+\]
+where the expectation is over the learner's randomization, if any.  The benchmark reruns the entire interaction with a policy that knew $r$ before round $1$; it does not hold fixed the queries or rewards observed by the non-clairvoyant learner.  This is a policy-dependent benchmark in the spirit of policy regret for reactive environments \cite{AroraDekelTewari2012}.
+
+\section{Constant query size implies learnability}
+
+The proof has two ingredients.  First, every possible input to $r$ can be deliberately realized after a bounded preparation period.  Second, commitments made during exploration can influence actual play for only $d$ additional rounds.
+
+\subsection{Every local signature is realizable}
+
+\begin{lemma}\label{lem:realizable}
+For every
+\[
+    z=(a,x)\in\{0,1\}\times\{0,1\}^{K},
+\]
+there is a complete policy $f_z$ such that
+\[
+    \sig_{\QQ}(f_z,\emptyset)=z.
+\]
+\end{lemma}
+
+\begin{proof}
+Set $f_z(\emptyset)=a$.  For every query $q\in\QQ$, assign
+\[
+    f_z(q)=x(q).
+\]
+Distinct queries are distinct nonempty histories, so these assignments neither conflict with one another nor with the value at $\emptyset$.  Extend the resulting partial function arbitrarily to all other histories.
+\end{proof}
+
+\subsection{Old commitments have bounded reach}
+
+A query made at actual round $s$ starts from a history of length $s-1$ and has relative depth at most $d$.  Therefore every concrete history queried at round $s$ has length at most
+\[
+    s-1+d.
+\]
+This simple observation is the source of recoverability in the stateless model.
+
+\begin{lemma}\label{lem:cleanroot}
+Consider the beginning of round $s$.  No commitment made before round $s$ is attached to a history of length at least
+\[
+    s+d-1.
+\]
+Consequently, if $\tau=s+d$, then neither the possible actual histories at round $\tau$ nor any of their descendants have been committed before round $s$.
+\end{lemma}
+
+\begin{proof}
+A commitment made at some round $j\leq s-1$ has history length at most
+\[
+    j-1+d\leq s+d-2.
+\]
+The actual history at round $\tau=s+d$ has length $\tau-1=s+d-1$, and every descendant is longer.
+\end{proof}
+
+\begin{lemma}\label{lem:scheduled-query}
+Fix any current round $s$ and any desired local signature
+\[
+    z\in\{0,1\}^{K+1}.
+\]
+There is a commitment-respecting strategy that guarantees
+\[
+    \sig_{\QQ}(L,h_{s+d})=z,
+\]
+regardless of the rewards received in rounds $s,\ldots,s+d-1$.  Hence the learner can observe the table entry $r(z)$ within at most $d+1$ rounds, counting the test round itself.
+\end{lemma}
+
+\begin{proof}
+Let $f_z$ be the template policy from Lemma~\ref{lem:realizable}, and set the target round to $\tau=s+d$.  At round $\tau$ the actual history will have length $\tau-1$, but its value is not yet known because the intervening rewards are unknown.
+
+For every possible history $g$ of length $\tau-1$ that extends the current actual history, prescribe a translated copy of $f_z$ below $g$:
+\[
+    C(g\circ\eta)=f_z(\eta)
+\]
+whenever such a concrete history is queried during the preparation period or at the target round.  Here $\eta$ is any finite action--reward suffix, interpreted as a history from a fresh root.  The subtrees below two distinct length-$(\tau-1)$ histories are disjoint, so the prescriptions do not conflict.
+
+By Lemma~\ref{lem:cleanroot}, no commitment made before round $s$ occurs at depth $\tau-1$ or below.  Thus every prescribed value is fresh when it is first needed.  At round $\tau$, whichever possible root $g$ has become actual, the learner's action and all answers at the relative histories in $\QQ$ agree with the translated template $f_z$.  Its local signature is therefore exactly $z$, and the observed reward is $r(z)$.
+\end{proof}
+
+\begin{remark}
+The construction is robust to the unknown rewards during preparation.  It does not try to predict which history will become actual.  It installs the same local template below every possible target root, and only one of those disjoint copies is eventually used.
+\end{remark}
+
+\subsection{Splicing into a known policy}
+
+The same argument lets the learner erase the effect of arbitrary old commitments and then imitate any desired policy.
+
+\begin{lemma}\label{lem:splice}
+Suppose that at the beginning of round $s$ the learner is given any complete target policy $f$.  There is a commitment-respecting continuation such that, from round $s+d$ onward, the realized interaction is a translated copy of a fresh interaction with $f$.
+\end{lemma}
+
+\begin{proof}
+Use target round $\tau=s+d$.  Below every possible length-$(\tau-1)$ actual history $g$, answer all new queries according to the translated policy
+\[
+    f_g(g\circ\eta)=f(\eta).
+\]
+Lemma~\ref{lem:cleanroot} ensures that no earlier commitment conflicts with these copies.  At round $\tau$, the actual root is one such $g$, and the subsequent local signatures and rewards are exactly those generated by $f$ from a fresh root.
+\end{proof}
+
+The stationarity of the model also implies the corresponding upper bound on any benchmark suffix.
+
+\begin{lemma}\label{lem:suffix}
+Fix a complete policy $f$ and an actual history $h$.  The restriction of $f$ to the subtree below $h$ defines a translated policy
+\[
+    f^{h}(\eta)=f(h\circ\eta).
+\]
+For every $n$, the next $n$ rewards generated below $h$ are exactly the rewards of a fresh $n$-round interaction with $f^h$.  In particular, every $n$-round suffix reward is at most $\OPT_n(r;\QQ)$.
+\end{lemma}
+
+\begin{proof}
+The query pattern is relative to the current root and the reward function sees only the local signature.  Removing the common prefix $h$ therefore leaves every local query, action, and reward unchanged.
+\end{proof}
+
+\subsection{Learning the complete reward table}
+
+There are
+\[
+    M=2^{K+1}
+\]
+possible local signatures.  Enumerate them as $z_1,\ldots,z_M$.  For each $z_i$, apply Lemma~\ref{lem:scheduled-query} and record the resulting reward $r(z_i)$.  After at most
+\[
+    L=(d+1)2^{K+1}
+\]
+rounds, the learner knows the entire truth table of $r$.
+
+\begin{theorem}[Constant-query learnability]\label{thm:main-upper}
+For every finite relative query pattern $\QQ$ of size $K$ and depth $d$, there is a deterministic learner such that, for every deterministic reward function
+\[
+    r:\{0,1\}^{K+1}\to\{0,1\}
+\]
+and every horizon $T$,
+\[
+    \boxed{
+    \Reg_T(L,r;\QQ)
+    \leq
+    \min\left\{
+        T,
+        (d+1)2^{K+1}+d
+    \right\}.
+    }
+\]
+In particular, for every fixed query pattern $\QQ$---so that both $K$ and $d$ are fixed---the regret is $O(1)$ as $T\to\infty$.
+\end{theorem}
+
+\begin{proof}
+If $T\leq L+d$, the trivial bound $\Reg_T\leq T$ suffices.  Otherwise, spend the first $L$ rounds learning every table entry of $r$ as described above.
+
+Let
+\[
+    n=T-L-d.
+\]
+Once $r$ is known, choose a policy $f_n^\star$ attaining $\OPT_n(r;\QQ)$.  Starting at round $L+1$, apply Lemma~\ref{lem:splice} to begin a translated copy of $f_n^\star$ at round $L+d+1$.  The learner consequently earns exactly $\OPT_n(r;\QQ)$ during the final $n$ rounds, in addition to its nonnegative rewards during exploration and splicing.
+
+Now consider a clairvoyant optimal policy over the full $T$ rounds.  Its first $L+d$ rewards total at most $L+d$.  By Lemma~\ref{lem:suffix}, its remaining $n$-round suffix is worth at most $\OPT_n(r;\QQ)$.  Hence
+\[
+    \OPT_T(r;\QQ)
+    \leq L+d+\OPT_n(r;\QQ).
+\]
+Subtracting the learner's reward gives
+\[
+    \Reg_T(L,r;\QQ)\leq L+d
+    =(d+1)2^{K+1}+d.
+\]
+\end{proof}
+
+\begin{corollary}
+The theorem holds for every known class $\RR$ of reward functions, finite or infinite, because the learner may simply ignore the class description and learn the complete table.  For fixed $K$, the full class $\RR_{\mathrm{all}}$ is itself finite, of cardinality
+\[
+    2^{2^{K+1}}.
+\]
+\end{corollary}
+
+\begin{remark}[Class-sensitive improvement]
+If a known finite class $\RR$ can be identified using $D(\RR)$ adaptive membership queries to table entries $r(z)$, the same argument gives the sharper bound
+\[
+    \Reg_T
+    \leq
+    (d+1)D(\RR)+d.
+\]
+Here $D(\RR)$ is the minimum worst-case depth of a binary decision tree whose internal nodes query local signatures and whose leaves identify reward functions up to equality.  Always
+\[
+    D(\RR)\leq \min\{2^{K+1},|\RR|-1\}.
+\]
+\end{remark}
+
+\section{Dependence on the query size}
+
+The exponential dependence on $K$ is not merely an artifact of learning the full table.
+
+\begin{theorem}[An exponential information-theoretic lower bound]\label{thm:info-lower}
+For every $K\geq 1$, there is a fixed query pattern $\QQ_K$ of size $K$ and a finite class $\RR_K$ such that every randomized learner has
+\[
+    \sup_{r\in\RR_K}
+    \Reg_T(L,r;\QQ_K)
+    =\Omega\bigl(\min\{T,2^K\}\bigr).
+\]
+\end{theorem}
+
+\begin{proof}
+For $j=1,\ldots,K$, let
+\[
+    q_j
+    =\underbrace{\bigl((0,0),\ldots,(0,0)\bigr)}_{j\text{ action--reward pairs}},
+    \qquad
+    \QQ_K=\{q_1,\ldots,q_K\}.
+\]
+Thus the queries lie along a single all-zero action--reward branch.
+For every local signature $z\in\{0,1\}^{K+1}$, define the point reward function
+\[
+    r_z(w)=\mathbf 1\{w=z\}.
+\]
+Let
+\[
+    \RR_K=\{r_z:z\in\{0,1\}^{K+1}\},
+    \qquad
+    M=|\RR_K|=2^{K+1}.
+\]
+
+For each $z$, a clairvoyant policy can realize signature $z$ at every round.  Whenever it realizes $z$, the reward is $1$.  Every queried relative history begins with reward $0$, whereas the realized action--reward pair has reward $1$.  Consequently no queried history extends the actual next history, so the policy can repeat the same construction independently at the next round, and
+\[
+    \OPT_T(r_z;\QQ_K)=T.
+\]
+
+Apply Yao's minimax principle with $z$ uniform over the $M$ possibilities.  Against a deterministic learner, until the first reward $1$ is observed, all feedback is identical.  Each round tests at most one candidate signature.  If $T\leq M$, even granting the learner perfect reward from the moment it first tests the correct signature, its average regret is at least
+\[
+    \frac{1}{M}
+    \left(
+        \sum_{j=1}^{T}(j-1)+(M-T)T
+    \right)
+    =T-\frac{T(T+1)}{2M}.
+\]
+For $T\leq M/2$ this is at least a constant multiple of $T$.  If $T\geq M/2$, considering only the first $\lfloor M/2\rfloor$ rounds gives a constant multiple of $M$.  Therefore the minimax expected regret is
+\[
+    \Omega(\min\{T,M\})
+    =\Omega(\min\{T,2^K\}).
+\]
+\end{proof}
+
+Combining Theorems~\ref{thm:main-upper} and~\ref{thm:info-lower}, the full arbitrary-$r$ model has an essentially exponential identification cost in the number of queried policy values.  In particular, every fixed query pattern is learnable with constant regret, while classes with $2^K$ comparable to $T$ can have linear minimax regret.
+
+\section{Summary and open directions}
+
+The stateless model removes the permanent traps that arise when an adversary can store arbitrary information about earlier commitments.  A commitment made at one round can affect the actual path only while its queried history remains within the fixed depth-$d$ future window.  This bounded contamination horizon permits safe experiments and gives the explicit regret guarantee
+\[
+    \Reg_T
+    \leq
+    (d+1)2^{K+1}+d.
+\]
+The result holds for an arbitrary deterministic reward table.
+
+Several questions remain natural:
+\begin{enumerate}[label=\arabic*.]
+    \item For a restricted class $\RR$, characterize the optimal class-sensitive membership-query depth $D(\RR)$ and the resulting minimax regret.
+
+    \item Study noisy or stochastic rewards.  Exact table identification is then replaced by estimation, and nontrivial $\sqrt{T}$-type rates should arise even for a fixed query pattern.
+
+    \item Computational complexity.
+
+    \item What can be done when can remember some of the commitments made in the past? When is learning still possible?
+\end{enumerate}
+
+\begin{thebibliography}{9}
+
+\bibitem{AroraDekelTewari2012}
+Raman Arora, Ofer Dekel, and Ambuj Tewari.
+\newblock Online bandit learning against an adaptive adversary: From regret to policy regret.
+\newblock In \emph{Proceedings of the 29th International Conference on Machine Learning}, 2012.
+
+\end{thebibliography}
+
+\end{document}
