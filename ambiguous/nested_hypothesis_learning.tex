@@ -1,0 +1,714 @@
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{amsthm}
+\usepackage{booktabs,tabularx,array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{bookmark}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!55!black,
+  citecolor=blue!55!black,
+  urlcolor=blue!55!black,
+  pdftitle={Learning from Adversarially Chosen Valid Labels},
+  pdfsubject={Statistical complexity of nested hypothesis classes}
+}
+
+\setlist[itemize]{leftmargin=1.6em,itemsep=0.25em,topsep=0.4em}
+\setlist[enumerate]{leftmargin=1.8em,itemsep=0.25em,topsep=0.4em}
+\renewcommand{\arraystretch}{1.16}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{question}[theorem]{Open question}
+
+\newcommand{\X}{\mathcal X}
+\newcommand{\Y}{\{0,1\}}
+\newcommand{\F}{\mathcal F}
+\newcommand{\Outer}{\mathfrak G}
+\newcommand{\SV}{\mathcal S}
+\newcommand{\calD}{\mathcal D}
+\newcommand{\eps}{\varepsilon}
+\newcommand{\LDu}{\operatorname{LD}_{\mathrm{unk}}}
+\newcommand{\pVC}{\operatorname{pVC}}
+\newcommand{\ddemo}{d_{\mathrm{demo}}}
+\newcommand{\Rect}{\operatorname{Rect}}
+\newcommand{\1}{\mathbf 1}
+\newcommand{\R}{\mathbb R}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+\title{\textbf{Learning from Adversarially Chosen Valid Labels}\\[0.35em]
+\large Nested Hypothesis Classes, Statistical Complexity, and the Full-Union Condition}
+\author{}
+\date{August 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We study a binary prediction problem in which the unknown object is not a single hypothesis but a set of hypotheses. Nature chooses a set $G$, and on each sampled point an adversary may demonstrate the prediction of a different member of $G$. At test time, the learner succeeds whenever its output agrees with at least one member of $G$ at the test point. The first observation is that all cross-point structure inside $G$ disappears: the problem is exactly learning a set-valued binary concept, or equivalently a partial concept with values in $\{0,1,\star\}$. We summarize known finite-class and online results, explain why the natural VC- and Littlestone-type candidates do not by themselves characterize iid learnability, introduce a fractional demonstration-shattering parameter as a possible lower-bound dimension, and analyze the proposed special case in which the union of all sets $G$ equals the set of all hypotheses. The main conclusion about that special case is negative but sharp: the full-union condition alone is without loss of generality and therefore cannot simplify the statistical characterization.
+\end{abstract}
+
+\tableofcontents
+
+\section{Main conclusions}
+
+Let $\F=\Y^{\X}$ be the class of all binary hypotheses and let
+\[
+    \Outer\subseteq 2^{\F}\setminus\{\varnothing\}
+\]
+be the outer class. Nature chooses $G^\star\in\Outer$. The discussion leads to the following conclusions.
+
+\begin{enumerate}
+    \item Each $G$ is statistically equivalent to the pointwise set-valued concept
+    \[
+        \Gamma_G(x):=\{h(x):h\in G\}\in\bigl\{\{0\},\{1\},\{0,1\}\bigr\}.
+    \]
+    The internal correlations among the values of a single $h\in G$ are unobservable because the adversary may switch hypotheses from point to point.
+
+    \item If the induced class $\SV:=\{\Gamma_G:G\in\Outer\}$ is finite, then it is learnable from correct demonstrations with
+    \[
+        m=O\!\left(\frac{\log|\SV|+\log(1/\delta)}{\eps}\right)
+    \]
+    iid contexts, even when the demonstrated valid labels are chosen adversarially.
+
+    \item There is an exact online dimension, the mistake-unknown multi-label Littlestone dimension $\LDu(\SV)$. It exactly equals the optimal realizable online mistake bound and gives a batch upper bound. It does not characterize iid learnability: ordinary thresholds have VC dimension $1$ and are iid learnable, but have infinite Littlestone dimension on a dense order.
+
+    \item The ordinary VC dimension of the associated partial concepts is also not sufficient. A class can have partial VC dimension $1$ and nevertheless be unlearnable because two different targets can support exactly the same arbitrary demonstrations while imposing complementary test-time obligations.
+
+    \item A natural static lower-bound parameter is a scale-dependent fractional demonstration dimension $\ddemo(\gamma;\SV)$. Infinite $\ddemo(\gamma;\SV)$ for a fixed $\gamma>0$ rules out PAC learnability. Whether finiteness for every $\gamma>0$ is sufficient remains a concrete candidate question.
+
+    \item The condition
+    \[
+        \bigcup_{G\in\Outer}G=\F
+    \]
+    imposes no statistical restriction. Given any outer class, one may adjoin the target $G_{\top}=\F$. This makes the union equal to all hypotheses, while $G_{\top}$ is a zero-loss target. The minimax sample complexity is unchanged.
+\end{enumerate}
+
+\section{The nested-hypothesis learning problem}
+
+\subsection{Protocol}
+
+Fix an instance space $\X$ and binary label space $\Y$. Let
+\[
+    \F=\Y^{\X}
+\]
+be the class of all total binary hypotheses. An element $G\in\Outer$ is itself a nonempty subset of $\F$.
+
+The realizable iid protocol is:
+
+\begin{enumerate}
+    \item Nature chooses a target $G^\star\in\Outer$ and a distribution $D$ over $\X$.
+    \item Contexts $X_1,\ldots,X_m$ are drawn iid from $D$.
+    \item For each $i$, an adversary chooses a demonstrated label $Y_i$ satisfying
+    \[
+        \exists h_i\in G^\star\qquad Y_i=h_i(X_i).
+    \]
+    The adversary may choose a different $h_i$ at every sample. In the strongest version, the labels may be chosen adaptively after observing the contexts and the preceding interaction.
+    \item The learner observes $(X_i,Y_i)_{i=1}^m$ and outputs a predictor $f:\X\to\Y$, or more generally a randomized predictor $\pi:\X\to\Delta(\Y)$.
+\end{enumerate}
+
+At a test point $x$, the learner is correct if its own output is compatible with at least one member of $G^\star$ at $x$. It need not match a particular label separately selected by the adversary at test time.
+
+\subsection{Loss and PAC learnability}
+
+For a deterministic predictor $f$, define
+\[
+    L_D(f,G)
+    :=
+    \Pr_{X\sim D}\!\left[\nexists h\in G:\ f(X)=h(X)\right].
+\]
+For a randomized predictor $\pi$, define
+\[
+    L_D(\pi,G)
+    :=
+    \mathbb E_{X\sim D}\Pr_{\widehat Y\sim\pi(\cdot\mid X)}
+    \!\left[\nexists h\in G:\ \widehat Y=h(X)\right].
+\]
+
+The outer class is distribution-free PAC learnable if there is a function $m_{\Outer}(\eps,\delta)$ and a learner such that, for every $G^\star\in\Outer$, every distribution $D$, and every valid demonstration strategy,
+\[
+    \Pr\!\left[L_D(\widehat\pi,G^\star)>\eps\right]\leq\delta
+\]
+whenever $m\geq m_{\Outer}(\eps,\delta)$. The probability is over the iid contexts and the learner's randomness.
+
+\section{The pointwise collapse to set-valued concepts}
+
+\subsection{Only the pointwise projections matter}
+
+For every $G\in\Outer$, define
+\[
+    \Gamma_G(x):=\{h(x):h\in G\}\subseteq\Y.
+\]
+Because $G$ is nonempty and labels are binary,
+\[
+    \Gamma_G(x)\in\bigl\{\{0\},\{1\},\{0,1\}\bigr\}.
+\]
+Let
+\[
+    \SV:=\{\Gamma_G:G\in\Outer\}
+    \subseteq
+    \bigl(2^{\Y}\setminus\{\varnothing\}\bigr)^{\X}
+\]
+be the induced class of set-valued concepts, with duplicate copies removed.
+
+\begin{proposition}[Pointwise reduction]
+The nested class $\Outer$ and its induced set-valued class $\SV$ define exactly the same statistical learning problem. In particular,
+\[
+    L_D(f,G)=\Pr_{X\sim D}[f(X)\notin\Gamma_G(X)].
+\]
+Two sets $G,G'$ with $\Gamma_G=\Gamma_{G'}$ are statistically indistinguishable and have identical loss against every predictor.
+\end{proposition}
+
+\begin{proof}
+A demonstrated label $y$ is valid for $G$ at $x$ exactly when $y\in\Gamma_G(x)$. Similarly, a learner prediction is accepted exactly when it belongs to $\Gamma_G(x)$. The protocol never requires the same member of $G$ to explain two different points, so no other property of $G$ enters either the observations or the loss.
+\end{proof}
+
+This is the binary special case of learning with multiple correct answers or learning from correct demonstrations \cite{JoshiEtAl2025,PourEtAl2026}.
+
+\subsection{Equivalent partial concepts}
+
+Associate with each $\Gamma\in\SV$ a partial concept $c_\Gamma:\X\to\{0,1,\star\}$ by
+\[
+    c_\Gamma(x)=
+    \begin{cases}
+        0,&\Gamma(x)=\{0\},\\
+        1,&\Gamma(x)=\{1\},\\
+        \star,&\Gamma(x)=\{0,1\}.
+    \end{cases}
+\]
+A demonstration must equal $c_\Gamma(x)$ on non-$\star$ points, while either demonstrated label is allowed on a $\star$ point. The learner is penalized only when it contradicts a non-$\star$ value.
+
+This differs from the standard PAC model for partial concepts in \cite{AlonEtAl2022}: there, the data distribution is assumed to be supported on the defined portion of the target. Here, $\star$ points may have arbitrary probability and may receive adversarially selected demonstrations.
+
+\subsection{Rectangular closure}
+
+Define the rectangular closure of $G$ by
+\[
+    \Rect(G)
+    :=
+    \left\{h\in\F:\ h(x)\in\Gamma_G(x)\text{ for every }x\in\X\right\}.
+\]
+Then $G\subseteq\Rect(G)$ and
+\[
+    \Gamma_{\Rect(G)}=\Gamma_G.
+\]
+Thus $G$ and $\Rect(G)$ are statistically equivalent.
+
+In the binary case, let
+\[
+    D_G:=\{x:\Gamma_G(x)\text{ is a singleton}\}
+\]
+and let $c_G(x)$ be its unique value on $D_G$. Then
+\[
+    \Rect(G)=\{h\in\F:h(x)=c_G(x)\text{ for every }x\in D_G\},
+\]
+a Boolean subcube or cylinder. Any global constraint within $G$ that is not expressible as a pointwise forced label disappears under rectangular closure.
+
+\section{Known statistical and online bounds}
+
+\subsection{Finite induced classes}
+
+Let $M:=|\SV|<\infty$. Map every $\Gamma\in\SV$ to a binary reward function
+\[
+    r_\Gamma(x,y):=\1\{y\in\Gamma(x)\}.
+\]
+A valid demonstration is an optimal action under the true reward function. The finite reward-class result of Joshi et al. \cite{JoshiEtAl2025} therefore applies directly.
+
+\begin{theorem}[Finite-class upper bound]
+There is a learner such that, for any iid contexts and any valid demonstrated labels, including adaptively chosen labels,
+\[
+    L_D(\widehat\pi,\Gamma^\star)
+    \leq
+    \frac{16\ln M+12\ln(2/\delta)}{m}
+\]
+with probability at least $1-\delta$. Consequently,
+\[
+    m(\eps,\delta)
+    =O\!\left(\frac{\log M+\log(1/\delta)}{\eps}\right).
+\]
+\end{theorem}
+
+The corresponding online algorithm makes at most $O(\log M)$ invalid predictions on every realizable sequence. The logarithmic dependence is the correct worst-case dependence on finite class size.
+
+\subsection{The mistake-unknown Littlestone dimension}
+
+The exact realizable online parameter is the mistake-unknown multi-label Littlestone dimension introduced by Pour, Mansouri, and Ben-David \cite{PourEtAl2026}. A convenient zero-offset description is the following.
+
+A multi-label tree specifies at each round a context
+\[
+    x_t=x_t(\widehat y_1,\ldots,\widehat y_{t-1})
+\]
+and, after the learner chooses $\widehat y_t$, a demonstrated label
+\[
+    y_t=y_t(\widehat y_1,\ldots,\widehat y_t).
+\]
+The tree is $d$-shattered by $\SV$ if, for every root-to-leaf prediction sequence, there exists a $\Gamma\in\SV$ such that
+\[
+    y_t\in\Gamma(x_t)\quad\text{for all }t
+\]
+and
+\[
+    \sum_t \1\{\widehat y_t\notin\Gamma(x_t)\}\geq d.
+\]
+The largest such $d$ is denoted $\LDu(\SV)$. The full recursive formulation uses an offset recording mistakes already accumulated by each surviving target.
+
+\begin{theorem}[Exact online characterization \cite{PourEtAl2026}]
+For every horizon $T$,
+\[
+    \inf_A M_A^{\mathrm{unk}}(T,\SV)
+    =
+    \min\{\LDu(\SV),T\}.
+\]
+For a finite class,
+\[
+    \LDu(\SV)\leq\log_2|\SV|.
+\]
+\end{theorem}
+
+An online-to-batch conversion yields the sufficient batch bound
+\[
+    m(\eps,\delta)
+    =
+    O\!\left(
+        \frac{\LDu(\SV)+\log(1/(\eps\delta))}{\eps}
+    \right).
+\]
+The cited paper states this in an iid joint-example formulation. The same qualitative implication is robust to adaptive valid-label choices when the contexts remain iid: the online mistake bound is pathwise, while the next context is independent of the past, so a martingale online-to-batch argument controls the average conditional risk.
+
+\subsection{Why the online dimension is not an iid characterization}
+
+\begin{example}[Thresholds]
+Let $\X=\R$ and
+\[
+    h_t(x)=\1\{x\geq t\},
+    \qquad
+    \Gamma_t(x)=\{h_t(x)\}.
+\]
+This is ordinary binary threshold classification. Its VC dimension is $1$, so it is PAC learnable with
+\[
+    m(\eps,\delta)
+    =\Theta\!\left(\frac{1+\log(1/\delta)}{\eps}\right).
+\]
+However, thresholds on a dense order have infinite Littlestone dimension. For any finite depth, an adversary can maintain a nonempty interval of possible thresholds, query an interior point, and retain the left or right subinterval according to the observed label. Since singleton-valued classes satisfy
+\[
+    \LDu=\operatorname{Ldim},
+\]
+we have $\LDu(\{\Gamma_t:t\in\R\})=\infty$.
+\end{example}
+
+Thus finite $\LDu$ is sufficient for iid learnability but not necessary. The exact online characterization does not resolve the desired iid characterization.
+
+\section{Why the most obvious static dimensions fail}
+
+\subsection{Partial VC dimension is not sufficient}
+
+Define the natural partial-concept VC dimension by
+\[
+\pVC(\SV)
+:=
+\sup\left\{|A|:
+\begin{array}{l}
+\text{for every }b:A\to\Y,\text{ there is }\Gamma\in\SV\\[-0.2em]
+\text{such that }\Gamma(x)=\{b(x)\}\text{ for every }x\in A
+\end{array}
+\right\}.
+\]
+This demands that every labeling be realized with no ambiguity on the shattered set.
+
+\begin{example}[Partial VC dimension one but no learnability]
+For every $B\subseteq\X$, define
+\[
+    \Gamma_B^+(x)=
+    \begin{cases}
+        \{1\},&x\in B,\\
+        \{0,1\},&x\notin B,
+    \end{cases}
+    \qquad
+    \Gamma_B^-(x)=
+    \begin{cases}
+        \{0\},&x\in B,\\
+        \{0,1\},&x\notin B.
+    \end{cases}
+\]
+Let
+\[
+    \SV_{\pm}
+    =
+    \{\Gamma_B^+:B\subseteq\X\}
+    \cup
+    \{\Gamma_B^-:B\subseteq\X\}.
+\]
+Then $\pVC(\SV_{\pm})=1$, but $\SV_{\pm}$ is not distribution-free PAC learnable when $\X$ is infinite.
+\end{example}
+
+\begin{proof}
+A single point can be forced to either label. On two points, the only fully specified patterns available from one target family are $11$ and $00$, so mixed patterns cannot be fully realized; hence the partial VC dimension is $1$.
+
+For unlearnability, fix an arbitrary binary function $b:\X\to\Y$ and define
+\[
+    B_1:=\{x:b(x)=1\},
+    \qquad
+    B_0:=\{x:b(x)=0\}.
+\]
+The same demonstration $y=b(x)$ is valid under both targets $\Gamma_{B_1}^+$ and $\Gamma_{B_0}^-$. For every predictor $f$,
+\begin{align*}
+    L_D(f,\Gamma_{B_1}^+)
+    &=D\{x:b(x)=1,\ f(x)=0\},\\
+    L_D(f,\Gamma_{B_0}^-)
+    &=D\{x:b(x)=0,\ f(x)=1\}.
+\end{align*}
+Therefore
+\[
+    L_D(f,\Gamma_{B_1}^+)
+    +
+    L_D(f,\Gamma_{B_0}^-)
+    =
+    \Pr_{X\sim D}[f(X)\neq b(X)].
+\]
+A learner that performed well for both indistinguishable targets would learn an arbitrary binary function $b$. On a finite domain of size $n$ with $D$ uniform and $b$ uniformly random, any learner using $m\leq n/2$ samples has expected ordinary prediction error at least $1/4$: a fresh point is unseen with probability at least $1/2$, and its unseen bit is guessed incorrectly with probability $1/2$. Hence one of the two indistinguishable targets has expected invalid-label risk at least $1/8$. Since $n$ is arbitrary, no distribution-free sample bound exists.
+\end{proof}
+
+The obstruction is not the inability to realize enough completely specified labelings. It is the ability of different targets to hide complementary subsets of an arbitrary demonstrated labeling.
+
+\subsection{Treating ambiguity as a third label is also wrong}
+
+Consider only
+\[
+    \SV_+:=\{\Gamma_B^+:B\subseteq\X\}.
+\]
+The fixed predictor $f(x)\equiv1$ has zero loss for every target, so the class has sample complexity zero. But if $\star$ is treated as an ordinary third label, the resulting ternary class has infinite Natarajan dimension: on every finite set it realizes all patterns using the label pair $(1,\star)$.
+
+Thus ambiguity is not an additional target label. It means that both learner outputs are acceptable, which changes the loss geometry fundamentally.
+
+\section{A candidate fractional demonstration dimension}
+
+The previous counterexample suggests that a useful iid dimension should measure whether arbitrary demonstrated labelings can be supported by targets that force each coordinate with nonnegligible probability, even when no one target forces all coordinates.
+
+\subsection{Definition}
+
+Let $A\subseteq\X$ be finite and $b:A\to\Y$. Define the targets compatible with demonstrating $b$ on $A$ by
+\[
+    \SV_b(A)
+    :=
+    \{\Gamma\in\SV:b(x)\in\Gamma(x)\text{ for every }x\in A\}.
+\]
+For $\Gamma\in\SV_b(A)$, define the coordinates on which $b$ is forced:
+\[
+    F_{\Gamma,b}
+    :=
+    \{x\in A:\Gamma(x)=\{b(x)\}\}.
+\]
+
+\begin{definition}[Fractional demonstration shattering]
+For $\gamma\in(0,1]$, the set $A$ is $\gamma$-demonstration-shattered by $\SV$ if, for every $b:A\to\Y$, there exists a distribution $\mu_b$ over $\SV_b(A)$ such that
+\[
+    \Pr_{\Gamma\sim\mu_b}[x\in F_{\Gamma,b}]\geq\gamma
+    \qquad\text{for every }x\in A.
+\]
+Define
+\[
+    \ddemo(\gamma;\SV)
+    :=
+    \sup\{|A|:A\text{ is }\gamma\text{-demonstration-shattered}\}.
+\]
+\end{definition}
+
+This parameter was proposed in the discussion as a candidate lower-bound dimension; it is not asserted to be an established characterization in the literature.
+
+\subsection{Sanity checks}
+
+\begin{proposition}
+The fractional demonstration dimension has the following properties.
+\begin{enumerate}
+    \item $\ddemo(1;\SV)=\pVC(\SV)$.
+    \item For an ordinary singleton-valued binary class $\mathcal C$,
+    \[
+        \ddemo(\gamma;\mathcal C)=\operatorname{VC}(\mathcal C)
+        \qquad\text{for every }\gamma>0.
+    \]
+    \item For the zero-sample class $\SV_+$,
+    \[
+        \ddemo(\gamma;\SV_+)=0
+        \qquad\text{for every }\gamma>0.
+    \]
+    \item For the unlearnable class $\SV_{\pm}$,
+    \[
+        \ddemo(1/2;\SV_{\pm})=\infty.
+    \]
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+The first two statements follow because forcing probability $1$ requires a compatible target that is nonambiguous on every coordinate, and singleton-valued targets force every compatible coordinate. For $\SV_+$, a demonstrated zero can never be forced, so no nonempty set works for all $b$. For $\SV_{\pm}$, given $b$, mix equally between $\Gamma^+_{\{b=1\}}$ and $\Gamma^-_{\{b=0\}}$. Every coordinate is forced to its demonstrated bit with probability exactly $1/2$.
+\end{proof}
+
+\subsection{A lower bound}
+
+\begin{proposition}[Uniform-distribution lower bound]
+Suppose $A$ has size $n$ and is $\gamma$-demonstration-shattered. For every learner using $m$ examples, there exist a target $\Gamma\in\SV$, the uniform distribution $D$ on $A$, and a valid demonstration strategy such that
+\[
+    \mathbb E L_D(\widehat f,\Gamma)
+    \geq
+    \frac{\gamma}{2}\left(1-\frac1n\right)^m.
+\]
+In particular, if $m\leq n/2$ and $n\geq2$, then
+\[
+    \mathbb E L_D(\widehat f,\Gamma)\geq\frac{\gamma}{4}.
+\]
+\end{proposition}
+
+\begin{proof}
+Choose $b$ uniformly from $\Y^A$, then choose $\Gamma\sim\mu_b$, and demonstrate $b(X_i)$ on each sampled point. Every target in the support of $\mu_b$ is compatible with these demonstrations, so the learner's observations reveal sampled bits of $b$ but reveal nothing about which $\Gamma$ was selected.
+
+At a fresh point $x$ that did not occur in the sample, $b(x)$ is an independent fair bit, so the learner disagrees with it with probability $1/2$. Conditional on disagreement, $\Gamma$ forces $b(x)$ with probability at least $\gamma$, in which case the learner's output is invalid. A fresh uniform point is absent from the training sample with probability $(1-1/n)^m$. Averaging gives the displayed bound, and therefore some fixed pair $(b,\Gamma)$ attains it.
+\end{proof}
+
+A standard rare-points modification gives the scale-sensitive lower bound
+\[
+    m(\eps,\text{constant confidence})
+    =
+    \Omega\!\left(
+        \frac{\gamma\,\ddemo(\gamma;\SV)}{\eps}
+    \right)
+\]
+for $\eps$ below a constant multiple of $\gamma$.
+
+\subsection{Relation to the online dimension}
+
+\begin{proposition}
+For every $\gamma\in(0,1]$,
+\[
+    \LDu(\SV)
+    \geq
+    \left\lfloor\gamma\,\ddemo(\gamma;\SV)\right\rfloor.
+\]
+\end{proposition}
+
+\begin{proof}
+Let $A=\{x_1,\ldots,x_n\}$ be $\gamma$-demonstration-shattered. An online adversary presents the points in this fixed order and, after prediction $\widehat y_t$, demonstrates the opposite bit
+\[
+    b(x_t):=1-\widehat y_t.
+\]
+For the resulting labeling $b$, draw conceptually from $\mu_b$. Every demonstrated label is valid for every target in its support. Since the learner always predicts the opposite of $b(x_t)$, its prediction is invalid exactly on coordinates forced by the selected target. The expected number of invalid predictions under $\mu_b$ is at least $\gamma n$, so some compatible target causes at least $\lfloor\gamma n\rfloor$ mistakes. This supplies the required mistake-unknown shattered tree.
+\end{proof}
+
+The parameter therefore lies naturally below the exact online dimension while detecting some iid obstructions missed by partial VC dimension.
+
+\begin{question}
+Is finiteness of $\ddemo(\gamma;\SV)$ for every $\gamma>0$ sufficient for distribution-free PAC learnability in the mistake-unknown demonstration model? If not, what additional static consistency or one-inclusion structure is required?
+\end{question}
+
+\section{The full-union special case}
+
+We now impose the proposed condition
+\[
+    \bigcup_{G\in\Outer}G=\F.
+\]
+When $\F=\Y^{\X}$, this says that every total binary function belongs to at least one member of the outer class.
+
+\subsection{Completion lemma}
+
+\begin{theorem}[The full-union condition is without loss of generality]
+Let $\Outer_0$ be any outer class over $\F=\Y^{\X}$ and define
+\[
+    G_{\top}:=\F,
+    \qquad
+    \Outer_{\top}:=\Outer_0\cup\{G_{\top}\}.
+\]
+Then
+\[
+    \bigcup_{G\in\Outer_{\top}}G=\F
+\]
+and, for every $\eps,\delta$,
+\[
+    m_{\Outer_{\top}}(\eps,\delta)
+    =
+    m_{\Outer_0}(\eps,\delta).
+\]
+The same equality holds for minimax expected risk and realizable online mistake complexity.
+\end{theorem}
+
+\begin{proof}
+For $G_{\top}=\F$,
+\[
+    \Gamma_{G_{\top}}(x)=\{0,1\}
+    \qquad\text{for every }x.
+\]
+Hence every learner output is valid and
+\[
+    L_D(f,G_{\top})=0
+\]
+for every $f$ and $D$. Any learner for $\Outer_0$ therefore also learns $\Outer_{\top}$ with the same guarantee; it may simply ignore the newly added target. Conversely, every learner for $\Outer_{\top}$ is automatically a learner for the subclass $\Outer_0$. The two minimax complexities are equal.
+\end{proof}
+
+\begin{remark}[A restricted base class]
+The same conclusion holds if ``all hypotheses'' means a known nonempty base class $\F_0\subseteq\Y^{\X}$ rather than all binary functions. Add $G_{\top}=\F_0$. Fix a selector
+\[
+    s_0(x)\in \Gamma_{\F_0}(x)=\{h(x):h\in\F_0\}
+    \qquad(x\in\X),
+\]
+and postprocess a learner's prediction $f(x)$ by leaving it unchanged when $f(x)\in\Gamma_{\F_0}(x)$ and replacing it by $s_0(x)$ otherwise. Since every $G\subseteq\F_0$ satisfies $\Gamma_G(x)\subseteq\Gamma_{\F_0}(x)$, the replaced prediction had loss one before postprocessing; thus postprocessing cannot increase its loss. It also gives zero loss on $G_{\top}$.
+\end{remark}
+
+The theorem means that the full-union subclass contains an exact copy of every original problem. It cannot admit a simpler iff statistical characterization unless the general problem does as well.
+
+\subsection{Embedding ordinary PAC learning}
+
+Let $\mathcal C\subseteq\F$ be any ordinary binary concept class and define
+\[
+    \Outer_{\mathcal C}
+    :=
+    \{\{h\}:h\in\mathcal C\}
+    \cup
+    \{\F\}.
+\]
+Then
+\[
+    \bigcup_{G\in\Outer_{\mathcal C}}G=\F.
+\]
+For a singleton target $G=\{h\}$, demonstrations and loss are exactly those of ordinary realizable binary classification by $h$. The target $\F$ has zero loss. Therefore
+\[
+    m_{\Outer_{\mathcal C}}(\eps,\delta)
+    =
+    m_{\mathcal C}^{\mathrm{PAC}}(\eps,\delta).
+\]
+In particular, if $\operatorname{VC}(\mathcal C)=d<\infty$, the optimal realizable PAC rate is
+\[
+    \Theta\!\left(
+        \frac{d+\log(1/\delta)}{\eps}
+    \right)
+\]
+up to universal constants \cite{Hanneke2016}. By choosing $\mathcal C$, full-union outer classes can realize zero sample complexity, every finite VC-type complexity, or ordinary PAC nonlearnability.
+
+More strongly, the completion lemma applies to every ambiguous class, not merely singleton classes. Thus the full-union condition preserves all of the unresolved complexity of the original model.
+
+\subsection{Even proper disjoint sets can be pointwise vacuous}
+
+One might try to repair the condition by forbidding $G=\F$. This does not suffice. Choose distinct points $x_0,x_1\in\X$ and let
+\[
+    G_{=}:=\{h:h(x_0)=h(x_1)\},
+    \qquad
+    G_{\neq}:=\{h:h(x_0)\neq h(x_1)\}.
+\]
+Then $G_{=}$ and $G_{\neq}$ are proper, disjoint, and
+\[
+    G_{=}\cup G_{\neq}=\F.
+\]
+Nevertheless,
+\[
+    \Gamma_{G_=}(x)=\Gamma_{G_{\neq}}(x)=\{0,1\}
+    \qquad\text{for every }x.
+\]
+Both targets have zero loss. Their global equality or inequality constraint is invisible because the adversary may use different hypotheses at $x_0$ and $x_1$.
+
+This example shows that raw set-theoretic properties of the family $\{G\}$---properness, disjointness, or even partitioning $\F$---need not correspond to statistical structure.
+
+\subsection{The rectangular perspective}
+
+After replacing each $G$ by its statistically equivalent $\Rect(G)$, the full-union condition says merely that a family of Boolean cylinders covers $\F$. But any family can be made into such a cover by adding the empty partial assignment, whose cylinder is all of $\F$.
+
+A genuinely restrictive version would impose structure on the rectangular closures themselves, for example:
+\begin{itemize}
+    \item the cylinders are all proper and their induced set-valued concepts have nonempty forced domains;
+    \item the cylinders form a nontrivial partition of $\F$ after rectangularization;
+    \item the cylinders are laminar or arise as leaves of a bounded-depth decision tree;
+    \item each target has bounded ambiguity according to a structural measure defined directly on $\Gamma_G$.
+\end{itemize}
+The second condition is a subcube-partition problem: every total hypothesis extends exactly one observable partial assignment. Unlike the raw full-union assumption, such conditions cannot be satisfied by freely adjoining an all-$\star$ target.
+
+\section{Current characterization and research directions}
+
+The known and proposed parameters give the following sandwich.
+
+\begin{center}
+\begin{tabularx}{0.96\textwidth}{>{\raggedright\arraybackslash}p{0.28\textwidth} X}
+\toprule
+Condition & Consequence \\
+\midrule
+$|\SV|<\infty$ & PAC learnable with $O((\log|\SV|+\log(1/\delta))/\eps)$ samples. \\
+$\LDu(\SV)<\infty$ & Exactly realizable-online learnable; also sufficient for iid PAC learnability. \\
+$\ddemo(\gamma;\SV)=\infty$ for some fixed $\gamma>0$ & Not distribution-free PAC learnable. \\
+$\pVC(\SV)<\infty$ & Necessary as a basic obstruction test, but not sufficient. \\
+$\bigcup_{G\in\Outer}G=\F$ & No simplification; every problem has an equivalent completion satisfying it. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+The cited works provide an exact online characterization and batch upper bounds, but not an iff combinatorial characterization of iid mistake-unknown learnability for arbitrary infinite classes. The following questions isolate the remaining issues.
+
+\begin{enumerate}
+    \item \textbf{Exact iid dimension.} Find a static or distribution-dependent combinatorial object whose finiteness is equivalent to PAC learnability in the adversarial-demonstration model.
+
+    \item \textbf{Fractional sufficiency.} Determine whether finite $\ddemo(\gamma;\SV)$ at every positive scale is sufficient. If not, construct a class with finite fractional profile but no learner.
+
+    \item \textbf{Tight rates.} Determine whether the minimax sample complexity can be bounded in terms of a profile such as
+    \[
+        \sup_{\gamma\gtrsim\eps}
+        \frac{\gamma\,\ddemo(\gamma;\SV)}{\eps},
+    \]
+    possibly together with a one-inclusion or compression parameter.
+
+    \item \textbf{Subcube partitions.} Characterize learnability when the rectangular closures form a proper partition, a laminar family, or a bounded-depth decision-tree partition of $\F$.
+
+    \item \textbf{Computational complexity.} Once a statistical characterization is identified, determine when the corresponding prediction and version-space operations can be implemented in polynomial time.
+\end{enumerate}
+
+\section{Final takeaway}
+
+The nested formulation initially appears to depend on a rich family of sets of hypotheses. Under the stated adversarial switching rule, however, it immediately reduces to a class of pointwise valid-label sets. This reduction is the central structural fact: all later dimensions and restrictions should be defined on the induced set-valued concepts $\Gamma_G$, not on hidden global properties of the raw sets $G$.
+
+For finite classes and for realizable online learning, strong results are available. For general iid learning, neither the online dimension nor the ordinary partial VC dimension is an iff characterization. The fractional demonstration dimension is a natural lower-bound candidate that captures the key indistinguishability obstruction, but its sufficiency is open.
+
+Finally, requiring the union of all $G$'s to equal all hypotheses does not produce a special case. Any outer class can be completed to satisfy that condition without changing its statistical complexity. A useful restricted problem must instead constrain the pointwise set-valued concepts or their rectangular closures.
+
+\begin{thebibliography}{9}
+
+\bibitem{JoshiEtAl2025}
+Nirmit Joshi, Gene Li, Siddharth Bhandari, Shiva Prasad Kasiviswanathan, Cong Ma, and Nathan Srebro.
+\newblock Learning to Answer from Correct Demonstrations.
+\newblock arXiv:2510.15464, 2025.
+\newblock \url{https://arxiv.org/abs/2510.15464}.
+
+\bibitem{PourEtAl2026}
+Alireza F. Pour, Farnam Mansouri, and Shai Ben-David.
+\newblock Learning with Multiple Correct Answers---A Trichotomy of Regret Bounds under Different Feedback Models.
+\newblock arXiv:2602.09402, 2026.
+\newblock \url{https://arxiv.org/abs/2602.09402}.
+
+\bibitem{AlonEtAl2022}
+Noga Alon, Steve Hanneke, Ron Holzman, and Shay Moran.
+\newblock A Theory of PAC Learnability of Partial Concept Classes.
+\newblock In \emph{Proceedings of the 62nd IEEE Symposium on Foundations of Computer Science}, pages 658--671, 2022.
+\newblock \url{https://arxiv.org/abs/2107.08444}.
+
+\bibitem{Hanneke2016}
+Steve Hanneke.
+\newblock The Optimal Sample Complexity of PAC Learning.
+\newblock \emph{Journal of Machine Learning Research}, 17(38):1--15, 2016.
+\newblock \url{https://www.jmlr.org/papers/v17/15-389.html}.
+
+\bibitem{Littlestone1988}
+Nick Littlestone.
+\newblock Learning Quickly When Irrelevant Attributes Abound: A New Linear-Threshold Algorithm.
+\newblock \emph{Machine Learning}, 2(4):285--318, 1988.
+
+\end{thebibliography}
+
+\end{document}

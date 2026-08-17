@@ -1,0 +1,152 @@
+\documentclass[11pt,aspectratio=169]{beamer}
+
+\usetheme{Madrid}
+\usecolortheme{default}
+
+\usepackage{amsmath,amssymb,mathtools}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+
+\title{What is the type signature of learning?}
+\author{Vinayak Pathak}
+\date{\today}
+
+\begin{document}
+
+\begin{frame}[plain,noframenumbering]
+    \titlepage
+\end{frame}
+
+\begin{frame}{Learning builds agents}
+\Large
+\begin{itemize}[<+->]
+    \item Today's agents are built using learning.
+    \item Future agents probably will be too.
+    \item We need learning processes that produce safe agents.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{What is learning?}
+\Large
+\begin{itemize}[<+->]
+    \item The Bayesian answer:
+    \[
+        (\text{Belief},\text{Evidence})\longmapsto\text{Belief}
+    \]
+    \item Objection 1: Can we compute the update?
+    \item Objection 2: What does the update guarantee?
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Objection 1: computation}
+\large
+\begin{itemize}
+    \item<1-> Domain: $x\in\{0,1\}^n$.
+    \item<2-> Query access to $p(x)$ and $p(y\mid x)$.
+\end{itemize}
+\uncover<3->{
+\begin{block}{Toy example}
+\[
+    p(x\mid y)=\frac{p(x)p(y\mid x)}{\sum_z p(z)p(y\mid z)}
+\]
+\end{block}
+}
+\uncover<4->{
+\begin{alertblock}{Question}
+Can we compute it exactly with $\operatorname{poly}(n)$ queries?
+\end{alertblock}
+}
+\uncover<5->{
+\begin{center}
+\Large\alert{No.} Calculating the denominator requires $2^n$ queries.
+\end{center}
+}
+\end{frame}
+
+\begin{frame}{Objection 2: guarantees}
+\large
+\begin{itemize}
+    \item<1-> Cox's axioms motivate coherent belief updates.
+    \item<2-> They do not choose the performance guarantee.
+\end{itemize}
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.48\textwidth}
+\uncover<3->{
+\begin{block}{Bayes}
+\[
+    \min_a\;\mathbb{E}_{\theta\sim p} L(a,\theta)
+\]
+Minimize prior-averaged loss.
+\end{block}
+}
+\end{column}
+\begin{column}{0.48\textwidth}
+\uncover<4->{
+\begin{alertblock}{Worst case}
+\[
+    \min_a\;\max_\theta L(a,\theta)
+\]
+Minimize the largest loss.
+\end{alertblock}
+}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{A small average can hide a large failure}
+\Large
+\begin{itemize}
+    \item<1-> Easy case: probability $1-\varepsilon$, loss $0$.
+    \item<2-> Hard case: probability $\varepsilon$, loss $1$.
+\end{itemize}
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.48\textwidth}
+\uncover<3->{
+\begin{block}{Average loss}
+\centering
+\Huge $\varepsilon$
+\end{block}
+}
+\end{column}
+\begin{column}{0.48\textwidth}
+\uncover<4->{
+\begin{alertblock}{Worst-case loss}
+\centering
+\Huge $1$
+\end{alertblock}
+}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{When can Bayes catch up?}
+\Large
+\begin{itemize}
+    \item<1-> The truth lies in the prior's support.
+    \item<2-> The evidence identifies the truth.
+    \item<3-> Updating continues long enough.
+\end{itemize}
+\uncover<4->{
+\[
+    p(\text{truth}\mid\text{evidence})\longrightarrow 1
+\]
+}
+\uncover<5->{
+\begin{center}
+Only then can average-case behavior approach the optimum for the true world.
+\end{center}
+}
+\end{frame}
+
+\begin{frame}{Finite computation blocks the escape hatch}
+\Large
+\begin{itemize}[<+->]
+    \item Exact updating can be intractable.
+    \item A tractable learner has finite time and may need approximations.
+    \item We cannot rely on infinite posterior concentration.
+    \item Small Bayesian risk does not imply small worst-case loss.
+\end{itemize}
+\end{frame}
+
+\end{document}

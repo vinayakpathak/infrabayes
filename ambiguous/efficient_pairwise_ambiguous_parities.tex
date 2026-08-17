@@ -1,0 +1,475 @@
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{hyperref}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue
+}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\F}{\mathbb{F}_2}
+\newcommand{\Pn}{\mathcal{P}_n}
+\newcommand{\Amb}{\operatorname{Amb}}
+\newcommand{\ip}[2]{\langle #1,#2\rangle}
+\newcommand{\ind}{\mathbf{1}}
+
+\title{Efficient Online Learning of Pairwise-Ambiguous Parities\\
+\large and an LPN-Based Computational Separation}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This note explains an efficient online algorithm for a structured ambiguous
+version of the parity class.  The unknown target consists of two parity
+functions.  On every instance, either parity output is acceptable, and the
+adversary may reveal either acceptable label.  Even though the learner is not
+told whether its own prediction was acceptable, a quadratic feature-map
+argument gives a deterministic polynomial-time learner making at most
+$\binom{n+2}{2}-1$ mistakes.
+
+The result should not be interpreted as an efficient algorithm for ordinary
+Learning Parity with Noise (LPN).  Rather, LPN is used as a hardness
+assumption: pairwise-ambiguous parities are efficiently learnable in the
+mistake-unknown model, while efficient agnostic online learning of the
+ordinary parity class would yield a polynomial-time distinguisher for
+decisional LPN.
+\end{abstract}
+
+\section{The distinction from ordinary LPN}
+
+Let
+\[
+\Pn
+=
+\left\{
+  p_w(x)=\ip{w}{x}\bmod 2 : w\in\F^n
+\right\}
+\]
+be the class of homogeneous parity functions on $\F^n$.
+
+In ordinary LPN, examples have the form
+\[
+  y=p_s(x)\oplus e,
+  \qquad
+  e\sim\operatorname{Bernoulli}(\eta),
+\]
+where the noise bit is random and independent of $x$.  The efficient result
+below concerns a different model.  There are two fixed latent parities
+$p_u$ and $p_v$, and the acceptable-label set on $x$ is
+\[
+  \{p_u(x),p_v(x)\}.
+\]
+Thus, relative to $p_u$, a revealed label can be written as
+\[
+  y=p_u(x)\oplus a\,\ip{u+v}{x},
+  \qquad a\in\{0,1\},
+\]
+where the adversary may choose $a$ separately on every round.  A flip is
+possible only on the structured disagreement set
+\[
+  \{x:\ip{u+v}{x}=1\}.
+\]
+This is not independent random classification noise.
+
+\section{Pairwise ambiguity of parities}
+
+\begin{definition}[Pairwise-ambiguous parity class]
+For $u,v\in\F^n$, define the set-valued hypothesis
+\[
+  G_{u,v}(x)=\{p_u(x),p_v(x)\}.
+\]
+The pairwise-ambiguous closure of the parity class is
+\[
+  \Amb^{(2)}(\Pn)
+  =
+  \{G_{u,v}:u,v\in\F^n\}.
+\]
+\end{definition}
+
+At points where $p_u(x)=p_v(x)$, the acceptable-label set is a singleton.
+At points where they disagree, both labels are acceptable:
+\[
+G_{u,v}(x)=
+\begin{cases}
+\{p_u(x)\}, & p_u(x)=p_v(x),\\
+\{0,1\}, & p_u(x)\neq p_v(x).
+\end{cases}
+\]
+The disagreement region is
+\[
+A_{u,v}
+=
+\{x:p_u(x)\neq p_v(x)\}
+=
+\{x:\ip{u+v}{x}=1\}.
+\]
+When $u\neq v$, this is an affine hyperplane of $\F^n$; when $u=v$, it is
+empty.  Hence the ambiguity is highly structured rather than arbitrary.
+
+\section{The mistake-unknown online protocol}
+
+Fix an unknown $G_{u,v}\in\Amb^{(2)}(\Pn)$.  On round $t$:
+\begin{enumerate}[label=\arabic*.]
+  \item The adversary presents an instance $x_t\in\F^n$.
+  \item The learner predicts $\widehat y_t\in\{0,1\}$.
+  \item The adversary reveals a label
+  \[
+    y_t\in G_{u,v}(x_t).
+  \]
+\end{enumerate}
+The learner makes a mistake exactly when
+\[
+  \widehat y_t\notin G_{u,v}(x_t).
+\]
+It observes the valid demonstration $(x_t,y_t)$, but receives no bit telling
+it whether $\widehat y_t$ was valid.  In particular,
+$\widehat y_t\neq y_t$ does not imply a mistake: both labels might have been
+acceptable.
+
+\section{A quadratic representation of validity}
+
+All arithmetic in this section is over $\F$.  Define
+\[
+q_{u,v}(x,y)
+=
+\bigl(y+\ip{u}{x}\bigr)
+\bigl(y+\ip{v}{x}\bigr).
+\]
+
+\begin{lemma}[Validity polynomial]
+For every $x\in\F^n$ and $y\in\F$,
+\[
+  y\in G_{u,v}(x)
+  \quad\Longleftrightarrow\quad
+  q_{u,v}(x,y)=0.
+\]
+\end{lemma}
+
+\begin{proof}
+The product is zero exactly when at least one factor is zero.  This happens
+exactly when $y=\ip{u}{x}$ or $y=\ip{v}{x}$.
+\end{proof}
+
+On Boolean inputs, $x_i^2=x_i$ and $y^2=y$.  After multilinearizing the
+quadratic polynomial, define the feature map
+\[
+\phi(x,y)
+=
+\left(
+  y,
+  (x_i)_{i=1}^n,
+  (yx_i)_{i=1}^n,
+  (x_ix_j)_{1\leq i<j\leq n}
+\right)
+\in\F^D,
+\]
+where
+\[
+D
+=1+2n+\binom{n}{2}
+=\binom{n+2}{2}.
+\]
+There is a coefficient vector $\theta_{u,v}\in\F^D$ such that
+\[
+  q_{u,v}(x,y)=\ip{\theta_{u,v}}{\phi(x,y)}.
+\]
+Moreover, $\theta_{u,v}\neq 0$: the coefficient of the feature $y$ is always
+one, coming from $y^2=y$.
+
+Consequently, the set of valid labeled examples is contained in the
+codimension-one subspace
+\[
+  \theta_{u,v}^{\perp}
+  =
+  \{z\in\F^D:\ip{\theta_{u,v}}{z}=0\}.
+\]
+
+\section{The span learner}
+
+Before round $t$, maintain
+\[
+R_t
+=
+\operatorname{span}
+\{\phi(x_s,y_s):s<t\}
+\subseteq\F^D.
+\]
+The learner acts as follows.
+
+\begin{enumerate}[label=\arabic*.]
+  \item If $\phi(x_t,0)\in R_t$, predict $\widehat y_t=0$.
+  \item Otherwise, if $\phi(x_t,1)\in R_t$, predict
+        $\widehat y_t=1$.
+  \item Otherwise, predict either label, say $\widehat y_t=0$.
+  \item After observing the valid label $y_t$, update
+  \[
+    R_{t+1}
+    =
+    \operatorname{span}\bigl(R_t\cup\{\phi(x_t,y_t)\}\bigr).
+  \]
+\end{enumerate}
+
+\begin{lemma}[Soundness of span certificates]
+If $\phi(x,b)\in R_t$, then $b\in G_{u,v}(x)$.
+\end{lemma}
+
+\begin{proof}
+Every revealed label is valid, so for every $s<t$,
+\[
+  \ip{\theta_{u,v}}{\phi(x_s,y_s)}=0.
+\]
+Therefore $R_t\subseteq\theta_{u,v}^{\perp}$.  If
+$\phi(x,b)\in R_t$, then
+\[
+  q_{u,v}(x,b)
+  =
+  \ip{\theta_{u,v}}{\phi(x,b)}
+  =0.
+\]
+The validity-polynomial lemma now gives $b\in G_{u,v}(x)$.
+\end{proof}
+
+\section{Mistake bound and running time}
+
+\begin{theorem}[Efficient learning of pairwise-ambiguous parities]
+The span learner is deterministic, runs in time polynomial in $n$ per round,
+and makes at most
+\[
+  D-1
+  =
+  \binom{n+2}{2}-1
+  =
+  \frac{n(n+3)}{2}
+\]
+mistakes on every sequence realizable by a fixed
+$G_{u,v}\in\Amb^{(2)}(\Pn)$.
+\end{theorem}
+
+\begin{proof}
+First, every maintained vector is orthogonal to $\theta_{u,v}$, so
+\[
+  R_t\subseteq\theta_{u,v}^{\perp}.
+\]
+Since $\theta_{u,v}\neq 0$,
+\[
+  \dim(\theta_{u,v}^{\perp})=D-1.
+\]
+
+Suppose the learner makes a mistake on round $t$.  We claim that the newly
+revealed valid vector $\phi(x_t,y_t)$ was not already in $R_t$.  If it were in
+$R_t$, then one of two things would happen.  Either the learner would predict
+$y_t$, or the learner would predict the other label because that label also
+had its feature vector in $R_t$.  In the latter case, the soundness lemma says
+the other label is valid as well.  In both cases the prediction would be
+acceptable, contradicting that a mistake occurred.
+
+Thus every mistake satisfies
+\[
+  \phi(x_t,y_t)\notin R_t,
+\]
+and therefore causes a strict dimension increase:
+\[
+  \dim(R_{t+1})=\dim(R_t)+1.
+\]
+The dimension can increase at most $D-1$ times while the span remains inside
+$\theta_{u,v}^{\perp}$.  Hence the total number of mistakes is at most $D-1$.
+
+For computation, maintain a row-echelon basis of $R_t$ over $\F$.  The feature
+dimension is $D=\Theta(n^2)$, and membership tests and insertion can be done
+by incremental Gaussian elimination.  A direct implementation uses
+$O(D^2)=O(n^4)$ bit operations per round, which is polynomial in $n$.
+\end{proof}
+
+\begin{remark}[Information-theoretic versus efficient bounds]
+There are at most $2^{2n}$ ordered pairs $(u,v)$.  A generic finite-class
+argument for the mistake-unknown model can therefore give an abstract
+$2n$-type mistake bound.  That argument does not by itself provide an
+efficient implicit implementation over the exponentially large class.  The
+quadratic-span learner gives an explicit polynomial-time algorithm, at the
+cost of the weaker $O(n^2)$ mistake bound.
+\end{remark}
+
+\section{The LPN-based computational separation}
+
+We now explain the role of LPN.  Fix a constant noise rate
+$\eta\in(0,1/2)$.  The decisional-LPN problem is to distinguish the following
+two distributions over labeled examples:
+\begin{align*}
+\mathsf{LPN}_{s,\eta}:&
+&x&\sim\operatorname{Unif}(\F^n),
+&y&=\ip{s}{x}\oplus e,
+&e&\sim\operatorname{Bernoulli}(\eta),\\
+\mathsf{Unif}:&
+&x&\sim\operatorname{Unif}(\F^n),
+&y&\sim\operatorname{Unif}(\F),
+\end{align*}
+where $s\in\F^n$ is an unknown secret.
+
+\begin{proposition}[Agnostic online parity learning would break LPN]
+Suppose that, for some constant $\alpha>0$ and polynomial $p$, there is a
+randomized online learner for $\Pn$ that runs in time polynomial in $n$ and
+$T$ and has expected regret
+\[
+  R_T\leq p(n)T^{1-\alpha}
+\]
+against the best parity on every labeled sequence.  Then decisional LPN at
+any fixed noise rate $\eta<1/2$ can be solved in randomized polynomial time.
+The learner may be improper.
+\end{proposition}
+
+\begin{proof}
+Given $T$ labeled samples, feed them to the online learner in sequence and
+let
+\[
+  L_A
+  =
+  \sum_{t=1}^T \ind\{\widehat y_t\neq y_t\}
+\]
+be its ordinary binary prediction loss.
+
+Under $\mathsf{LPN}_{s,\eta}$, the comparator $p_s$ has expected loss
+$\eta T$.  Therefore the regret guarantee implies
+\[
+  \mathbb{E}[L_A\mid\mathsf{LPN}_{s,\eta}]
+  \leq
+  \eta T+R_T.
+\]
+Under $\mathsf{Unif}$, each label is a fresh unbiased bit, independent of the
+learner's prediction conditional on the past.  Hence
+\[
+  \mathbb{E}[L_A\mid\mathsf{Unif}]=\frac{T}{2}.
+\]
+
+Turn this expectation gap into a distinguisher as follows: after computing
+$L_A$, output ``uniform'' with probability $L_A/T$, and output ``LPN''
+otherwise.  Its probability of outputting ``uniform'' is exactly $1/2$ under
+$\mathsf{Unif}$ and at most
+\[
+  \eta+\frac{R_T}{T}
+\]
+under $\mathsf{LPN}_{s,\eta}$.  Thus its distinguishing advantage is at least
+\[
+  \frac12-\eta-\frac{R_T}{T}.
+\]
+Choose a polynomially large horizon $T$ such that
+\[
+  \frac{R_T}{T}
+  \leq
+  \frac{1/2-\eta}{2}.
+\]
+This is possible because
+$R_T/T\leq p(n)T^{-\alpha}$ and $\alpha$ is a fixed positive constant.  The
+resulting advantage is a positive constant, and the total running time and
+sample size are polynomial.
+\end{proof}
+
+\begin{corollary}[Conditional separation]
+Under the standard decisional-LPN hardness assumption,
+\begin{enumerate}[label=(\roman*)]
+  \item $\Amb^{(2)}(\Pn)$ is polynomial-time learnable in the realizable
+        mistake-unknown model, with at most $n(n+3)/2$ mistakes; but
+  \item $\Pn$ has no polynomial-time agnostic online learner, proper or
+        improper, with regret $p(n)T^{1-\alpha}$ for any fixed
+        $\alpha>0$ and polynomial $p$.
+\end{enumerate}
+\end{corollary}
+
+The first item is unconditional.  Only the hardness claim in the second item
+is conditional on LPN.
+
+\section{Why the ambiguous learner does not solve ordinary LPN}
+
+In a fully arbitrary ambiguity model, one could declare an arbitrary set of
+instances ambiguous and thereby hide an arbitrary corruption pattern.  That
+would risk making ambiguity as hard as agnostic noise.
+
+For pairwise parities, the ambiguity region is restricted to
+\[
+  A_d=\{x:\ip{d}{x}=1\}
+\]
+for one fixed $d=u+v$.  An independent LPN noise pattern is overwhelmingly
+unlikely to agree with one such fixed parity-defined region across all
+examples.  Therefore the polynomial-time learner for
+$\Amb^{(2)}(\Pn)$ does not imply a polynomial-time algorithm for LPN.
+
+The result instead identifies a structured form of adversarial uncertainty
+that is tractable even though unrestricted agnostic parity learning is
+LPN-hard.
+
+\section{Extension to constantly many latent parities}
+
+For a fixed integer $r\geq 2$, define
+\[
+  G_{w_1,\ldots,w_r}(x)
+  =
+  \{\ip{w_1}{x},\ldots,\ip{w_r}{x}\}.
+\]
+Validity is characterized by
+\[
+  q(x,y)
+  =
+  \prod_{j=1}^r\bigl(y+\ip{w_j}{x}\bigr),
+  \qquad
+  y\in G_{w_1,\ldots,w_r}(x)
+  \Longleftrightarrow
+  q(x,y)=0.
+\]
+After multilinearization, $q$ is represented using all nonconstant
+square-free monomials of degree at most $r$ in the $n+1$ Boolean variables
+$x_1,\ldots,x_n,y$.  The feature dimension is at most
+\[
+  D_r
+  =
+  \sum_{k=1}^r\binom{n+1}{k}
+  =
+  n^{O(r)}.
+\]
+Because all homogeneous parities vanish at $x=0$, we have $q(0,1)=1$, so the
+coefficient vector is nonzero.  The same span argument therefore gives at
+most $D_r-1$ mistakes and an $n^{O(r)}$-time implementation.  Consequently,
+for every fixed constant $r$, the class of ambiguities generated by $r$
+latent parities is efficiently mistake-unknown learnable.
+
+\section{Relation to the subspace formulation}
+
+For $r=2$, write $d=u+v$ and $U=\operatorname{span}\{d\}$.  Relative to the
+base parity $p_u$, the two acceptable labels are obtained by adding either
+zero or an element of the one-dimensional subspace $U$ evaluated at $x$.
+Thus the pairwise construction is exactly the special case in which the
+ambiguity subspace has dimension at most one.
+
+\section{Conclusion}
+
+The result is an efficient learning theorem for \emph{pairwise-ambiguous
+parities}, not an algorithm for ordinary noisy parity learning.  Its core is
+a low-degree algebraic representation: every valid labeled example lies in
+one unknown codimension-one subspace of a quadratic feature space.  A learner
+can accumulate revealed valid examples, use span membership as a sound
+certificate, and charge every actual mistake to a dimension increase.
+
+Together with the decisional-LPN assumption, this gives a clean computational
+separation between structured mistake-unknown ambiguity and agnostic online
+learning of the underlying parity class.
+
+\end{document}

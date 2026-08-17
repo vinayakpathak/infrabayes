@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Compile newcombian_bandits.tex",
+            "label": "Compile active LaTeX document",
             "type": "process",
             "command": "/Library/TeX/texbin/latexmk",
             "args": [
@@ -10,10 +10,10 @@
                 "-interaction=nonstopmode",
                 "-halt-on-error",
                 "-file-line-error",
-                "newcombian_bandits.tex"
+                "${fileBasename}"
             ],
             "options": {
-                "cwd": "${workspaceFolder}/newcombian"
+                "cwd": "${fileDirname}"
             },
             "problemMatcher": [],
             "group": {

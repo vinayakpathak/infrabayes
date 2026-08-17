@@ -1,0 +1,145 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[hidelinks]{hyperref}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\title{Ambiguous Learning}
+\author{Vinayak Pathak}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+% Add the abstract here.
+\end{abstract}
+
+\section{Introduction}
+The no free lunch theorem says that the class of all hypotheses is unlearnable \cite{blumer1989learnability}. The usual response to this obstacle is to insist that we use our domain knowledge to find a hypothesis class $\mathcal{H}$ (with a small capacity) that the true hypothesis lies in. This is called realizable learning. If we cannot be confident that the true hypothesis does lie in $\mathcal{H}$, then we rely on agnostic learning guarantees that simply ensure we can achieve a loss close to the loss of the best hypothesis in the hypothesis class. However, the number of samples needed for agnostic learning is generally a lot more than for realizable learning \cite{hanneke2016optimal}. Moreover, there are instances of learning problems where agnostic learning is computationally intractable even though realizable learning is easy \cite{blum2003noise}. One example is the LPN problem, which is considered hard enough that it has been used to define a certain kind of hardness and many cryptographic protocols rely on it \cite{blum1994cryptographic,juels2005authenticating,applebaum2009fast}.
+
+We propose an alternative to agnostic learning for handling the unrealizable case. We argue that one reason we are unable to find a suitable $\mathcal{H}$ is because it is very ambitious to expect to learn a function that assigns a unique label to each domain point. Reality itself might have more ambiguity than that, especially if it contains adversaries that are allowed to modify the environment in order to fool us. Instead, we think of reality as a \emph{set} of hypotheses, and the hypothesis class as a set of set of hypotheses. Given the true set of hypotheses, an adversary is free to pick a different hypothesis from the set to label each point. We think of the adversary's actions as completely unlearnable and hence punish the learner only for assigning a label that doesn't agree with any of the hypotheses in the true set. 
+
+\section{Definitions}
+
+Fix an instance space $\mathcal{X}$ and a nonempty label space $\mathcal{Y}$. Let $\mathcal{F}=\mathcal{Y}^{\mathcal{X}}$ be the class of all total hypotheses. An \emph{ambiguous hypothesis} is a nonempty set $G\subseteq\mathcal{F}$, and an \emph{ambiguous hypothesis class} is a collection $\mathfrak{G}\subseteq 2^{\mathcal{F}}\setminus\{\varnothing\}$.
+
+In the iid setting, Nature chooses a true ambiguous hypothesis $G^\star\in\mathfrak{G}$ and a distribution $D$ over $\mathcal{X}$, and contexts $X_1,\ldots,X_m$ are drawn iid from $D$. For each $i$, an adversary chooses a demonstrated label $Y_i$ satisfying $Y_i=h_i(X_i)$ for some $h_i\in G^\star$. The adversary may choose a different $h_i$ at every sample and may choose labels adaptively after observing the contexts and the preceding interaction. The learner observes $(X_i,Y_i)_{i=1}^m$ and outputs a predictor $f:\mathcal{X}\to\mathcal{Y}$. At a test point $x$, the learner is correct if its output agrees with at least one member of $G^\star$ at $x$; it need not match a label separately selected by the adversary at test time. The loss of $f$ is
+\[
+    L_D(f,G)
+    :=
+    \Pr_{X\sim D}\!\left[\nexists h\in G:\ f(X)=h(X)\right].
+\]
+We say that $\mathfrak{G}$ is distribution-free PAC learnable if there is a function $m_{\mathfrak{G}}(\varepsilon,\delta)$ and a learner such that, for every $G^\star\in\mathfrak{G}$, every distribution $D$, and every valid demonstration strategy,
+\[
+    \Pr\!\left[L_D(\widehat{f},G^\star)>\varepsilon\right]
+    \leq\delta
+\]
+whenever $m\geq m_{\mathfrak{G}}(\varepsilon,\delta)$. The probability is over the iid contexts and the learner's randomness.
+
+In the online setting, Nature chooses a true ambiguous hypothesis $G^\star\in\mathfrak{G}$. On each round $t$, the adversary chooses a context $X_t$, the learner observes $X_t$ and predicts $\widehat{Y}_t$, and the adversary then reveals a demonstrated label $Y_t=h_t(X_t)$ for some $h_t\in G^\star$. Both the contexts and the demonstrated labels may be chosen adaptively, and the adversary may choose a different $h_t$ on every round. The learner makes a mistake on round $t$ if $\widehat{Y}_t\neq h(X_t)$ for every $h\in G^\star$. We say that $\mathfrak{G}$ is online learnable if there is a learner and a finite bound $M_{\mathfrak{G}}$, independent of the horizon, such that for every $G^\star\in\mathfrak{G}$ and every valid adaptive sequence,
+\[
+    \sum_{t=1}^T \mathbf{1}\!\left\{\nexists h\in G^\star:\ \widehat{Y}_t=h(X_t)\right\}
+    \leq M_{\mathfrak{G}}
+\]
+for every horizon $T$.
+
+\begin{remark}
+Given any $\mathfrak{G}$, we can think of the class of hypotheses being learned as $\mathcal{H}:=\bigcup_{G\in\mathfrak{G}}G$. Now suppose $\mathcal{H}$ is the set of all hypotheses. Whether or not the resulting $\mathfrak{G}$ is learnable depends on how $\mathcal{H}$ has been split into subsets. For example, on one extreme we could have maximum ambiguity and say $\mathfrak{G}=\{\mathcal{H}\}$, which is very easy to learn since the learner is never punished. On the other hand, we could have $\mathfrak{G}=\{\{h\}:h\in\mathcal{H}\}$, in which case we are back to the standard realizable learning setting and the no free lunch theorem applies.
+\end{remark}
+
+\section{An Ambiguous Version of LPN is Efficiently Learnable}
+
+We first recall the ordinary parity-learning problem. Let $\mathcal{X}=\mathbb{F}_2^n$ and $\mathcal{Y}=\mathbb{F}_2$, with all arithmetic over $\mathbb{F}_2$. The hypothesis class is the class of parity functions
+\[
+    h_w(x):=\langle w,x\rangle,
+    \qquad
+    \mathcal{H}_n:=\{h_w:w\in\mathbb{F}_2^n\}.
+\]
+In the realizable setting, there is an unknown $s\in\mathbb{F}_2^n$ and every example satisfies $y=h_s(x)$. Finding a parity consistent with the observed examples amounts to solving a system of linear equations over $\mathbb{F}_2$, so Gaussian elimination gives a polynomial-time learner.
+
+The agnostic setting is believed to be computationally hard. In the Learning Parity with Noise (LPN) problem,
+\[
+    x\sim\operatorname{Unif}(\mathbb{F}_2^n),
+    \qquad
+    y=h_s(x)\oplus e,
+    \qquad
+    e\sim\operatorname{Bernoulli}(\eta),
+\]
+where $s$ is unknown, $\eta\in(0,1/2)$, and $e$ is independent of $x$. An efficient agnostic learner for $\mathcal{H}_n$ would in particular solve this problem. Under the standard LPN hardness assumption, parity functions are therefore efficiently learnable in the realizable setting but not in the agnostic setting \cite{blum1994cryptographic,blum2003noise}.
+
+We now define an ambiguous version of the problem. For $u,v\in\mathbb{F}_2^n$, define the ambiguous hypothesis $G_{u,v}:=\{h_u,h_v\}$ and the pairwise-ambiguous parity class
+\[
+    \mathfrak{G}_n^{(2)}:=\{G_{u,v}:u,v\in\mathbb{F}_2^n\}.
+\]
+Thus the acceptable labels at $x$ are $h_u(x)$ and $h_v(x)$, and the adversary may reveal either one.
+
+The key idea is to embed each labeled example $(x,y)$ as a vector $\phi(x,y)$ in a feature space of dimension $D=O(n^2)$. We show that there is such a feature space in which, for every $u,v$, there is a nonzero coefficient vector $\theta_{u,v}$ such that
+\[
+    y\in\{h_u(x),h_v(x)\}
+    \quad\Longleftrightarrow\quad
+    \langle\theta_{u,v},\phi(x,y)\rangle=0.
+\]
+Consequently, all labeled examples revealed by the adversary lie in the hyperplane $\theta_{u,v}^{\perp}$. The learner maintains the span $R$ of their feature vectors. When a new $x$ arrives, it predicts a label $y$ for which $\phi(x,y)\in R$, if one exists. Membership in $R$ means that $\langle\theta_{u,v},\phi(x,y)\rangle=0$ and therefore the label is acceptable. If neither label is certified, the learner predicts arbitrarily. Whenever such a prediction is a mistake, the newly revealed feature vector lies outside $R$ and therefore increases its dimension by one, or equivalently reduces the dimension of its null space by one. Since $R$ is contained in the $(D-1)$-dimensional hyperplane $\theta_{u,v}^{\perp}$, the learner makes at most $D-1=O(n^2)$ mistakes.
+
+\begin{lemma}
+There exist $D=O(n^2)$ and a feature map $\phi:\mathbb{F}_2^n\times\mathbb{F}_2\to\mathbb{F}_2^D$ such that, for every $u,v\in\mathbb{F}_2^n$, there exists a nonzero vector $\theta_{u,v}\in\mathbb{F}_2^D$ satisfying, for every $x\in\mathbb{F}_2^n$ and $y\in\mathbb{F}_2$,
+\[
+    \langle\theta_{u,v},\phi(x,y)\rangle=0
+    \quad\Longleftrightarrow\quad
+    y\in\{h_u(x),h_v(x)\}.
+\]
+\end{lemma}
+
+\begin{proof}
+We want to express the Boolean constraint $h_u(x)=y$ or $h_v(x)=y$ as a linear equation in the features. Over $\mathbb{F}_2$, this constraint can be written as
+\[
+    \bigl(y+h_u(x)\bigr)\bigl(y+h_v(x)\bigr)=0.
+\]
+Indeed, the product is zero exactly when at least one of its factors is zero. Using $h_u(x)=\langle u,x\rangle$ and the Boolean identities $x_i^2=x_i$ and $y^2=y$, we can expand the left-hand side as
+\begin{align*}
+    \bigl(y+h_u(x)\bigr)\bigl(y+h_v(x)\bigr)
+    &=y+\sum_i u_iv_ix_i+\sum_i(u_i+v_i)yx_i \\
+    &\qquad+\sum_{i<j}(u_iv_j+u_jv_i)x_ix_j.
+\end{align*}
+This expansion contains
+\[
+    D:=1+2n+\binom{n}{2}=\binom{n+2}{2}
+\]
+features. Define
+\[
+    \phi(x,y):=\left(y,(x_i)_{i=1}^n,(yx_i)_{i=1}^n,(x_ix_j)_{1\leq i<j\leq n}\right)
+\]
+and, for every $u,v\in\mathbb{F}_2^n$, define
+\[
+    \theta_{u,v}:=\left(1,(u_iv_i)_{i=1}^n,(u_i+v_i)_{i=1}^n,(u_iv_j+u_jv_i)_{1\leq i<j\leq n}\right).
+\]
+The expansion above gives
+\[
+    \langle\theta_{u,v},\phi(x,y)\rangle
+    =\bigl(y+h_u(x)\bigr)\bigl(y+h_v(x)\bigr).
+\]
+\end{proof}
+
+Combining this lemma with the discussion above gives us the following theoreom.
+
+\begin{theorem}[Efficient learning of pairwise-ambiguous parities]
+For every $n$, the class $\mathfrak{G}_n^{(2)}$ is efficiently online learnable. The span learner is deterministic, runs in polynomial time per round, and makes at most
+\[
+    D-1=\binom{n+2}{2}-1=\frac{n(n+3)}{2}
+\]
+mistakes on every sequence generated by a fixed $G_{u,v}\in\mathfrak{G}_n^{(2)}$.
+\end{theorem}
+
+
+\bibliographystyle{plain}
+\bibliography{ambiguous_learning}
+
+
+\end{document}
