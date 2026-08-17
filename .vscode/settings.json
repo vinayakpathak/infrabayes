@@ -1,6 +1,0 @@
-{
-    "files.autoSave": "afterDelay",
-    "[latex]": {
-        "editor.wordWrap": "on"
-    }
-}
