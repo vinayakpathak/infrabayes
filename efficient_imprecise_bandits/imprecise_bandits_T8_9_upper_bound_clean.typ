@@ -20,28 +20,35 @@
 #set list(indent: 1.5em, body-indent: 0.5em)
 #set enum(indent: 1.5em, body-indent: 0.5em)
 
-#let thm(body) = block(width: 100%, above: 0.8em, below: 0.8em)[
+#let thm(it) = block(width: 100%, above: 0.8em, below: 0.8em)[
   #set par(first-line-indent: 0em)
+  #set align(left)
   #set text(style: "italic")
   #show strong: set text(style: "normal")
-  #body
+  #strong[
+    #it.supplement #context it.counter.display(it.numbering)#if it.caption != none [ (#it.caption.body)].
+  ] #it.body
 ]
 
-#let theorem-counter = counter("theorem")
-#let theorem(body, title: none) = [
-  #theorem-counter.step()
-  #thm[
-    *Theorem #context theorem-counter.display()#if title != none [ (#title)].* #body
-  ]
-]
+#show figure.where(kind: "theorem"): thm
+#show figure.where(kind: "lemma"): thm
 
-#let lemma-counter = counter("lemma")
-#let lemma(body) = [
-  #lemma-counter.step()
-  #thm[
-    *Lemma #context lemma-counter.display().* #body
-  ]
-]
+#let theorem(body, title: none) = figure(
+  body,
+  caption: title,
+  kind: "theorem",
+  supplement: [Theorem],
+  numbering: "1",
+  outlined: false,
+)
+
+#let lemma(body) = figure(
+  body,
+  kind: "lemma",
+  supplement: [Lemma],
+  numbering: "1",
+  outlined: false,
+)
 
 #let note(body) = block(width: 100%, above: 0.7em, below: 0.7em)[
   #set par(first-line-indent: 0em)
@@ -161,44 +168,13 @@ $y in K^star (x)$; there is no sampling noise. However, there still is the Knigh
 ] <lem:inner-feasible-set>
 
 #lemma[
-  There exist $d_A+1$ arms $x^(0),dots,x^(d_A) in A$ such that, from any
+  There exist $d_A+1$ arms $x^((0)),dots,x^((d_A)) in A$ such that, from any
   possible sequence of responses
-  $y^(i) in K^star (x^(i))$, we can compute an affine map $hat(f)$ such that
+  $y^((i)) in K^star (x^((i)))$, we can compute an affine map $hat(f)$ such that
   $ K^star (x) = (hat(f)(x) + N) inter D, quad x in A. $
 ] <lem:noiseless-anchor-identification>
 
-*Proof.* Let $c_A$ be the centre of $A$, let $e_1,dots,e_(d_A)$ be the
-standard basis vectors, and choose
+*Proof.* Let $x^((0)), dots, x^((d_A))$ be any affine basis of $A$. Play them in sequence and let $y^((0)),dots, y^((d_A))$ be the corresponding outcomes chosen by the adversary. Let $hat(f)$ be the unique affine interpolator for which $hat(f)(x^((i))) = y^((i))$ for all $i$. Since $y^((i)) in K^star (x^((i)))$, we have that $hat(f)(x^((i)))+N = f(x^((i)))+N$ for all $i$. Since $x^((i))$'s form an affine basis, therefore $hat(f)(x)+N = f(x)+N$ for all $x in A$.
+ $qed$
 
-$ x^(0) := c_A, quad
-  x^(i) := c_A + R_A e_i, quad i=1,dots,d_A. $
-
-These points form an affine basis. Suppose their observed responses are
-$y^(0),dots,y^(d_A)$, and let $hat(f)$ be the unique affine map satisfying
-
-$ hat(f)(x^(i))=y^(i), quad i=0,dots,d_A. $
-
-Thus $hat(f)$ can be computed by affine interpolation from the observed
-responses.
-
-Fix an affine map $f$ and a linear subspace $N$ as in Lemma 1, and let $pi$
-be the quotient map modulo $N$. Since
-$y^(i) in K^star (x^(i)) subset.eq f(x^(i))+N$, we have
-
-$ pi(y^(i))=pi(f(x^(i))), quad i=0,dots,d_A. $
-
-Applying $pi$ to either $hat(f)$ or $f$ gives an affine map into the quotient
-space. These two quotient-valued affine maps agree on the affine basis
-$x^(0),dots,x^(d_A)$, so they agree everywhere. Consequently,
-
-$ pi(hat(f)(x))=pi(f(x)), quad x in A. $
-
-Equivalently, $hat(f)(x)-f(x) in N$, and hence
-
-$ hat(f)(x)+N=f(x)+N. $
-
-Using Lemma 1 and intersecting with $D$ therefore gives
-
-$ K^star (x)=(hat(f)(x)+N) inter D, quad x in A. $
-
-This proves the claim. #h(1fr) $qed$
+Now the learner works as follows.
