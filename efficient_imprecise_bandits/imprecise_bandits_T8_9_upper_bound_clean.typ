@@ -327,6 +327,103 @@ analysis.
   $tilde(O)(n^(-1/2))$.
 ] <lem:noisy-anchor-interpolation>
 
+In the noisy setting, taking the span of the observed residuals is unstable:
+even a small amount of noise can introduce a spurious direction. We therefore
+replace the subspace $N_t$ by a learned residual ellipsoid.
+
+#lemma[
+  Fix $delta in (0,1)$ and a block length $n$. Let $hat(f)$ be the empirical
+  affine interpolant constructed in @lem:noisy-anchor-interpolation, and put
+
+  $ L_A:=1+2sqrt(d_A), quad
+    epsilon_(n,delta):=2sqrt(2)R_D
+      sqrt((d_D log((2d_D T)/delta))/n), $
+
+  $ eta_(n,delta):=(1+L_A)epsilon_(n,delta), quad
+    R_0:=(1+L_A)R_D, $
+
+  and
+
+  $ M_("max"):=d_D log_2(1+(T R_0^2)/(d_D eta_(n,delta)^2)). $
+
+  The update rule in @alg:noisy-ridge-learning can be implemented in
+  polynomial time and maintains an explicitly represented ellipsoid
+  $cal(E)_M subset.eq RR^(d_D)$ centred at the origin, where $M$ is the number
+  of blocks declared informative. Against every compatible adaptive nature
+  policy, with probability at least $1-delta$, there is an affine map
+  $f:A -> RR^(d_D)$ satisfying
+
+  $ K^star (x)=(f(x)+N) inter D, quad x in A, $
+
+  such that, simultaneously throughout the horizon:
+
+  - If a block at arm $x$ is not declared informative and $bar(y)$ is its
+    empirical average outcome, then
+    $ bar(y)-hat(f)(x) in cal(E)_M. $
+
+  - The number of informative blocks satisfies $M <= M_("max")$.
+
+  - For every $gamma >= 0$, every $x in A$, and every
+    $u in gamma cal(E)_M$,
+
+    $ opdist(hat(f)(x)+u,f(x)+N)
+      <= L_A epsilon_(n,delta)
+        +gamma(sqrt(M_("max"))+1)eta_(n,delta). $
+
+  In particular, the learned affine spaces have uniform error
+  $tilde(O)(n^(-1/2))$, while only $tilde(O)(d_D)$ blocks are informative.
+] <lem:ridge-residual-learning>
+
+#algorithm(title: [Noisy ridge-ellipsoid imprecise bandit])[
+  #set enum(numbering: "1.", indent: 1.5em, body-indent: 0.55em)
+
+  + Choose the $d_A+1$ anchor arms from
+    @lem:noisy-anchor-interpolation. Play each anchor for $n$ consecutive
+    rounds, compute its empirical average $bar(y)^((i))$, and construct the
+    affine interpolant $hat(f)$. If the horizon ends during this phase, stop.
+
+  + Set $lambda:=rho:=eta_(n,delta)$, with $eta_(n,delta)$ as defined in
+    @lem:ridge-residual-learning. Initialize $M:=0$ and let $hat(G)_0$ be the
+    matrix with no columns.
+
+  + At the beginning of each subsequent block, define
+
+    $ V_M:=lambda^2 I+hat(G)_M hat(G)_M^T, quad
+      cal(E)_M:={u:u^T V_M^(-1)u<=1}. $
+
+    Let $c_D$ be the centre of $D$, and define the expanded outcome balls
+
+    $ D_1:={y:norm(y-c_D)_2<=R_D+rho}, quad
+      D_2:={y:norm(y-c_D)_2<=R_D+2rho}. $
+
+    For every arm $x in A$, define the inner and outer provisional fibers
+
+    $ hat(K)_M^("in")(x):=(hat(f)(x)+2cal(E)_M) inter D_1, $
+
+    $ hat(K)_M^("out")(x):=(hat(f)(x)+3cal(E)_M) inter D_2. $
+
+  + If $hat(K)_M^("in")(x)=emptyset$ for some $x in A$, choose any such arm.
+    Otherwise, choose
+
+    $ x in opargmax_(x' in A)
+        min_(y in hat(K)_M^("out")(x')) r(x',y). $
+
+  + Play the chosen arm for $n$ rounds. If fewer than $n$ rounds remain,
+    play until the horizon and stop without updating. Otherwise, let
+    $bar(y)$ be the block-average outcome and set
+
+    $ hat(g):=bar(y)-hat(f)(x). $
+
+  + If
+
+    $ hat(g)^T V_M^(-1)hat(g)>1, $
+
+    declare the block informative, set
+    $hat(G)_(M+1):=[hat(G)_M,hat(g)]$, and then increase $M$ by one. Otherwise
+    leave $hat(G)_M$ and $M$ unchanged. Return to Step 3 and continue until
+    time $T$.
+] <alg:noisy-ridge-learning>
+
 #bibliography(
   "imprecise_bandits_T8_9_upper_bound_clean.bib",
   title: [References],
