@@ -257,16 +257,11 @@ It remains to compute the arm in the planning step.
   then $K'_t (x_("emp"))=emptyset$.
 ] <lem:polynomial-empty-set>
 
-*Proof.* Use Gaussian elimination to extract a full-column-rank spanning
-matrix $H_t$ for $N_t$, and compute the orthogonal projector
-
-$ P_t:=H_t (H_t^T H_t)^(-1)H_t^T, $
-
-with $P_t:=0$ if $N_t={0}$. Let $c_D$ be the centre of $D$ and define
+*Proof.* Clearly, for a given $x$, the set $K'_t (x)$ is empty if and only if the distance between $c_D$ and $hat(f)(x) + N_t$ is bigger than $R_D$. Thus to decide if there exists an $x in A$ for which $K'_t (x)$ is empty, we need to find the arm that maximizes the distance between $c_D$ and $hat(f)(x) + N_t$. To see why this can be done in polynomial time, let $q_t (x)$ be the point in $hat(f)(x) + N_t$ that is closest to $c_D$. Note that $q_t (x)$ can be written as an affine function.
 
 $ q_t (x):=c_D+(I-P_t)(hat(f)(x)-c_D). $
 
-This is the point in $hat(f)(x)+N_t$ closest to $c_D$.
+Here $P_t$ is the projection on $N_t$.
 
 #figure(
   align(center, cetz.canvas({
@@ -317,22 +312,12 @@ This is the point in $hat(f)(x)+N_t$ closest to $c_D$.
     $q_t (x)$, the point on that line closest to $c_D$.],
 ) <fig:q-projection>
 
-Consequently,
-
-$ K'_t (x)=emptyset $
-if and only if
-$ norm(q_t (x)-c_D)_2^2>R_D^2. $
-
-The map $q_t$ is affine, so $norm(q_t (x)-c_D)_2^2$ is quadratic in $x$.
-Compute
+Now we need to compute
 
 $ x_("emp") in opargmax_(x in A) norm(q_t (x)-c_D)_2^2. $
 
 This is a quadratic optimization problem over the Euclidean ball $A$, hence
-a trust-region problem and polynomial-time solvable @more1983computing. If
-some arm $x$ has an empty provisional set, then its objective value is
-strictly larger than $R_D^2$. The maximizing arm $x_("emp")$ has at least
-that value and therefore also has an empty provisional set. $qed$
+a trust-region problem and polynomial-time solvable @more1983computing. $qed$
 
 #lemma[
   Fix a round $t$ and suppose that $K'_t (x)$ is nonempty for every $x in A$.
