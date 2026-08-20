@@ -316,8 +316,7 @@ Now we need to compute
 
 $ x_("emp") in opargmax_(x in A) norm(q_t (x)-c_D)_2^2. $
 
-This is a quadratic optimization problem over the Euclidean ball $A$, hence
-a trust-region problem and polynomial-time solvable @more1983computing. $qed$
+This is a quadratic optimization problem over the Euclidean ball $A$, which is polynomial-time solvable using the result in @more1983computing. $qed$
 
 #lemma[
   Fix a round $t$ and suppose that $K'_t (x)$ is nonempty for every $x in A$.
@@ -327,9 +326,6 @@ a trust-region problem and polynomial-time solvable @more1983computing. $qed$
 
   $ min_(y in K'_t (x_epsilon)) r(x_epsilon,y)
     >= max_(x in A) min_(y in K'_t (x)) r(x,y)-epsilon. $
-
-  Thus the argmax arm in the planning step is computable in polynomial time
-  in the standard weak, additive-accuracy model.
 ] <lem:polynomial-robust-planning>
 
 *Proof.* Compute the orthogonal projector $P_t$ onto $N_t$ as in the proof of
@@ -395,28 +391,23 @@ $O(sqrt(epsilon_("emp")))$ and is absorbed into the noisy tolerances below.
 
 = Noisy Setting
 
+In this section, $tilde(O)$ suppresses logarithmic factors in $T$ and
+$1/delta$, as well as multiplicative factors depending only on the fixed
+problem parameters.
+
 #lemma[
-  Fix $delta in (0,1)$ and an integer $n >= 1$. There exist affinely
-  independent arms $x^((0)),dots,x^((d_A)) in A$ with the following
-  property. Play each arm for $n$ consecutive rounds, let
-
-  $ overline(y)^((i)) := 1/n sum_(s=1)^n y_s^((i)) $
-
-  be its average observed outcome, and let $hat(f)$ be the unique affine map
-  satisfying $hat(f)(x^((i)))=overline(y)^((i))$ for every $i=0,dots,d_A$.
-  Then, against every compatible adaptive nature policy, with probability at
-  least $1-delta$ there exists an affine map $f:A -> RR^(d_D)$ such that
+  Fix $delta in (0,1)$ and $1<=n<=T$. There exist $d_A+1$ affinely
+  independent anchor arms such that, after playing each arm for $n$ rounds
+  and interpolating their empirical average outcomes, the resulting affine
+  map $hat(f)$ satisfies the following with probability at least $1-delta$.
+  There is an affine map $f$ such that
 
   $ K^star (x)=(f(x)+N) inter D, quad x in A, $
 
   and
 
   $ sup_(x in A) norm(hat(f)(x)-f(x))_2
-    <= (1+2sqrt(d_A)) 2sqrt(2) R_D
-      sqrt((d_D log((2d_D (d_A+1))/delta))/n). $
-
-  In particular, the uniform interpolation error is
-  $tilde(O)(n^(-1/2))$.
+    <= tilde(O)(n^(-1/2)). $
 ] <lem:noisy-anchor-interpolation>
 
 In the noisy setting, taking the span of the observed residuals is unstable:
@@ -424,47 +415,19 @@ even a small amount of noise can introduce a spurious direction. We therefore
 replace the subspace $N_t$ by a learned residual ellipsoid.
 
 #lemma[
-  Fix $delta in (0,1)$ and a block length $n$. Let $hat(f)$ be the empirical
-  affine interpolant constructed in @lem:noisy-anchor-interpolation, and put
+  Fix $delta in (0,1)$ and $1<=n<=T$, and let $hat(f)$ be constructed as in
+  @lem:noisy-anchor-interpolation. One can choose
+  $lambda=tilde(O)(n^(-1/2))$ so that, with probability at least $1-delta$,
+  @alg:noisy-ridge-learning simultaneously satisfies throughout the horizon:
 
-  $ L_A:=1+2sqrt(d_A), quad
-    epsilon_(n,delta):=2sqrt(2)R_D
-      sqrt((d_D log((2d_D T)/delta))/n), $
+  - At most $O(log T)$ blocks are informative.
 
-  $ eta_(n,delta):=(1+L_A)epsilon_(n,delta), quad
-    R_0:=(1+L_A)R_D, $
+  - For every current ellipsoid $cal(E)_M$, every $x in A$, and every
+    $u in 3cal(E)_M$,
 
-  and
+    $ opdist(hat(f)(x)+u,f(x)+N) <= tilde(O)(n^(-1/2)), $
 
-  $ M_("max"):=d_D log_2 (1+(T R_0^2)/(d_D eta_(n,delta)^2)). $
-
-  Run @alg:noisy-ridge-learning with block length $n$ and ridge parameter
-  $lambda:=eta_(n,delta)$. Its update rule can be implemented in polynomial
-  time and maintains an explicitly represented ellipsoid
-  $cal(E)_M subset.eq RR^(d_D)$ centred at the origin, where $M$ is the number
-  of blocks declared informative. Against every compatible adaptive nature
-  policy, with probability at least $1-delta$, there is an affine map
-  $f:A -> RR^(d_D)$ satisfying
-
-  $ K^star (x)=(f(x)+N) inter D, quad x in A, $
-
-  such that, simultaneously throughout the horizon:
-
-  - If a block at arm $x$ is not declared informative and $overline(y)$ is its
-    empirical average outcome, then
-    $ overline(y)-hat(f)(x) in cal(E)_M. $
-
-  - The number of informative blocks satisfies $M <= M_("max")$.
-
-  - For every $gamma >= 0$, every $x in A$, and every
-    $u in gamma cal(E)_M$,
-
-    $ opdist(hat(f)(x)+u,f(x)+N)
-      <= L_A epsilon_(n,delta)
-        +gamma(sqrt(M_("max"))+1)eta_(n,delta). $
-
-  In particular, the learned affine spaces have uniform error
-  $tilde(O)(n^(-1/2))$, while only $tilde(O)(d_D)$ blocks are informative.
+    where $f$ and $N$ are as in @lem:noisy-anchor-interpolation.
 ] <lem:ridge-residual-learning>
 
 #algorithm(title: [Noisy imprecise bandit $(n,lambda)$])[
@@ -510,15 +473,148 @@ replace the subspace $N_t$ by a learned residual ellipsoid.
 
     $ hat(g):=overline(y)-hat(f)(x). $
 
-  + If
-
-    $ hat(g)^T V_M^(-1)hat(g)>1, $
-
-    declare the block informative, set
+  + If $hat(g) in.not cal(E)_M$ declare the block informative, set
     $hat(G)_(M+1):=[hat(G)_M,hat(g)]$, and then increase $M$ by one. Otherwise
     leave $hat(G)_M$ and $M$ unchanged. Return to Step 3 and continue until
     time $T$.
 ] <alg:noisy-ridge-learning>
+
+#lemma[
+  Let $L subset.eq RR^(d_D)$ be an affine space such that
+  $L inter D != emptyset$. For any $y in RR^(d_D)$, define
+
+  $ epsilon:=max(opdist(y,L),opdist(y,D)). $
+
+  Then
+
+  $ opdist(y,L inter D)=O(epsilon+sqrt(epsilon)). $
+
+  The square-root term is unavoidable uniformly over $L$. Consequently, an
+  $tilde(O)(n^(-1/2))$ error in both the affine-space and ball constraints can
+  become a $tilde(O)(n^(-1/4))$ error after intersection.
+] <lem:noisy-ball-stability>
+
+#lemma[
+  Let $cal(B)$ be a complete $n$-round
+  block that is declared uninformative, and let $x$ be the arm
+  played in that block. Then its realized average regret satisfies
+
+  $ 1/n sum_(t in cal(B)) (V^star-r(x,y_t))
+      <= tilde(O)(n^(-1/4)). $
+] <lem:noisy-uninformative-block>
+
+*Proof.* Let $M$ be the state at the start of the block and let
+
+$ overline(y):=1/n sum_(t in cal(B)) y_t. $
+
+Since the block is uninformative,
+$hat(g):=overline(y)-hat(f)(x)$ belongs to $cal(E)_M$. Define
+
+$ hat(v)_M (x'):=min_(y in hat(K)_M^("out") (x')) r(x',y). $
+
+For every $x' in A$ and $y in hat(K)_M^("out") (x')$,
+@lem:ridge-residual-learning gives
+
+$ opdist(y,f(x')+N)<=tilde(O)(n^(-1/2)). $
+
+Also, $y in D_2$ implies
+$opdist(y,D)<=2rho=tilde(O)(n^(-1/2))$. Applying
+@lem:noisy-ball-stability with $L=f(x')+N$ gives
+
+$ opdist(y,K^star (x'))<=tilde(O)(n^(-1/4)). $
+
+Since the reward is Lipschitz in its outcome argument,
+
+$ hat(v)_M (x')>=v^star (x')-tilde(O)(n^(-1/4)). $
+
+Let $x^star$ maximize $v^star$. The planning rule and the fact that
+$overline(y) in hat(K)_M^("out") (x)$ now give
+
+$ r(x,overline(y))
+    >=hat(v)_M (x)
+    >=hat(v)_M (x^star)
+    >=V^star-tilde(O)(n^(-1/4)). $
+
+Finally, the reward is affine in the outcome and the arm is fixed throughout
+the block, so
+
+$ r(x,overline(y))=1/n sum_(t in cal(B)) r(x,y_t). $
+
+This proves the average-regret bound.  $qed$
+
+= NP-hardness of IUCB
+
+#theorem[
+  Even when $A$, $D$, and $Z$ are Euclidean balls and planning for every
+  fixed hypothesis is polynomial-time, computing the exact first optimistic
+  value or a globally optimal first arm of IUCB is NP-hard.
+] <thm:iucb-np-hardness>
+
+*Proof.* Let $cal(T) in QQ^(m times d times d_A)$ be a rational order-three
+tensor, viewed as a bilinear map
+$cal(T):RR^d times RR^(d_A) -> RR^m$, and put
+
+$ L:=1+sum_(i,j,k) abs(T_(i j k)), quad
+  alpha:=1/(2L), quad A:={x:norm(x)_2<=1}. $
+
+Write $z=(z_0,u)$ and $y=(w,s)$, and take
+
+$ Z:={(z_0,u):(z_0-5/3)^2+norm(u)_2^2<=1}, quad
+  D:={(w,s):norm(w)_2^2+s^2<=1}. $
+
+For $z=(z_0,u)$, define the data in @eq:setting-compatible-set and the
+reward by
+
+$ B_z x:=-alpha cal(T)(u,x), quad C_z (w,s):=z_0 w, quad d_z:=0,
+  quad r(x,(w,s)):=1/2(1+s). $
+
+These are instances of the setting above, and
+
+$ K_z (x)={(w,s) in D:w=alpha/z_0 cal(T)(u,x)}. $
+
+The definition of $Z$ gives $z_0>=2/3$ and
+
+$ norm(u)_2/z_0<=3/4, $
+
+because
+$1-(z_0-5/3)^2-9z_0^2/16=-(15z_0-16)^2/144<=0$.
+Equality holds at $z_0=16/15$ and $norm(u)_2=4/5$ in every direction.
+Also $norm(cal(T)(u,x))_2<=L norm(u)_2 norm(x)_2$, so the fixed $w$ in
+$K_z (x)$ has norm at most $3alpha L/4<1$. Thus every $K_z (x)$ is
+nonempty.
+
+Define $v_z (x):=min_(y in K_z (x)) r(x,y)$. Nature chooses
+$s=-sqrt(1-norm(w)_2^2)$, whence
+
+$ v_z (x)=h(alpha/z_0 norm(cal(T)(u,x))_2), quad
+  h(t):=1/2(1-sqrt(1-t^2)). $
+
+For fixed $z$, a top right singular vector of
+$M_u x:=cal(T)(u,x)$ maximizes $v_z (x)$, so fixed-hypothesis planning is
+polynomial-time. IUCB instead begins with confidence set $Z$. Since $h$ is
+strictly increasing and the ratio above attains $3/4$ in every direction,
+
+$ V_("IUCB"):=max_(z in Z,x in A) v_z (x)
+  =h(3alpha/4 norm(cal(T))_sigma), $
+
+where
+
+$ norm(cal(T))_sigma:=max_(norm(u)_2<=1,norm(x)_2<=1)
+    norm(cal(T)(u,x))_2 $
+
+is the tensor spectral norm. Since
+
+$ norm(cal(T))_sigma=4/(3alpha)
+    sqrt(1-(1-2V_("IUCB"))^2), $
+
+exact IUCB optimism would compute this NP-hard tensor norm. If IUCB returns
+only a globally optimal arm $x^star$, one SVD of
+$N_x u:=cal(T)(u,x^star)$ computes
+
+$ max_(z in Z) v_z (x^star)=h(3alpha/4 sigma_max (N_x))=V_("IUCB"), $
+
+so the same inverse recovers $norm(cal(T))_sigma$. Producing a globally
+optimal first arm is therefore NP-hard as well. $qed$
 
 #pagebreak()
 #counter(heading).update(0)
