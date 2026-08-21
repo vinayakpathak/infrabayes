@@ -106,13 +106,13 @@ possible sampled outcome. The reward is affine in the arm and outcome:
 $ r(x,y) := a^T x + b^T y + c. $
 
 Let $Z subset.eq RR^(d_Z)$ denote the hypothesis set, and let
-$z^star in Z$ be the unknown true hypothesis. Each hypothesis $z in Z$
-determines matrices $B_z$ and $C_z$ and a vector $d_z$ of compatible
-dimensions. For every $z in Z$ and $x in A$, define
+$z^star in Z$ be the unknown true hypothesis. For every $z in Z$ and $x in A$, define
 
 #set math.equation(numbering: "(1)")
 $ K_z (x) := {y in D : C_z y + B_z x + d_z = 0}. $ <eq:setting-compatible-set>
 #set math.equation(numbering: none)
+
+Here $B_z$, $C_z$, and $d_z$ of are $z$-dependent matrices and vectors of appropriate dimensions.
 
 The true feasible outcome set is $K^star (x) := K_(z^star) (x)$.
 
@@ -121,16 +121,20 @@ We assume throughout that $K^star (x)$ is nonempty for every $x in A$.
 Let $N:=opker C_(z^star)$.
 
 #lemma[
-  There exists an affine map $f: A -> RR^(d_D)$ such that
+  There exists an affine map $f_z: A -> RR^(d_D)$ and a linear subspace $N_z$ independent of $x$ such that
 
-  $ f(x)+N
-      ={y in RR^(d_D):C_(z^star)y+B_(z^star)x+d_(z^star)=0},
+  $ f_z (x)+N_z
+      ={y in RR^(d_D):C_(z)y+B_(z)x+d_(z)=0},
       quad x in A. $
 
-  Consequently,
+  Consequently, there exists an $f$ and $N$ such that
 
   $ K^star (x)=(f(x)+N) inter D, quad x in A. $
 ] <lem:noiseless-affine-spaces>
+
+*Proof.* Fix $x$ and let $y_1, y_2 in K_z (x)$. Then $C_z (y_1 - y_2) = 0$, which means $y_1-y_2$ must lie in a subspace determined by $z$. We can pick some $y in K_z (x)$ arbitrarily and set $f_z (x) = y$. This is clearly an affine mapping. $qed$
+
+Note that as the proof demonstrates, $f_z$ need not be unique. Indeed, for each $z$ there can be multiple $f_z$'s that satisfy the requirement of the lemma. However, each $z$ determines a unique $N_z$.
 
 We also assume a uniform non-tangency condition: there is a constant
 $S in (0,1]$ such that, for every $x in A$ and every
@@ -423,12 +427,44 @@ factors in $T$ and $1/delta$.
   independent anchor arms such that, after playing each arm for $n$ rounds
   and interpolating their empirical average outcomes, the resulting affine
   map $hat(f)$ satisfies the following with probability at least $1-delta$.
-  There is an affine map $f$ satisfying the conclusion of
-  @lem:noiseless-affine-spaces such that
+  There is an affine map $f$ and a linear subspace $N$ such that $K^star (x) = f(x) + N$ and
 
   $ sup_(x in A) norm(hat(f)(x)-f(x))_2
     <= tilde(O)(n^(-1/2)). $
 ] <lem:noisy-anchor-interpolation>
+
+*Proof.* Let $x^((0)),dots,x^((d_A))$ be any affine basis of $A$. Play each
+arm for $n$ rounds. Let $overline(y)^((i))$ be the average observed outcome
+for the $i$th arm, and let $overline(m)^((i))$ be the corresponding average conditional mean. Since
+$K^star (x^((i)))$ is convex, $overline(m)^((i)) in K^star (x^((i)))$.
+Let $hat(f)$ and $f$ be the unique affine interpolators satisfying
+$hat(f) (x^((i)))=overline(y)^((i))$ and
+$f(x^((i)))=overline(m)^((i))$ for every $i$. By
+@lem:noiseless-anchor-identification,
+$K^star (x)=(f(x)+N) inter D$ for every $x in A$.
+
+Within each block, $y_t-m_t$ is a martingale-difference sequence. Since $D$
+is bounded, Azuma--Hoeffding and a union bound over the finitely many anchors
+and outcome coordinates imply that, with probability at least $1-delta$,
+
+$ max_(i=0,dots,d_A)
+    norm(overline(y)^((i))-overline(m)^((i)))_2
+  <=tilde(O)(n^(-1/2)). $
+
+Let $alpha_0 (x),dots,alpha_(d_A) (x)$ be the affine coordinates of
+$x in A$ with respect to the chosen basis. Since $A$ is compact,
+
+$ L:=sup_(x in A) sum_(i=0)^(d_A) abs(alpha_i (x))<infinity. $
+
+Since $hat(f)$ and $f$ are affine and agree with the corresponding values at
+the anchors,
+
+$ norm(hat(f) (x)-f(x))_2
+  <=sum_(i=0)^(d_A) abs(alpha_i (x))
+    norm(overline(y)^((i))-overline(m)^((i)))_2
+  <=L tilde(O)(n^(-1/2)). $
+
+Taking the supremum over $x in A$ proves the result. $qed$
 
 In the noisy setting, taking the span of the observed residuals is unstable:
 even a small amount of noise can introduce a spurious direction. We therefore
