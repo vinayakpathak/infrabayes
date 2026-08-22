@@ -260,7 +260,7 @@ the observed response belongs to $K'_t (x_t)$. Hence
 original robust benchmark. Charging at most a constant regret to each of the
 $d_A+1$ initial rounds and to each update round gives $R_T <= O(d_A+d_D). $
 
-== Computational Tractability
+== Noiseless Computational Tractability
 
 All the steps in @alg:noiseless-subspace-learning can be carried out in
 polynomial time. First, affine interpolation can be done via Gaussian elimination.
@@ -427,7 +427,8 @@ factors in $T$ and $1/delta$.
   independent anchor arms such that, after playing each arm for $n$ rounds
   and interpolating their empirical average outcomes, the resulting affine
   map $hat(f)$ satisfies the following with probability at least $1-delta$.
-  There is an affine map $f$ and a linear subspace $N$ such that $K^star (x) = f(x) + N$ and
+  There is an affine map $f$ and a linear subspace $N$ such that
+  $K^star (x)=(f(x)+N) inter D$ and
 
   $ sup_(x in A) norm(hat(f)(x)-f(x))_2
     <= tilde(O)(n^(-1/2)). $
@@ -435,7 +436,7 @@ factors in $T$ and $1/delta$.
 
 *Proof.* Let $x^((0)),dots,x^((d_A))$ be any affine basis of $A$. Play each
 arm for $n$ rounds. Let $overline(y)^((i))$ be the average observed outcome
-for the $i$th arm, and let $overline(m)^((i))$ be the corresponding average conditional mean. Since
+for arm $i$, and let $overline(m)^((i))$ be the corresponding average conditional mean. Since
 $K^star (x^((i)))$ is convex, $overline(m)^((i)) in K^star (x^((i)))$.
 Let $hat(f)$ and $f$ be the unique affine interpolators satisfying
 $hat(f) (x^((i)))=overline(y)^((i))$ and
@@ -444,23 +445,27 @@ $f(x^((i)))=overline(m)^((i))$ for every $i$. By
 $K^star (x)=(f(x)+N) inter D$ for every $x in A$.
 
 Within each block, $y_t-m_t$ is a martingale-difference sequence. Since $D$
-is bounded, Azuma--Hoeffding and a union bound over the finitely many anchors
-and outcome coordinates imply that, with probability at least $1-delta$,
+is bounded, the Azuma--Hoeffding inequality for bounded martingale
+differences (see @hoeffding1963probability @azuma1967weighted), together with
+a union bound over the finitely many anchors and outcome coordinates, implies
+that, with probability at least $1-delta$,
 
-$ max_(i=0,dots,d_A)
+$ max_(0 <= i <= d_A)
     norm(overline(y)^((i))-overline(m)^((i)))_2
   <=tilde(O)(n^(-1/2)). $
 
-Let $alpha_0 (x),dots,alpha_(d_A) (x)$ be the affine coordinates of
-$x in A$ with respect to the chosen basis. Since $A$ is compact,
+Now consider an arbitrary $x in A$, and let
+$alpha_0,dots,alpha_(d_A)$ be its affine coordinates with respect to the
+chosen basis. Since $A$ is compact, there is a constant $L$, independent of
+$x$, such that
 
-$ L:=sup_(x in A) sum_(i=0)^(d_A) abs(alpha_i (x))<infinity. $
+$ sum_(i=0)^(d_A) abs(alpha_i)<=L. $
 
 Since $hat(f)$ and $f$ are affine and agree with the corresponding values at
 the anchors,
 
 $ norm(hat(f) (x)-f(x))_2
-  <=sum_(i=0)^(d_A) abs(alpha_i (x))
+  <=sum_(i=0)^(d_A) abs(alpha_i)
     norm(overline(y)^((i))-overline(m)^((i)))_2
   <=L tilde(O)(n^(-1/2)). $
 
@@ -475,6 +480,47 @@ Fix $delta in (0,1)$ and $1<=n<=T$, and let $hat(f)$ and $f$ be as in
 $lambda=tilde(O)(n^(-1/2))$ with $lambda>=n^(-1/2)$ so that, conditional on
 the anchor conclusion, the conclusions of the following two lemmas hold
 simultaneously throughout the horizon with probability at least $1-delta$.
+
+#algorithm(title: [Noisy imprecise bandit $(n,lambda)$])[
+  #set enum(numbering: "1.", indent: 1.5em, body-indent: 0.55em)
+
+  *Parameters:* block length $n in NN$ and ridge parameter $lambda>0$.
+
+  + Choose the $d_A+1$ anchor arms from
+    @lem:noisy-anchor-interpolation. Play each anchor for $n$ consecutive
+    rounds, compute its empirical average $overline(y)^((i))$, and construct
+    the affine interpolant $hat(f)$. If the horizon ends during this phase,
+    stop.
+
+  + Initialize $M:=0$ and let $hat(G)_0$ be the matrix with no columns.
+
+  + At the beginning of each subsequent block, define
+
+    $ V_M:=lambda^2 I_(d_D)+hat(G)_M hat(G)_M^T
+        in RR^(d_D times d_D), quad
+      cal(E)_M:={u in RR^(d_D):u^T V_M^(-1)u<=1}. $
+
+    For every arm $x in A$, define
+
+    $ hat(K)_M (x):=(hat(f)(x)+cal(E)_M) inter D. $
+
+  + If $hat(K)_M (x)=emptyset$ for some $x in A$, choose any such arm.
+    Otherwise, choose
+
+    $ x in opargmax_(x' in A)
+        min_(y in hat(K)_M (x')) r(x',y). $
+
+  + Play the chosen arm for $n$ rounds. If fewer than $n$ rounds remain, play
+    until the horizon and stop without updating. Otherwise, let $overline(y)$
+    be the block-average outcome and set
+
+    $ hat(g):=overline(y)-hat(f)(x). $
+
+  + If $hat(g) in.not cal(E)_M$, declare the block informative, set
+    $hat(G)_(M+1):=[hat(G)_M,hat(g)]$, and then increase $M$ by one. Otherwise
+    leave $hat(G)_M$ and $M$ unchanged. Return to Step 3 and continue until
+    time $T$.
+] <alg:noisy-ridge-learning>
 
 #lemma[
   At most $O(log T)$ blocks of @alg:noisy-ridge-learning are informative.
@@ -524,137 +570,121 @@ $ M<=d_D log_2 (1+O(T/(n lambda^2)))=O(log T), $
 where the last equality uses $lambda>=n^(-1/2)$. $qed$
 
 #lemma[
-  For every current ellipsoid $cal(E)_M$, every $x in A$, and every
-  $u in 3cal(E)_M$,
+  Let $hat(f)$ be the empirical affine interpolant constructed during the
+  anchor phase of @alg:noisy-ridge-learning, and let $f$ be the affine
+  interpolant of the corresponding average conditional means, as in
+  @lem:noisy-anchor-interpolation. For every current ellipsoid $cal(E)_M$,
+  every $x in A$, and every $u in cal(E)_M$,
 
   $ opdist(hat(f)(x)+u,f(x)+N) <= tilde(O)(n^(-1/2)). $
 ] <lem:ridge-residual-learning>
 
-*Proof.* Condition on the conclusion of @lem:noisy-anchor-interpolation.
-Consider a complete block $cal(B)$ in which the arm $x$ is fixed, and define
-its average conditional mean
+*Proof.* We prove by induction on $M$.
+
+We first show that this bound holds for the initial matrix
+$V_0=lambda^2 I_(d_D)$, and then show that it remains true after every update
+from $V_M$ to $V_(M+1)$.
+
+For the initial matrix $V_0=lambda^2 I_(d_D)$, the ellipsoid $cal(E)_0$ is
+the Euclidean ball of radius $lambda$. By @lem:noisy-anchor-interpolation,
+there exists some $beta_n<=tilde(O)(n^(-1/2))$ such that
+$norm(hat(f)(x)-f(x))_2<=beta_n$ for every $x in A$. Therefore, by the
+triangle inequality, for every $x in A$ and $u in cal(E)_0$,
+
+$ opdist(hat(f)(x)+u,f(x)+N)
+    <=norm(hat(f)(x)-f(x))_2+norm(u)_2
+    <=beta_n+lambda <= tilde(O)(n^(-1/2)). $
+
+Thus the claimed bound holds when $M=0$.
+
+Geometrically, $hat(f)(x)+cal(E)_0$ is a ball of radius $lambda$ centred at
+$hat(f)(x)$, while $f(x)+N$ is the affine space that we want this ball to
+remain close to. Each informative update adds a new generating direction
+$hat(g)$ to the ellipsoid. The component of $hat(g)$ lying in $N$ only moves
+the ellipsoid parallel to $f(x)+N$ and therefore does not increase the
+distance from that affine space. Only the component orthogonal to $N$ matters.
+Thus, if $hat(g)$ is within $eta_n$ of $N$, one update can increase the
+distance by at most $eta_n$. An uninformative block does not change the
+ellipsoid at all.
+
+To make this precise, consider a complete block $cal(B)$ at arm $x$ and let
 
 $ overline(m):=1/n sum_(t in cal(B)) m_t. $
 
-Every $m_t$ belongs to the convex set $K^star (x)$, so
-$overline(m) in K^star (x)$. Bounded vector martingale concentration and a
-union bound over all complete blocks give, with probability at least
-$1-delta$,
+Since $overline(m) in K^star (x)$, the vector
+$g:=overline(m)-f(x)$ belongs to $N$. The empirical residual is
+$hat(g):=overline(y)-hat(f)(x)$. Conditionally on the history at the beginning
+of any adaptively selected block, the vectors $y_t-m_t$ remain martingale
+differences. The same concentration argument as in
+@lem:noisy-anchor-interpolation, followed by a union bound over the at most
+$T/n$ complete blocks, therefore gives, simultaneously for every block,
 
-$ norm(overline(y)-overline(m))_2<=tilde(O)(n^(-1/2)) $
+$ norm(overline(y)-overline(m))_2<=tilde(O)(n^(-1/2)). $
 
-simultaneously for every block. Work on this event.
+Combining this with the uniform anchor-interpolation bound gives
 
-For a block at arm $x$, let
+$ norm(hat(g)-g)_2<=tilde(O)(n^(-1/2)). $
 
-$ g:=overline(m)-f(x) in N. $
-
-Its empirical residual therefore satisfies
-
-$ norm(hat(g)-g)_2
-    <= norm(overline(y)-overline(m))_2
-      +norm(hat(f)(x)-f(x))_2
-    <= tilde(O)(n^(-1/2)). $
-
-In particular, every stored residual is within
-$tilde(O)(n^(-1/2))$ of $N$. Thus we may write
-
-$ hat(G)_M=G_M+Delta_M, $
-
-where every column of $G_M$ belongs to $N$ and every column of $Delta_M$ has
-norm at most $tilde(O)(n^(-1/2))$. By
-@lem:ridge-informative-blocks,
-
-$ norm(Delta_M)_("op")
-    <=norm(Delta_M)_F
-    <=sqrt(M) tilde(O)(n^(-1/2))
-    <=tilde(O)(n^(-1/2)). $
-
-Let $Q_M:=[hat(G)_M,lambda I_(d_D)]$. Since
-$Q_M Q_M^T=V_M$ and $Q_M$ has full row rank,
-
-$ cal(E)_M
-    ={hat(G)_M alpha+lambda w:
-      norm(alpha)_2^2+norm(w)_2^2<=1}. $
-
-Hence, for every $u in 3cal(E)_M$, there are $alpha$ and $w$ satisfying the
-displayed norm constraint such that
-
-$ u=3(G_M alpha+Delta_M alpha+lambda w). $
-
-Because $G_M alpha in N$,
-
-$ opdist(u,N)
-    <=3(norm(Delta_M)_("op")+lambda)
-    <=tilde(O)(n^(-1/2)). $
-
-Finally,
+We may therefore choose $eta_n=tilde(O)(n^(-1/2))$ so that every stored
+residual satisfies $opdist(hat(g),N)<=eta_n$. We prove the following more
+explicit form of the induction claim:
 
 $ opdist(hat(f)(x)+u,f(x)+N)
-    <=norm(hat(f)(x)-f(x))_2+opdist(u,N)
-    <=tilde(O)(n^(-1/2)). $
+    <=beta_n+lambda+M eta_n, quad
+  x in A, u in cal(E)_M. $
 
-$qed$
+The base case above establishes this claim when $M=0$.
 
-#algorithm(title: [Noisy imprecise bandit $(n,lambda)$])[
-  #set enum(numbering: "1.", indent: 1.5em, body-indent: 0.55em)
+Now consider an update from $V_M$ to $V_(M+1)$. Suppose that the bound holds
+for $M$ and that the informative block producing the update has residual
+$hat(g)$. Let $Q_M:=[hat(G)_M,lambda I_(d_D)]$. Since
+$Q_M Q_M^T=V_M$ and $Q_M$ has full row rank,
 
-  *Parameters:* block length $n in NN$ and ridge parameter $lambda>0$.
+$ cal(E)_M={Q_M theta:norm(theta)_2<=1}. $
 
-  + Choose the $d_A+1$ anchor arms from
-    @lem:noisy-anchor-interpolation. Play each anchor for $n$ consecutive
-    rounds, compute its empirical average $overline(y)^((i))$, and construct
-    the affine interpolant $hat(f)$. If the horizon ends during this phase,
-    stop.
+After storing $hat(g)$, every $u in cal(E)_(M+1)$ can therefore be written as
 
-  + Set $rho:=lambda$. Initialize $M:=0$ and let $hat(G)_0$ be the matrix with
-    no columns.
+$ u=Q_M theta+a hat(g), quad norm(theta)_2^2+a^2<=1. $
 
-  + At the beginning of each subsequent block, define
+Set $u_0:=Q_M theta$. Then $u_0 in cal(E)_M$, and since $N$ is a linear
+subspace, for every $x in A$,
 
-    $ V_M:=lambda^2 I_(d_D)+hat(G)_M hat(G)_M^T
-        in RR^(d_D times d_D), quad
-      cal(E)_M:={u in RR^(d_D):u^T V_M^(-1)u<=1}. $
+$ opdist(hat(f)(x)+u,f(x)+N)
+    <=opdist(hat(f)(x)+u_0,f(x)+N)
+      +abs(a)opdist(hat(g),N)
+    <=beta_n+lambda+(M+1)eta_n. $
 
-    Let $c_D$ be the centre of $D$, and define the expanded outcome balls
+This proves the induction claim. By @lem:ridge-informative-blocks,
+$M=O(log T)$, and therefore
 
-    $ D_1:={y:norm(y-c_D)_2<=R_D+rho}, quad
-      D_2:={y:norm(y-c_D)_2<=R_D+2rho}. $
+$ beta_n+lambda+M eta_n=tilde(O)(n^(-1/2)). $
 
-    For every arm $x in A$, define
-
-    $ hat(K)_M^("in") (x):=(hat(f)(x)+2cal(E)_M) inter D_1, $
-
-    $ hat(K)_M^("out") (x):=(hat(f)(x)+3cal(E)_M) inter D_2. $
-
-  + If $hat(K)_M^("in") (x)=emptyset$ for some $x in A$, choose any such arm.
-    Otherwise, choose
-
-    $ x in opargmax_(x' in A)
-        min_(y in hat(K)_M^("out") (x')) r(x',y). $
-
-  + Play the chosen arm for $n$ rounds. If fewer than $n$ rounds remain, play
-    until the horizon and stop without updating. Otherwise, let $overline(y)$
-    be the block-average outcome and set
-
-    $ hat(g):=overline(y)-hat(f)(x). $
-
-  + If $hat(g) in.not cal(E)_M$ declare the block informative, set
-    $hat(G)_(M+1):=[hat(G)_M,hat(g)]$, and then increase $M$ by one. Otherwise
-    leave $hat(G)_M$ and $M$ unchanged. Return to Step 3 and continue until
-    time $T$.
-] <alg:noisy-ridge-learning>
+#h(1fr) $qed$
 
 #lemma[
   Under the uniform non-tangency condition, for every $x in A$ and every
   $y in RR^(d_D)$,
 
   $ opdist(y,K^star (x))
-      <= O(opdist(y,f(x)+N)+opdist(y,D)). $
+      <=(1+S^(-1))opdist(y,f(x)+N)+S^(-1)opdist(y,D). $
 
-  Consequently, a $tilde(O)(n^(-1/2))$ error in both the affine-space and
-  ball constraints remains $tilde(O)(n^(-1/2))$ after intersection.
+  In particular, if $y in D$, then
+
+  $ opdist(y,K^star (x))
+      <=(1+S^(-1))opdist(y,f(x)+N). $
 ] <lem:noisy-ball-stability>
+
+*Proof.* Let $p$ be the Euclidean projection of $y$ onto $f(x)+N$. If
+$p in D$, then $p in K^star (x)$ and the result is immediate. Otherwise, the
+uniform non-tangency condition and the triangle inequality give
+
+$ opdist(p,K^star (x))
+    <=S^(-1)opdist(p,D)
+    <=S^(-1) (norm(y-p)_2+opdist(y,D)). $
+
+Since $norm(y-p)_2=opdist(y,f(x)+N)$, one more application of the triangle
+inequality proves the first claim. The second follows by setting
+$opdist(y,D)=0$. $qed$
 
 #lemma[
   Suppose that the conclusions of @lem:noisy-anchor-interpolation and
@@ -675,22 +705,19 @@ $hat(g):=overline(y)-hat(f)(x)$ belongs to $cal(E)_M$.
 
 Since $D$ is convex, $overline(y) in D$. Therefore,
 
-$ overline(y) in (hat(f)(x)+cal(E)_M) inter D
-    subset.eq hat(K)_M^("in") (x). $
+$ overline(y) in (hat(f)(x)+cal(E)_M) inter D=hat(K)_M (x). $
 
 In particular, this block could not have been selected by the empty-set
 branch of Step 4, so its arm was selected by the planning rule. Define
 
-$ hat(v)_M (x'):=min_(y in hat(K)_M^("out") (x')) r(x',y). $
+$ hat(v)_M (x'):=min_(y in hat(K)_M (x')) r(x',y). $
 
-For every $x' in A$ and $y in hat(K)_M^("out") (x')$,
+For every $x' in A$ and $y in hat(K)_M (x')$,
 @lem:ridge-residual-learning gives
 
 $ opdist(y,f(x')+N)<=tilde(O)(n^(-1/2)). $
 
-Also, $y in D_2$ implies
-$opdist(y,D)<=2rho=tilde(O)(n^(-1/2))$. Applying
-@lem:noisy-ball-stability gives
+Since $y in D$, applying @lem:noisy-ball-stability gives
 
 $ opdist(y,K^star (x'))
     <=tilde(O)(n^(-1/2)). $
@@ -701,7 +728,7 @@ $ hat(v)_M (x')
     >=v^star (x')-tilde(O)(n^(-1/2)). $
 
 Let $x^star$ maximize $v^star$. The planning rule and the fact that
-$overline(y) in hat(K)_M^("out") (x)$ now give
+$overline(y) in hat(K)_M (x)$ now give
 
 $ r(x,overline(y))
     >=hat(v)_M (x)
@@ -728,6 +755,189 @@ $ R_T<=tilde(O)(n+T n^(-1/2))=tilde(O)(T^(2/3)). $
 
 These conclusions fail with probability at most $2(T+1)^(-2)$, and
 $R_T<=C_r T$ always, so taking expectations only adds $O(C_r/T)$.
+
+== Computational Tractability
+
+The statistical argument above presents @alg:noisy-ridge-learning using
+exact emptiness tests and exact maximization over the single provisional set
+$hat(K)_M (x)$. We now explain how to implement these operations with weak
+finite-precision optimization. The additional sets introduced in this
+section provide numerical slack only; they do not change the statistical
+idea.
+
+The matrix updates, leverage calculations, and affine interpolation are
+standard polynomial-time linear algebra. Moreover,
+$V_M-lambda^2 I_(d_D)$ is positive semidefinite, while
+$lambda>=T^(-1/2)$ and the stored residuals have bounded norm. Hence all
+inversions can be carried out to the required inverse-polynomial precision in
+polynomial time. For this implementation, one may choose the centre
+$c_A$ of $A$ and the arms $c_A+R_A e_i$, $i=1,dots,d_A$, as the affine
+basis. Their interpolation coefficients and the resulting affine map are
+computed by Gaussian elimination and matrix multiplication, with
+polynomially controlled bit complexity. This conditioning detail is
+irrelevant to the dependence on $n$ and was therefore omitted from the
+statistical argument.
+
+=== Empty-Fiber Certification
+
+Fix $rho:=lambda$, let $c_D$ be the centre of $D$, and define
+
+$ D_1:={y:norm(y-c_D)_2<=R_D+rho}, quad
+  D_2:={y:norm(y-c_D)_2<=R_D+2rho}, $
+
+$ hat(K)_M^("in") (x):=(hat(f)(x)+2cal(E)_M) inter D_1, quad
+  hat(K)_M^("out") (x):=(hat(f)(x)+3cal(E)_M) inter D_2. $
+
+The implementation tests the inner sets for emptiness and plans against the
+outer sets. The exact set used in the statistical proof satisfies
+
+$ hat(K)_M (x) subset.eq hat(K)_M^("in") (x)
+    subset.eq hat(K)_M^("out") (x). $
+
+The constants $2$ and $3$ are not important. Their role, together with the
+two expanded outcome balls, is to create a strict margin between the set
+containing an uninformative empirical outcome and the set used for planning.
+
+Write $hat(f)(x)=F x+f_0$. For a fixed arm, the distance between
+$hat(f)(x)+2cal(E)_M$ and $D_1$ is
+
+$ d_M (x):=max_(norm(u)_2<=1) (
+    u^T (hat(f)(x)-c_D)
+    -2sqrt(u^T V_M u)
+    -(R_D+rho)norm(u)_2
+  ). $
+
+This is the support-function formula for the distance between two closed
+convex sets. In particular, $d_M (x)>0$ exactly when
+$hat(K)_M^("in") (x)=emptyset$.
+
+After introducing nonnegative variables $s_0,s_1$ satisfying
+
+$ u^T V_M u<=s_0^2, quad norm(u)_2^2<=s_1^2, $
+
+maximizing $d_M (x)$ jointly over $x in A$ and $norm(u)_2<=1$ becomes a QCQP
+with a fixed number of quadratic constraints. The only coupling between the
+arm and dual variables is the bilinear expression $u^T F x$. We impose the
+explicit bounds $norm(u)_2<=1$, $0<=s_1<=1$, and
+$0<=s_0<=sqrt(lambda_(max) (V_M))$, together with the ball constraint on $x$,
+and combine them into a redundant positive-definite enclosing ellipsoid.
+The weak fixed-constraint result in @app:qcqp then applies.
+
+A weakly feasible output is corrected before it is used as a certificate:
+project its $x$ and $u$ components onto their respective balls, reset
+$s_0,s_1$ to the corresponding exact norms, and directly evaluate the
+support-function objective. Since all variables are polynomially bounded,
+using sufficiently smaller internal accuracy makes the change in objective
+at most $zeta$. The corrected point is feasible, so a positive value is a
+genuine certificate of emptiness.
+
+Exact emptiness classification is unnecessary. Let
+$zeta<min(rho,lambda)/10$ and solve the preceding maximization to additive
+accuracy $zeta$. If an arm has certified distance greater than $2zeta$, its
+inner set is genuinely empty. Otherwise every inner pair of constituent sets
+is at distance at most $3zeta$. The corresponding outer intersection then
+contains a Euclidean ball of radius at least
+
+$ min(lambda,rho-3zeta). $
+
+Indeed, the positive semidefiniteness of $V_M-lambda^2 I_(d_D)$ implies that
+$cal(E)_M$ contains the Euclidean ball of radius $lambda$. The gap from
+$2cal(E)_M$ to $3cal(E)_M$ therefore supplies the ellipsoid margin,
+while the gap from $D_1$ to $D_2$ supplies the outcome-ball margin.
+
+=== Robust Planning
+
+The preceding strict-feasibility margin also makes robust planning tractable.
+Fenchel--Rockafellar duality gives the following dual representation (see
+@boyd2004convex):
+
+$ min_(y in hat(K)_M^("out") (x)) r(x,y)
+  =a^T x+c+b^T c_D+max_(u in RR^(d_D)) (
+      u^T (hat(f)(x)-c_D)
+      -3sqrt(u^T V_M u)
+      -(R_D+2rho)norm(b-u)_2
+    ). $
+
+The interior ball bounds the norm of an optimal dual vector by a polynomial
+in the input size, $T$, and
+$min(lambda,rho-3zeta)^(-1)$. Introducing epigraph variables for the two
+square roots therefore turns the joint maximization over $x$ and $u$ into a
+bounded QCQP with a fixed number of quadratic constraints.
+@app:qcqp[Appendix] gives an additive-$zeta_v$ optimal arm in polynomial time. As in
+the emptiness problem, a weakly feasible solution is projected onto the arm
+ball and its epigraph variables are conservatively increased. The resulting
+loss is absorbed into $zeta_v$.
+
+=== Finite-Precision Comparisons
+
+The remaining comparisons use the same kind of gray zone. Let $tilde(y)$
+denote the rounded block average used by the implementation, and choose the
+rounding precision $tau$ so that
+$norm(tilde(y)-overline(y))_2<=tau<=rho$. Define the residual used in the
+leverage test to be $hat(g):=tilde(y)-hat(f)(x)$. Since
+$overline(y) in D$, the expanded ball $D_1$ absorbs the rounding error and
+$tilde(y) in D_1$.
+
+Let $ell:=hat(g)^T V_M^(-1)hat(g)$ and compute an approximation
+$tilde(ell)$ satisfying $abs(tilde(ell)-ell)<=gamma/2$. Append the residual
+only if $tilde(ell)-gamma/2>1$. Such an update has $ell>1$ and therefore
+retains the determinant-doubling argument in
+@lem:ridge-informative-blocks. Otherwise $ell<=1+gamma$, so, for
+$gamma<=1$,
+
+$ hat(g) in sqrt(1+gamma)cal(E)_M subset.eq 2cal(E)_M. $
+
+Finally, the proof of @lem:ridge-residual-learning is unchanged when
+$cal(E)_M$ is multiplied by any fixed constant. Thus points in the outer
+ellipsoid remain $tilde(O)(n^(-1/2))$-close to $f(x)+N$, while points in
+$D_2$ are at distance at most $2rho$ from $D$. Applying
+@lem:noisy-ball-stability shows that every point in an outer fiber is
+$tilde(O)(n^(-1/2))$-close to the corresponding true feasible set.
+
+It remains to connect this numerical wrapper to the statistical proof. If a
+complete block is not appended, its rounded residual lies in
+$2cal(E)_M$, and therefore
+
+$ tilde(y) in hat(K)_M^("in") (x)
+    subset.eq hat(K)_M^("out") (x). $
+
+Consequently, a complete block selected using a certified empty inner fiber
+must be appended; otherwise the displayed membership would contradict
+emptiness. Every complete block that is not appended is therefore a planning
+block. For such a block, define
+
+$ hat(v)_M^("out") (x')
+    :=min_(y in hat(K)_M^("out") (x')) r(x',y). $
+
+The preceding outer-fiber bound and the Lipschitz property of the reward give,
+uniformly in $x'$,
+
+$ hat(v)_M^("out") (x')
+    >=v^star (x')-tilde(O)(n^(-1/2)). $
+
+If the weak planner returns an additive-$zeta_v$ maximizer and $x^star$
+maximizes $v^star$, then
+
+$ r(x,overline(y))
+  >=r(x,tilde(y))-norm(b)_2 tau
+  >=hat(v)_M^("out") (x)-norm(b)_2 tau
+  >=hat(v)_M^("out") (x^star)-zeta_v-norm(b)_2 tau
+  >=V^star-tilde(O)(n^(-1/2))-zeta_v-norm(b)_2 tau. $
+
+Affineness again identifies $r(x,overline(y))$ with the realized average
+reward in the block. Thus certified empty-fiber blocks and leverage updates
+are charged to the same $O(log T)$ informative blocks as before, while every
+other complete block has average regret at most
+$tilde(O)(n^(-1/2))+zeta_v+norm(b)_2 tau$.
+
+Taking $rho=lambda=tilde(O)(n^(-1/2))$ and choosing, for example,
+$zeta=(T+1)^(-8)$, $gamma=(T+1)^(-8)$,
+$zeta_v=(T+1)^(-3)$, and $tau=(T+1)^(-12)$ makes every
+numerical error negligible or absorbs it into the existing
+$tilde(O)(n^(-1/2))$ bound. These choices require only $O(log T)$ additional
+precision bits, and the planning error contributes at most $T zeta_v$ to
+regret. Hence the weak bit-model implementation remains polynomial-time and
+has the same regret rate.
 
 = NP-hardness of IUCB
 
