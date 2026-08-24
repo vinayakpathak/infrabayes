@@ -95,6 +95,20 @@
 #let opargmin = math.op("argmin")
 #let poly = math.op("poly")
 
+#set document(
+  title: [When are Imprecise Bandits Computationally Tractable?],
+  author: ("Vinayak Pathak",),
+)
+
+#align(center)[
+  #set par(first-line-indent: 0em)
+  #text(size: 18pt, weight: "bold")[When are Imprecise Bandits Computationally Tractable?]
+  #v(0.65em)
+  #text(size: 11pt)[Vinayak Pathak]
+]
+
+#v(1.25em)
+
 = Setting
 
 Let $A subset.eq RR^(d_A)$ be the arm set and let
@@ -260,7 +274,7 @@ the observed response belongs to $K'_t (x_t)$. Hence
 original robust benchmark. Charging at most a constant regret to each of the
 $d_A+1$ initial rounds and to each update round gives $R_T <= O(d_A+d_D). $
 
-== Noiseless Computational Tractability
+== Computational Tractability
 
 All the steps in @alg:noiseless-subspace-learning can be carried out in
 polynomial time. First, affine interpolation can be done via Gaussian elimination.
@@ -421,6 +435,23 @@ $O(sqrt(epsilon_("emp")))$ and is absorbed into the noisy tolerances below.
 In this section, constants hidden by $O$ and $tilde(O)$ may depend on the
 fixed problem parameters. In addition, $tilde(O)$ suppresses logarithmic
 factors in $T$ and $1/delta$.
+
+In the noisy setting, estimating the true $N$ is tricky. To reduce the level of
+noise, we can work with with average outcomes over blocks of length $n$ instead
+of each individual outcome. Suppose $m_i$ is the conditional mean corresponding
+to the outcome $y_i$. Then over a block of size $n$, we can bound
+$norm(1/n sum y_i - 1/n sum m_i) <= O(n^(-1/2))$ with high probability. Due to
+the convexity of $D$, $1/n sum m_i$ also lies in $D$, and therefore, the
+"residuals" calculated using $overline(y) = 1/n sum y_i$ should be close to the
+true residuals. However, it is still risky to compute the subspace containing
+this residual and committing to it for the future steps. A small error in the
+direction of the calculated subspace can lead to large errors further out. Thus
+to get better control over the estimation errors, we approximate the subspace
+$N$ with an ellipsoid. We start by computing an approximate $hat(f)$ using an
+affine basis, and assume that $N$ is a unit ball of radius $lambda$ where
+$lambda <= O(n^(-1/2))$. Then if a residual arrives that lies outside the
+current ellipsoid, we expand the ellipsoid in a specific way along the direction
+of the residual.
 
 #lemma[
   Fix $delta in (0,1)$ and $1<=n<=T$. There exist $d_A+1$ affinely
