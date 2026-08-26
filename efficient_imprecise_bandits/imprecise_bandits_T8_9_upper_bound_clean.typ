@@ -991,8 +991,8 @@ compute
 $ norm(cal(T))_sigma:=max_(norm(u)_2<=1,norm(x)_2<=1)
     norm(cal(T)(u,x))_2. $
 
-Computing this value is NP-hard. From $cal(T)$, construct an IUCB instance as
-follows. Put
+Computing this value is NP-hard @hillar2013most. From $cal(T)$, construct an IUCB
+instance as follows. Put
 
 $ L:=1+sum_(i,j,k) abs(T_(i j k)), quad
   alpha:=1/(2L), quad A:={x:norm(x)_2<=1}. $
