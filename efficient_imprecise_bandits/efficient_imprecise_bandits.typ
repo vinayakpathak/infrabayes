@@ -960,7 +960,235 @@ precision bits, and the planning error contributes at most $T zeta_v$ to
 regret. Hence the weak bit-model implementation remains polynomial-time and
 has the same regret rate.
 
-= NP-hardness of IUCB
+= NP-hardness
+
+== D = simplex, A = ball, F = F0 + F1
+
+== D = ball, A = ball, F = trilinear
+
+In this subsection only, we drop the additive restriction from the main
+setting and allow a general trilinear constraint map. It is convenient to use
+the homogeneous outcome formulation. Thus, if $Y$ is the ambient outcome
+space, $W$ is the constraint space, and
+
+$ F:RR^(d_A) times RR^(d_Z) times Y -> W $
+
+is linear in each argument separately, define
+
+$ L_z (x):=opker F_(x,z), quad
+  K_z (x):=L_z (x) inter D, quad
+  v_z (x):=min_(y in K_z (x)) r(x,y), quad
+  V_z:=max_(x in A) v_z (x). $
+
+Here $D$ is a Euclidean ball in the affine normalization hyperplane, hence a
+Euclidean ball in its affine hull. The construction below shows that allowing
+the coefficients of the outcome constraint to depend on the arm makes even
+known-hypothesis planning hard.
+
+Let $G=(V,E)$ be an undirected graph with $V={1,dots,n}$ and
+$E={e_1,dots,e_m}$, where $m>=1$ and $e_ell={i_ell,j_ell}$. Put $d:=n+m$.
+For $q=(u,w) in RR^n times RR^m$, define the homogeneous cubic
+
+$ p_G (q):=sum_(ell=1)^m u_(i_ell) u_(j_ell) w_ell. $
+
+#lemma[
+  If $omega(G)$ is the clique number of $G$, then
+
+  $ max_(norm(q)_2=1) p_G (q)^2
+      =2/27 (1-1/omega(G)). $
+] <lem:clique-cubic>
+
+*Proof.* Write $rho:=norm(u)_2$ and $sigma:=norm(w)_2$. For fixed $u$ and
+$sigma$, Cauchy–Schwarz gives
+
+$ max_(norm(w)_2=sigma) p_G (u,w)
+    =sigma sqrt(sum_(ell=1)^m u_(i_ell)^2 u_(j_ell)^2). $
+
+Writing $u=rho s$ with $norm(s)_2=1$ and setting $pi_i:=s_i^2$, the
+Motzkin–Straus theorem @motzkin1965maxima gives
+
+$ max_(norm(s)_2=1) sum_({i,j} in E) s_i^2 s_j^2
+  =max_(pi_i>=0, sum_i pi_i=1) sum_({i,j} in E) pi_i pi_j
+  =1/2 (1-1/omega(G)). $
+
+Finally,
+
+$ max_(rho^2+sigma^2=1, rho>=0, sigma>=0) rho^2 sigma
+    =2/(3 sqrt(3)). $
+
+Squaring the product of these two maxima proves the identity. Since $p_G$ is
+odd, its maximum, rather than only its maximum absolute value, is the positive
+square root of the displayed quantity. $qed$
+
+#theorem[
+  There is a polynomial-time reduction from CLIQUE to rational
+  imprecise-bandit instances for which $A$ is a full-dimensional Euclidean
+  ball, $D$ is a Euclidean ball in its affine hull, $Z=[1,2]$ is a
+  one-dimensional Euclidean ball, the reward is linear, and $F$ is
+  trilinear. Every set $K_z (x)$ is a singleton independent of $z$, and the
+  uniform non-tangency condition holds. Even the corresponding distance
+  inequality over the full homogeneous kernel holds with a constant
+  $S>0.88$.
+
+  For these instances, approximating $V_z$ to inverse-polynomial additive
+  accuracy is NP-hard even when $z$ is known. Consequently, if, for some
+  fixed $beta>0$, a randomized polynomial-time learner guaranteed
+
+  $ E[R_T]<=P(L) T^(1-beta) $
+
+  on every such instance for a polynomial $P$, then $"NP" subset.eq "BPP"$.
+  For a deterministic learner, the same conclusion would be $"P" = "NP"$.
+] <thm:trilinear-balls-np-hardness>
+
+*Proof.* We may restrict CLIQUE to instances with $m>=1$ and
+$3<=k<=n$, since the excluded cases are polynomial-time decidable. Starting
+from $(G,k)$, use the cubic $p_G$ above and write an arm as
+$x=(x_0,xi) in RR times RR^d$. Take
+
+$ A:={(x_0,xi):(x_0-5/3)^2+norm(xi)_2^2<=1}. $
+
+This is a full-dimensional Euclidean ball and $x_0>=2/3$ throughout $A$.
+Moreover, the normalized coordinate $q:=xi/x_0$ ranges over exactly the ball
+$norm(q)_2<=3/4$. Indeed,
+
+$ 1-(x_0-5/3)^2-9/16 x_0^2=-(15x_0-16)^2/144<=0, $
+
+so every attainable ratio has norm at most $3/4$. Conversely, for any such
+$q$, the choice $x_0=16/15$ and $xi=x_0 q$ belongs to $A$.
+
+Let $Z:=[1,2]$. Introduce the ambient outcome and constraint spaces
+
+$ Y:=RR times RR^d times RR^(d times d) times RR^(d times d times d), $
+
+$ W:=RR^d times RR^(d times d) times RR^(d times d times d), $
+
+and write $y=(y_0,eta,Theta,Xi) in Y$. With the normalization functional
+$mu(y):=y_0$, the outcome set is the affine Euclidean unit ball
+
+$ D:={(1,eta,Theta,Xi):
+      norm(eta)_2^2+norm(Theta)_F^2+norm(Xi)_F^2<=1}. $
+
+For $x=(x_0,xi)$, $z in RR$, and $y in Y$, define $F(x,z,y)$ coordinatewise
+by
+
+$ F_i (x,z,y):=z (x_0 eta_i-1/2 xi_i y_0), $
+
+$ F_(i j) (x,z,y):=z (x_0 Theta_(i j)-xi_i eta_j), $
+
+$ F_(i j ell) (x,z,y):=z (x_0 Xi_(i j ell)-xi_i Theta_(j ell)). $
+
+Each term contains one coordinate from each of $x$, $z$, and $y$, so $F$ is
+trilinear. Define the reward by
+
+$ r(x,y):=1/m sum_(ell=1)^m Xi_(i_ell, j_ell, n+ell). $
+
+It is linear and independent of $x$; its coefficient vector has Euclidean
+norm $1/sqrt(m)<=1$.
+
+Fix $x in A$ and $z in Z$. Since $z x_0!=0$ and $y_0=1$ on $D$, the equations
+$F(x,z,y)=0$ can be solved recursively. They force the unique candidate
+
+$ eta_i=1/2 q_i, quad
+  Theta_(i j)=1/2 q_i q_j, quad
+  Xi_(i j ell)=1/2 q_i q_j q_ell. $
+
+If $t:=norm(q)_2<=3/4$, the squared norm of its nonconstant outcome
+coordinates is
+
+$ 1/4 (t^2+t^4+t^6)<=4329/16384<1. $
+
+Thus the candidate lies in $D$, proving that $K_z (x)$ is precisely this
+singleton. It does not depend on $z$. The operator $F_(x,z):Y->W$ is also
+onto: set $y_0=0$ and solve successively for $eta$, $Theta$, and $Xi$ for an
+arbitrary right-hand side.
+
+On the normalization hyperplane, the affine solution space is the singleton
+$K_z (x)$, so the intrinsic non-tangency condition from the main setting is
+automatic. In fact, a stronger homogeneous version holds. Surjectivity and
+the dimensions of $Y$ and $W$ show that $L_z (x)$ is the line spanned by
+$y(x)=(1,g(q))$, where $g(q):=(eta,Theta,Xi)$ is given by the displayed
+recursion. If $p=tau y(x) in L_z (x)$ lies outside $D$, then
+
+$ opdist(p,D)>=abs(tau-1), quad
+  opdist(p,K_z (x))=abs(tau-1) sqrt(1+norm(g(q))_2^2). $
+
+Consequently the ambient homogeneous distance inequality holds uniformly
+with
+
+$ S>=1/sqrt(1+4329/16384)=128/sqrt(20713)>0.88. $
+
+Because the compatible outcome is unique, evaluating the reward at that
+outcome gives
+
+$ v_z (x)=1/(2m) p_G (q). $
+
+The ratio $q$ fills the radius-$3/4$ ball, so homogeneity and
+@lem:clique-cubic imply, for every $z in Z$,
+
+$ V_z
+  =27/(128m) max_(norm(h)_2=1) p_G (h)
+  =27/(128m) sqrt(2/27) sqrt(1-1/omega(G)). $
+
+For $j=2,dots,n$, let
+
+$ U_j:=27/(128m) sqrt(2/27) sqrt(1-1/j). $
+
+If $omega(G)>=k$, then $V_z>=U_k$; if $omega(G)<=k-1$, then
+$V_z<=U_(k-1)$. The two cases have gap
+
+$ U_k-U_(k-1)
+  >=27/(128m) sqrt(2/27) 1/(2k(k-1))
+  =Omega(1/(m k^2)). $
+
+Since $sqrt(2/27)>1/4$ and $m<=n^2$, the gap $Delta_k:=U_k-U_(k-1)$
+satisfies
+
+$ Delta_k>1/(40m k(k-1))>=1/(40m n^2). $
+
+Set $epsilon:=1/(500m n^2)$. Using polynomially many bits, one can compute a
+rational $tau_k$ such that
+
+$ abs(tau_k-1/2 (U_k+U_(k-1)))<=epsilon. $
+
+An $epsilon$-additive estimate of $V_z$ lies above $tau_k$ when
+$omega(G)>=k$ and below it when $omega(G)<=k-1$, because
+$2epsilon<Delta_k/2$. It therefore decides whether $G$ contains a $k$-clique.
+The constructed instance has dimension $O(d^3)$, and all its defining
+coefficients are rational with polynomial encoding length. This proves the
+planning claim.
+
+For the learning claim, let nature put a point mass on the unique feasible
+outcome $y(x_t)$ after each played arm $x_t$, and let
+
+$ overline(r)_T:=1/T sum_(t=1)^T r(x_t,y(x_t)). $
+
+Pointwise,
+
+$ V_z-overline(r)_T=R_T/T>=0. $
+
+The assumed regret bound therefore yields
+
+$ E[V_z-overline(r)_T]<=P(L) T^(-beta). $
+
+By Markov's inequality,
+
+$ Pr(V_z-overline(r)_T>3P(L)T^(-beta))<=1/3. $
+
+The displayed rational lower bound on $Delta_k$ shows that the polynomial
+horizon
+
+$ T>=ceil((360m n^2 P(L))^(1/beta)) $
+
+makes this error smaller than one third of the gap. Comparing
+$overline(r)_T$ with the same rational threshold $tau_k$ then decides CLIQUE:
+in the no case every round's reward is at most $U_(k-1)<tau_k$, while in the
+yes case $overline(r)_T>=U_k-Delta_k/3>tau_k$ with probability at least
+$2/3$.
+This gives $"NP" subset.eq "BPP"$ for a randomized learner and
+$"P" = "NP"$ for a deterministic one. $qed$
+
+
+== IUCB is NP-hard even when A and D are Euclidean balls
 
 Given rational descriptions of
 $A$, $D$, $Z$, the affine reward $r$, and the maps defining $K_z (x)$, let
