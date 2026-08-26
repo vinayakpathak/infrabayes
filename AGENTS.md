@@ -6,6 +6,20 @@
   `#lemma[...]` block directly with its mathematical statement. Add a lemma
   name only when the user explicitly requests one. Internal reference labels
   are allowed.
+- Write for a mathematically mature reader. Keep the exposition compact but
+  explicit, and do not expand routine specializations that the reader can
+  immediately derive from a general statement.
+- When technical jargon is used only once, replace it with its operative
+  mathematical definition instead of introducing the term and then defining
+  it separately.
+- State a general property once rather than enumerating its obvious special
+  cases.
+- Integrate definitions and explanations into the proof's narrative. Avoid
+  meta-expository detours that interrupt the argument's forward motion.
+- Use concrete notation and named mathematical objects instead of vague
+  referents such as "the weak solution" or "the scalar changes."
+- Include explanatory material when it is needed for the next step of the
+  argument; omit details that merely repeat what was just displayed.
 
 ## Typst mathematics
 

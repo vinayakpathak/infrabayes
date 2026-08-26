@@ -403,32 +403,22 @@ $ norm(x-c_A)_2^2/R_A^2+s^2/R_D^2<=2. $
 
 This is an ellipsoid in the joint variable $(x,s)$. Thus the QCQP has a fixed
 number of quadratic constraints, one of which is ellipsoidal. Bienstock's
-theorem @bienstock2016cdt returns a weakly feasible, additive $delta$-optimal
-solution in time polynomial in $L$ and $log(1/delta)$. The cases $R_A=0$ or
-$R_D=0$ reduce immediately to a lower-dimensional problem.
+theorem @bienstock2016cdt returns, in time polynomial in $L$ and $log(1/delta)$, a solution $(x^star,s^star)$ such that for each constraint $g_i (x,s)<= 0$, we have that $g_i (x^star, s^star) <= delta$, and the value of the objective function $Phi_t (x,s):=a^T x+b^T q_t (x)+c-beta_t s$ at $(x^star, s^star)$ is $delta$-close to the optimal, i.e., for every feasible $(x,s)$, $Phi_t (x^star,s^star)>=Phi_t (x,s)-delta$.
 
-To obtain a feasible arm, project the $x$-component of the weak solution onto
-$A$, call it $x_delta$, and set
-
-$ s_delta:=sqrt(R_D^2-norm(q_t (x_delta)-c_D)_2^2). $
-
-The square root is real by the assumption of the lemma. The projection moves
-$x$ by $O(sqrt(delta))$, and the violated quadratic equality implies that
-$s$ changes by at most $O(delta^(1/4))$. Consequently the linear objective
-changes by at most $C delta^(1/4)$, where $C>=1$ is a data-dependent constant
-whose bit length is polynomial in $L$. Choose
-$delta<=(epsilon/(2C))^4$ and approximate $beta_t$ to the same working
-precision. The resulting arm is feasible and its robust value is within
+The output $x^star$ of Bienstock's algorithm may not be a feasible arm. But to obtain a feasible arm, we can simply project
+$x^star$ onto $A$ to obtain $x_epsilon$. It is easy to see that this does not change the value of the objective function too much. Indeed, set $s_epsilon:=sqrt(R_D^2-norm(q_t (x_epsilon)-c_D)_2^2).$
+The projection moves
+$x^star$ by $O(sqrt(delta))$, and thus moves $s^star$ by at most
+$O(delta^(1/4))$. Consequently the linear objective
+changes by at most $C delta^(1/4)$, where $C>=1$ is a constant. Choose
+$delta<=(epsilon/(2C))^4$. The resulting arm is feasible and its robust value is within
 $epsilon$ of the optimum. Since
 $log(1/delta)=poly(L)+O(log(1/epsilon))$, the running time is polynomial. $qed$
 
-Taking $epsilon=T^(-2)$ adds at most $T^(-1)$ to total regret. Since the
-provisional model changes only when $N_t$ grows, the planning problem is
-solved at most $d_D+1$ times. With finite-precision data, the strict comparison
-in @lem:polynomial-empty-set uses the usual gray-zone convention: if the
-maximum squared distance is within $epsilon_("emp")$ of $R_D^2$, enlarge the
-squared outcome radius by $epsilon_("emp")$. This changes the radius by only
-$O(sqrt(epsilon_("emp")))$ and is absorbed into the noisy tolerances below.
+Set $epsilon=T^(-2)$ in @lem:polynomial-robust-planning. On each round, the
+computed arm then loses at most $T^(-2)$ relative to the exact planning
+solution, so approximate planning contributes at most $T^(-1)$ to total
+regret.
 
 = Noisy Setting
 
