@@ -34,6 +34,7 @@
 
 #show figure.where(kind: "theorem"): thm
 #show figure.where(kind: "lemma"): thm
+#show figure.where(kind: "problem"): thm
 
 #let theorem(body, title: none) = figure(
   body,
@@ -48,6 +49,15 @@
   body,
   kind: "lemma",
   supplement: [Lemma],
+  numbering: "1",
+  outlined: false,
+)
+
+#let problem(body, title: none) = figure(
+  body,
+  caption: title,
+  kind: "problem",
+  supplement: [Problem],
   numbering: "1",
   outlined: false,
 )
@@ -94,6 +104,7 @@
 #let opargmax = math.op("argmax")
 #let opargmin = math.op("argmin")
 #let poly = math.op("poly")
+#let Pr = math.op("Pr")
 
 #set document(
   title: [When are Imprecise Bandits Computationally Tractable?],
@@ -186,13 +197,23 @@ $ C_r := max_(x in A, y in D) r(x,y) - min_(x in A, y in D) r(x,y) $
 
 denote the reward range.
 
+#problem[
+  Given a horizon $T$ and rational descriptions of the known data above,
+  with $A$ and $D$ Euclidean balls and the compatible outcome sets defined
+  by @eq:setting-compatible-set, construct a policy whose running time is
+  polynomial in $T$ and the input bit length and whose expected regret is
+  sublinear in $T$. The guarantee must hold, without knowing $z^star$, for
+  every $z^star in Z$ such that $K^star (x)$ is nonempty for every $x in A$
+  and the uniform non-tangency condition holds, against every compatible
+  adaptive nature policy.
+] <prob:additive-ball-learning>
+
 #theorem(title: [efficient $T^(2/3)$ learning])[
-  Suppose that the known problem data in the setting above are rational.
-  For every known horizon $T$, there
-  is a policy whose arithmetic and weak-optimization running time is
-  polynomial in $T$ and the input bit length and which, for every true
-  hypothesis satisfying the uniform non-tangency condition and every
-  compatible adaptive nature policy, satisfies
+  For every known horizon $T$, there is a policy for
+  @prob:additive-ball-learning whose arithmetic and weak-optimization
+  running time is polynomial in $T$ and the input bit length and which, for
+  every true hypothesis satisfying the uniform non-tangency condition and
+  every compatible adaptive nature policy, satisfies
 
   $ E[R_T] <= tilde(O)(
       P(d_A,d_D,R_A,R_D,norm(b)_2,C_r,S^(-1)) T^(2/3)), $
@@ -962,12 +983,193 @@ has the same regret rate.
 
 = NP-hardness
 
+In this section we show that several natural variations of
+@prob:additive-ball-learning are NP-hard. Thus in some sense, the problem is
+the hardest problem that's still tractable.
+
+We first show that additive planning at inverse-polynomial accuracy reduces
+to efficient learning whenever a minimizing outcome can be computed exactly.
+This condition is essential, since the reduction must simulate the outcome
+observed by the learner.
+
+#lemma[
+  Fix a rational imprecise-bandit instance of bit length $L$ and a hypothesis
+  $z$ such that $K_z (x)$ is nonempty for every $x in A$, and write
+
+  $ v_z (x):=min_(y in K_z (x)) r(x,y), quad
+    V_z:=max_(x in A) v_z (x). $
+
+  Suppose that, for every rational arm $x$ produced by the learner, one can
+  compute an exact rational outcome
+
+  $ y_z (x) in opargmin_(y in K_z (x)) r(x,y) $
+
+  in time polynomial in $L$ and the encoding length of $x$. Suppose also
+  that, for some fixed $beta>0$ and polynomial $P$, a polynomial-time learner
+  guarantees
+
+  $ E[R_T]<=P(L) T^(1-beta) $
+
+  against every compatible nature policy. Then, for every $epsilon in (0,1)$,
+  one can compute in time $poly(L,1/epsilon)$ an arm $hat(x)$ and its value
+  $hat(V):=v_z (hat(x))$ such that
+
+  $ Pr(0<=V_z-hat(V)<=epsilon)>=2/3. $
+
+  If the learner is deterministic, the resulting planner satisfies
+  $0<=V_z-hat(V)<=epsilon$ with certainty.
+] <lem:planning-from-learning>
+
+*Proof.* Run the learner for
+
+$ T:=ceil((3P(L)/epsilon)^(1/beta)) $
+
+rounds with true hypothesis $z$, and let nature put a point mass on
+$y_z (x_t)$ after each arm $x_t$. Choose
+
+$ hat(t) in opargmax_(t=1,dots,T) v_z (x_t) $
+
+and return $hat(x):=x_(hat(t))$ and $hat(V):=v_z (hat(x))$.
+
+Since nature always returns a minimizing outcome,
+
+$ 0<=V_z-hat(V)
+  <=1/T sum_(t=1)^T (V_z-v_z (x_t))
+  =R_T/T. $
+
+Consequently,
+
+$ E[V_z-hat(V)]<=P(L) T^(-beta)<=epsilon/3. $
+
+Markov's inequality gives the claimed probability. The horizon and the
+simulation time are polynomial in $L$ and $1/epsilon$ because $beta$ is
+fixed. If the learner is deterministic, then the simulation is deterministic
+and the displayed bound holds without taking an expectation. $qed$
+
 == D = simplex, A = ball, F = F0 + F1
+
+We first replace the Euclidean outcome ball in @prob:additive-ball-learning
+by a simplex. Even known-hypothesis planning then becomes NP-hard.
+
+#theorem[
+  There is a polynomial-time reduction from MAX-CUT to rational
+  imprecise-bandit instances for which $A$ is a Euclidean unit ball, $D$ is
+  a simplex, $Z=[1,2]$, the maps $F_0$ and $F_1$ are bilinear, and the reward
+  is linear and takes values in $[0,1]$. Every $K_z (x)$ is nonempty, and
+  every $z in Z$ induces the same model.
+
+  For these instances, approximating the known-hypothesis value
+
+  $ V_z:=max_(x in A) min_(y in K_z (x)) r(x,y) $
+
+  to inverse-polynomial additive accuracy is NP-hard. Consequently, if, for
+  some fixed $beta>0$, a randomized polynomial-time learner guaranteed
+
+  $ E[R_T]<=P(L) T^(1-beta) $
+
+  on every such instance, where $L$ is the input bit length and $P$ is a
+  polynomial, then $"NP" subset.eq "BPP"$. For a deterministic learner, the
+  same conclusion would be $"P"="NP"$.
+] <thm:additive-simplex-np-hardness>
+
+*Proof.* We reduce from MAX-CUT @garey1979computers. Let $G=(V,E)$ have
+$n$ vertices and $m>=1$ edges. Orient the edges arbitrarily, let
+$B_G in RR^(m times n)$ be the resulting edge-vertex incidence matrix, and
+put
+
+$ gamma:=1/(2m n), quad
+  A:={x in RR^m:norm(x)_2<=1}, quad Z:=[1,2]. $
+
+Write an outcome as $y=(p,q,s) in RR^n times RR^n times RR$ and take
+
+$ D:={(p,q,s):p_i>=0, q_i>=0 " for " i=1,dots,n,
+      s>=0, sum_(i=1)^n (p_i+q_i)+s=1}. $
+
+With $W=RR^n$, define
+
+$ F_0 (x,z):=-gamma z B_G^T x, quad
+  F_1 ((p,q,s),z):=z(p-q), $
+
+and
+
+$ r(x,(p,q,s)):=sum_(i=1)^n (p_i+q_i). $
+
+Both constraint maps are bilinear, and the reward lies in $[0,1]$ on $D$.
+Since $z!=0$, compatibility is equivalent to
+
+$ p-q=gamma B_G^T x, $
+
+so it is independent of $z$.
+
+The incidence matrix has $norm(B_G)_F=sqrt(2m)$. Hence every $x in A$
+satisfies
+
+$ norm(B_G^T x)_1
+  <=sqrt(n) norm(B_G^T x)_2
+  <=sqrt(n) norm(B_G)_F norm(x)_2
+  <=sqrt(2m n). $
+
+For $t:=gamma B_G^T x$, it follows that $norm(t)_1<=1$. The choice
+
+$ p_i:=max(t_i,0), quad q_i:=max(-t_i,0), quad
+  s:=1-norm(t)_1 $
+
+therefore belongs to $D$ and satisfies $p-q=t$, proving that every
+$K_z (x)$ is nonempty.
+
+For any compatible $(p,q,s)$, nonnegativity gives
+$p_i+q_i>=abs(p_i-q_i)=abs(t_i)$. The preceding positive-negative
+decomposition attains equality in every coordinate, and therefore
+
+$ v_z (x):=min_(y in K_z (x)) r(x,y)
+    =gamma norm(B_G^T x)_1. $
+
+By duality of the $ell_1$ and $ell_oo$ norms,
+
+$ norm(B_G^T x)_1
+  =max_(sigma in {-1,1}^n) sigma^T B_G^T x. $
+
+Consequently,
+
+$ max_(x in A) norm(B_G^T x)_1
+  =max_(sigma in {-1,1}^n) norm(B_G sigma)_2. $
+
+For a sign vector $sigma$ and an edge $e={i,j}$, the corresponding
+coordinate satisfies
+
+$ (B_G sigma)_e^2=(sigma_i-sigma_j)^2
+  =cases(4 & "if " sigma_i!=sigma_j, 0 & "otherwise"). $
+
+Thus $norm(B_G sigma)_2^2$ is four times the size of the cut encoded by
+$sigma$. If $M_G$ denotes the maximum cut size, then
+
+$ V_z=2gamma sqrt(M_G). $
+
+The values corresponding to consecutive cut sizes satisfy, for
+$k=1,dots,m$,
+
+$ 2gamma (sqrt(k)-sqrt(k-1))
+  =2gamma/(sqrt(k)+sqrt(k-1))
+  >=gamma/m. $
+
+The tolerance $gamma/(3m)$ is inverse-polynomial in the encoding length.
+Approximating the candidate values $2gamma sqrt(k)$ to polynomially many
+bits, an estimate of $V_z$ within this tolerance identifies $M_G$. This
+proves the planning claim.
+
+The positive-negative decomposition displayed above is an exact rational
+minimizing outcome and is computable in polynomial time from every rational
+arm. Applying @lem:planning-from-learning with $epsilon=gamma/(3m)$
+therefore supplies, with probability at least $2/3$, the estimate used in the
+preceding paragraph. This would place MAX-CUT in $"BPP"$ and hence imply
+$"NP" subset.eq "BPP"$. For a deterministic learner, the estimate is
+deterministic and gives $"P"="NP"$. $qed$
 
 == D = ball, A = ball, F = trilinear
 
-In this subsection only, we drop the additive restriction from the main
-setting and allow a general trilinear constraint map. It is convenient to use
+In this subsection, we retain the Euclidean arm and outcome balls from
+@prob:additive-ball-learning but drop the additive restriction and allow a
+general trilinear constraint map. It is convenient to use
 the homogeneous outcome formulation. Thus, if $Y$ is the ambient outcome
 space, $W$ is the constraint space, and
 
@@ -1103,7 +1305,8 @@ onto: set $y_0=0$ and solve successively for $eta$, $Theta$, and $Xi$ for an
 arbitrary right-hand side.
 
 On the normalization hyperplane, the affine solution space is the singleton
-$K_z (x)$, so the intrinsic non-tangency condition from the main setting is
+$K_z (x)$, so the intrinsic non-tangency condition in
+@prob:additive-ball-learning is
 automatic. In fact, a stronger homogeneous version holds. Surjectivity and
 the dimensions of $Y$ and $W$ show that $L_z (x)$ is the line spanned by
 $y(x)=(1,g(q))$, where $g(q):=(eta,Theta,Xi)$ is given by the displayed
@@ -1157,35 +1360,14 @@ The constructed instance has dimension $O(d^3)$, and all its defining
 coefficients are rational with polynomial encoding length. This proves the
 planning claim.
 
-For the learning claim, let nature put a point mass on the unique feasible
-outcome $y(x_t)$ after each played arm $x_t$, and let
-
-$ overline(r)_T:=1/T sum_(t=1)^T r(x_t,y(x_t)). $
-
-Pointwise,
-
-$ V_z-overline(r)_T=R_T/T>=0. $
-
-The assumed regret bound therefore yields
-
-$ E[V_z-overline(r)_T]<=P(L) T^(-beta). $
-
-By Markov's inequality,
-
-$ Pr(V_z-overline(r)_T>3P(L)T^(-beta))<=1/3. $
-
-The displayed rational lower bound on $Delta_k$ shows that the polynomial
-horizon
-
-$ T>=ceil((360m n^2 P(L))^(1/beta)) $
-
-makes this error smaller than one third of the gap. Comparing
-$overline(r)_T$ with the same rational threshold $tau_k$ then decides CLIQUE:
-in the no case every round's reward is at most $U_(k-1)<tau_k$, while in the
-yes case $overline(r)_T>=U_k-Delta_k/3>tau_k$ with probability at least
-$2/3$.
-This gives $"NP" subset.eq "BPP"$ for a randomized learner and
-$"P" = "NP"$ for a deterministic one. $qed$
+The displayed recursion computes the unique compatible outcome exactly in
+polynomial time from every rational arm; in particular, $x_0>=2/3$ keeps the
+division $q=xi/x_0$ bounded. Applying @lem:planning-from-learning with the
+displayed $epsilon$ therefore supplies, with probability at least $2/3$, an
+additive estimate to which the preceding threshold argument applies. This
+would place CLIQUE in $"BPP"$ and hence imply $"NP" subset.eq "BPP"$. For a
+deterministic learner, the estimate is deterministic and gives
+$"P" = "NP"$. $qed$
 
 
 == IUCB is NP-hard even when A and D are Euclidean balls
@@ -1236,7 +1418,7 @@ reward by
 $ B_z x:=-alpha cal(T)(u,x), quad C_z (w,s):=z_0 w, quad d_z:=0,
   quad r(x,(w,s)):=1/2(1+s). $
 
-These are instances of the setting above, and
+These are instances of @prob:additive-ball-learning, and
 
 $ K_z (x)={(w,s) in D:w=alpha/z_0 cal(T)(u,x)}. $
 
