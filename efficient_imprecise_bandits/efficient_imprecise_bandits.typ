@@ -139,7 +139,7 @@ $ K_z (x) := {y in D : C_z y + B_z x + d_z = 0}. $ <eq:setting-compatible-set>
 
 Here $B_z$, $C_z$, and $d_z$ of are $z$-dependent matrices and vectors of appropriate dimensions.
 
-The true feasible outcome set is $K^star (x) := K_(z^star) (x)$.
+For arm $x$, $K_z (x)$ denotes the set of outcomes that an adversary is allowed to pick as the expected value of its distribution. The true feasible outcome set is $K^star (x) := K_(z^star) (x)$.
 
 We assume throughout that $K^star (x)$ is nonempty for every $x in A$.
 
@@ -180,7 +180,7 @@ history and $x_t$, any distribution supported on $D$ whose conditional mean
 $ m_t := E[y_t | cal(F)_(t-1), x_t] $
 
 belongs to $K^star (x_t)$. An outcome $y_t$ is sampled from this distribution,
-and the learner receives reward $r(x_t,y_t)$.
+the learner observes $y_t$, and receives reward $r(x_t,y_t)$.
 
 The robust value of an arm and the optimal robust value are
 
@@ -197,23 +197,78 @@ $ C_r := max_(x in A, y in D) r(x,y) - min_(x in A, y in D) r(x,y) $
 
 denote the reward range.
 
+An *instance of a linear imprecise-bandit problem* in the additive model
+considered here is a finite binary encoding $cal(I)$ of the dimensions
+$d_A,d_D,d_Z$ and the constraint dimension $d_W$; rational centres and radii
+specifying the balls $A$ and $D$; a compact semialgebraic hypothesis set $Z$
+given by rational polynomial equalities and inequalities; rational reward
+coefficients $a,b,c$; and rational coefficient arrays specifying
+
+$ B_z:=B_0+sum_(j=1)^(d_Z) z_j B_j, quad
+  C_z:=C_0+sum_(j=1)^(d_Z) z_j C_j, quad
+  d_z:=d_0+sum_(j=1)^(d_Z) z_j d_j. $
+
+Here $B_j in RR^(d_W times d_A)$, $C_j in RR^(d_W times d_D)$, and
+$d_j in RR^(d_W)$. This affine dependence on $z$ is the additive-bilinear
+model considered in this paper, and gives the family $z mapsto K_z (x)$ in
+@eq:setting-compatible-set a finite rational description. Write $L$ for the
+bit length of $cal(I)$. A *valid realization* of $cal(I)$ is a pair
+$(z^star,S)$ such that $z^star in Z$, $S in (0,1]$, every
+$K_(z^star) (x)$ is nonempty, and the non-tangency condition above holds with
+constant $S$. Neither $z^star$ nor $S$ is part of the input given to the
+learner.
+
+For $t>=1$, let the observed history before round $t$ be
+
+$ h_(t-1):=((x_1,y_1),dots,(x_(t-1),y_(t-1))). $
+
+A horizon-aware randomized *policy* is a single probabilistic interactive
+algorithm $pi$. Equivalently, for a private random tape $omega$ independent of
+nature's randomization, its action on round $t$ has the form
+
+$ x_t=pi_t (cal(I),1^T,h_(t-1);omega) in A. $
+
+Thus its public input before round $t$ is exactly the instance encoding, the
+unary encoding $1^T$ of the known horizon, and the observed history
+$h_(t-1)$. The policy is not given $z^star$, $S$, the conditional means
+$m_s$, or nature's conditional distributions. Since $r$ is known, the rewards
+in previous rounds are determined by $h_(t-1)$ and need not be supplied
+separately.
+
+A *nature policy* $nu$ is a sequence of probability kernels
+$nu_t (dot | h_(t-1),x)$ supported on $D$. It is compatible with $z^star$ if
+the mean of $nu_t (dot | h_(t-1),x)$ belongs to $K_(z^star) (x)$ for every
+$t$, history $h_(t-1)$, and arm $x in A$. Conditional on $h_(t-1)$ and $x_t$,
+the outcome $y_t$ is sampled from $nu_t (dot | h_(t-1),x_t)$.
+
+We measure computation in the arithmetic and weak-optimization model used
+below, in which the coordinates of the observed outcomes are real inputs. A
+policy is *polynomial-time* if one fixed polynomial in $L$ and $T$ bounds its
+total running time through round $T$, including the cost and requested
+accuracy of its weak-optimization calls. Since the horizon is encoded as
+$1^T$, this is polynomial in the length of the public input and observed
+transcript. The finite-precision implementation is given in the computational
+tractability subsection.
+
 #problem[
-  Given a horizon $T$ and rational descriptions of the known data above,
-  with $A$ and $D$ Euclidean balls and the compatible outcome sets defined
-  by @eq:setting-compatible-set, construct a policy whose running time is
-  polynomial in $T$ and the input bit length and whose expected regret is
-  sublinear in $T$. The guarantee must hold, without knowing $z^star$, for
-  every $z^star in Z$ such that $K^star (x)$ is nonempty for every $x in A$
-  and the uniform non-tangency condition holds, against every compatible
-  adaptive nature policy.
+  Find a polynomial-time policy $pi$, a fixed constant $epsilon>0$, and a
+  fixed polynomial $P$ such that, for every instance $cal(I)$, every horizon
+  $T>=1$, every valid realization $(z^star,S)$, and every adaptive nature
+  policy $nu$ compatible with $z^star$,
+
+  $ E_(pi,nu)[R_T]
+    <=P(d_A,d_D,L,R_A,R_D,norm(b)_2,C_r,S^(-1)) T^(1-epsilon). $
+
+  The expectation is over the private randomization of $pi$ and the outcomes
+  sampled by $nu$.
 ] <prob:additive-ball-learning>
 
 #theorem(title: [efficient $T^(2/3)$ learning])[
-  For every known horizon $T$, there is a policy for
-  @prob:additive-ball-learning whose arithmetic and weak-optimization
-  running time is polynomial in $T$ and the input bit length and which, for
-  every true hypothesis satisfying the uniform non-tangency condition and
-  every compatible adaptive nature policy, satisfies
+  There is a horizon-aware policy for @prob:additive-ball-learning whose
+  arithmetic and weak-optimization running time is polynomial in $T$ and the
+  input bit length and which, for every true hypothesis satisfying the uniform
+  non-tangency condition and every compatible adaptive nature policy,
+  satisfies
 
   $ E[R_T] <= tilde(O)(
       P(d_A,d_D,R_A,R_D,norm(b)_2,C_r,S^(-1)) T^(2/3)), $
@@ -221,6 +276,9 @@ denote the reward range.
   where $P$ is a fixed polynomial. Apart from the uniform non-tangency
   condition on the true feasible sets, no geometric property of $Z$ is used.
 ] <thm:efficient-upper-bound>
+
+Since every fixed polylogarithmic factor is $O(T^(1/12))$, this theorem solves
+@prob:additive-ball-learning with, for example, $epsilon=1/4$.
 
 = Warmup: Noiseless Setting
 
@@ -987,10 +1045,9 @@ In this section we show that several natural variations of
 @prob:additive-ball-learning are NP-hard. Thus in some sense, the problem is
 the hardest problem that's still tractable.
 
-We first show that additive planning at inverse-polynomial accuracy reduces
-to efficient learning whenever a minimizing outcome can be computed exactly.
-This condition is essential, since the reduction must simulate the outcome
-observed by the learner.
+We first show that efficient planning can be reduced to efficient learning.
+Most proofs below show that planning is already NP-hard. Due to the reduction
+from planning to learning, this shows that learning is also NP-hard.
 
 #lemma[
   Fix a rational imprecise-bandit instance of bit length $L$ and a hypothesis
@@ -1164,6 +1221,184 @@ therefore supplies, with probability at least $2/3$, the estimate used in the
 preceding paragraph. This would place MAX-CUT in $"BPP"$ and hence imply
 $"NP" subset.eq "BPP"$. For a deterministic learner, the estimate is
 deterministic and gives $"P"="NP"$. $qed$
+
+== D = ball, A = polytope, F = F0 + F1
+
+We now keep the Euclidean outcome ball and the additive bilinear constraint,
+but allow the arm set to be a polytope given by rational inequalities. Even
+the cube, which has only $2n$ such inequalities but $2^n$ vertices, makes
+known-hypothesis planning NP-hard.
+
+#theorem[
+  There is a polynomial-time reduction from MAX-CUT to rational
+  imprecise-bandit instances for which $A=[-1,1]^n$, represented by $2n$
+  inequalities, $D$ is a Euclidean unit ball, $Z=[1,2]$, the maps $F_0$ and
+  $F_1$ are bilinear, and the reward is linear. Every $K_z (x)$ is nonempty,
+  every $z in Z$ induces the same model, and the uniform non-tangency condition
+  holds with an absolute constant.
+
+  For these instances, approximating the known-hypothesis value
+
+  $ V_z:=max_(x in A) min_(y in K_z (x)) r(x,y) $
+
+  to inverse-polynomial additive accuracy is NP-hard. Consequently, if, for
+  some fixed $beta>0$, a randomized polynomial-time learner guaranteed
+
+  $ E[R_T]<=P(L) T^(1-beta) $
+
+  on every such instance, where $L$ is the input bit length and $P$ is a
+  polynomial, then $"NP" subset.eq "BPP"$. For a deterministic learner, the
+  same conclusion would be $"P"="NP"$.
+] <thm:additive-polytope-np-hardness>
+
+*Proof.* We again reduce from MAX-CUT. Let $G=(V,E)$ have $n$ vertices and
+$m>=1$ edges. Orient the edges arbitrarily and let
+$B_G in RR^(m times n)$ be the edge-vertex incidence matrix, so that
+
+$ (B_G x)_e=x_i-x_j $
+
+for an edge $e={i,j}$. Put
+
+$ epsilon:=1/(4m), quad A:=[-1,1]^n, quad Z:=[1,2]. $
+
+Write outcomes as $y=(u,s) in RR^m times RR$ and take
+
+$ D:={(u,s):norm(u)_2^2+s^2<=1}. $
+
+With $W=RR^m$, define
+
+$ F_0 (x,z):=-epsilon z B_G x, quad F_1 ((u,s),z):=z u, $
+
+and let $r(x,(u,s)):=s$. Both constraint maps are bilinear and the reward is
+linear. Since $z!=0$, compatibility is equivalent to
+
+$ u=epsilon B_G x, $
+
+and is therefore independent of $z$. Moreover, every $x in A$ satisfies
+
+$ norm(B_G x)_2^2
+    =sum_({i,j} in E) (x_i-x_j)^2
+    <=4m, $
+
+so
+
+$ norm(epsilon B_G x)_2^2<=1/(4m)<=1/4. $
+
+Thus every compatible fiber is nonempty. Minimizing $s$ over that fiber gives
+
+$ v_z (x)=-sqrt(1-epsilon^2 norm(B_G x)_2^2). $
+
+Set $q(x):=norm(B_G x)_2^2$. With every coordinate except $x_i$ fixed,
+$q(x)$ is a convex quadratic in $x_i$, so replacing $x_i$ by one of the
+endpoints of $[-1,1]$ does not decrease $q$. Applying this replacement one
+coordinate at a time produces a sign vector $sigma in {-1,1}^n$ with
+$q(sigma)>=q(x)$. At a sign vector,
+
+$ q(sigma)
+    =sum_({i,j} in E) (sigma_i-sigma_j)^2
+    =4 thin lr(|"cut" (sigma)|). $
+
+Consequently,
+
+$ max_(x in [-1,1]^n) q(x)=4 "MaxCut" (G). $
+
+The displayed robust value is strictly increasing in $q(x)$. If the maximum
+cut has size $k$, the planning value is therefore
+
+$ V_k=-sqrt(1-k/(4m^2)). $
+
+For $k=1,dots,m$, consecutive possible values satisfy
+
+$ V_k-V_(k-1)
+  =frac(1/(4m^2),
+      sqrt(1-(k-1)/(4m^2))+sqrt(1-k/(4m^2)))
+  >=1/(8m^2). $
+
+Hence an estimate of $V_z$ within
+
+$ Delta:=1/(32m^2) $
+
+identifies $k$ after the $m+1$ candidate values are computed to polynomially
+many bits. This proves the planning claim.
+
+We next derive the learning consequence. The exact minimizing outcome
+displayed above need not be rational, so we use a rational feasible
+approximation rather than invoke @lem:planning-from-learning. Suppose the
+claimed learner exists and set
+
+$ eta:=Delta/6, quad
+  T:=ceil((6P(L)/Delta)^(1/beta)). $
+
+In the weak bit model the learner outputs rationally encoded arms. For each
+played arm $x_t$, rational binary search for a square root computes $a_t$ in
+polynomial time such that
+
+$ 0<=sqrt(1-epsilon^2 q(x_t))-a_t<=eta, quad
+  a_t^2<=1-epsilon^2 q(x_t). $
+
+Let nature return the point
+
+$ y_t:=(epsilon B_G x_t,-a_t). $
+
+This is a rational point of $K_z (x_t)$, and its reward satisfies
+
+$ 0<=r(x_t,y_t)-v_z (x_t)<=eta. $
+
+Writing $V_z=V_k$ and
+
+$ S_T:=sum_(t=1)^T (V_z-v_z (x_t)), $
+
+we therefore have
+
+$ S_T<=R_T+T eta. $
+
+Taking expectations under the learner's randomization gives
+
+$ E[S_T]<=P(L) T^(1-beta)+T eta. $
+
+If the learner never plays a $Delta$-optimal arm, then $S_T>Delta T$.
+Markov's inequality and the choices of $T$ and $eta$ imply
+
+$ Pr("no " Delta "-optimal arm is played")
+  <=P(L)/(Delta T^beta)+eta/Delta
+  <=1/3. $
+
+Select a played arm maximizing the rational quantity $q(x_t)$ and round its
+coordinates to endpoints without decreasing $q$. With probability at least
+$2/3$, the resulting sign vector has robust value at least $V_k-Delta$. A cut
+of size at most $k-1$ would instead have robust value at most
+$V_(k-1)<=V_k-1/(8m^2)<V_k-Delta$. The rounded sign vector therefore encodes
+a maximum cut. The horizon, the square-root approximations, and the rounding
+all have polynomial bit complexity, proving $"NP" subset.eq "BPP"$. If the
+learner is deterministic, the same argument succeeds with certainty and gives
+$"P"="NP"$.
+
+It remains to verify non-tangency. For a fixed $x$, put
+
+$ a:=norm(epsilon B_G x)_2, quad rho:=sqrt(1-a^2)>=sqrt(3)/2. $
+
+The ambient affine solution space and its intersection with $D$ are
+
+$ L_z (x)={(epsilon B_G x,s):s in RR}, quad
+  K_z (x)={(epsilon B_G x,s):abs(s)<=rho}. $
+
+If $p=(epsilon B_G x,s) in L_z (x)$ lies outside $D$ and $t:=abs(s)>rho$,
+then
+
+$ opdist(p,K_z (x))=t-rho, quad
+  opdist(p,D)=sqrt(a^2+t^2)-1. $
+
+Factoring the second expression gives
+
+$ frac(opdist(p,D),opdist(p,K_z (x)))
+  =frac(t+rho,sqrt(a^2+t^2)+1)
+  >=rho
+  >=sqrt(3)/2. $
+
+Indeed, after clearing the positive denominator, subtracting $rho$, and
+squaring, the first inequality is equivalent to
+$(1-rho^2)(t^2-rho^2)>=0$. Thus the uniform non-tangency condition holds with
+$S=sqrt(3)/2$. $qed$
 
 == D = ball, A = ball, F = trilinear
 
