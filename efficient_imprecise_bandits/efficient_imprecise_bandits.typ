@@ -197,26 +197,21 @@ $ C_r := max_(x in A, y in D) r(x,y) - min_(x in A, y in D) r(x,y) $
 
 denote the reward range.
 
-An *instance of a linear imprecise-bandit problem* in the additive model
-considered here is a finite binary encoding $cal(I)$ of the dimensions
-$d_A,d_D,d_Z$ and the constraint dimension $d_W$; rational centres and radii
-specifying the balls $A$ and $D$; a compact semialgebraic hypothesis set $Z$
-given by rational polynomial equalities and inequalities; rational reward
-coefficients $a,b,c$; and rational coefficient arrays specifying
+The objects above define a *linear imprecise-bandit instance*
 
-$ B_z:=B_0+sum_(j=1)^(d_Z) z_j B_j, quad
-  C_z:=C_0+sum_(j=1)^(d_Z) z_j C_j, quad
-  d_z:=d_0+sum_(j=1)^(d_Z) z_j d_j. $
+$ cal(I):=(A,D,r,Z,(K_z)_(z in Z)). $
 
-Here $B_j in RR^(d_W times d_A)$, $C_j in RR^(d_W times d_D)$, and
-$d_j in RR^(d_W)$. This affine dependence on $z$ is the additive-bilinear
-model considered in this paper, and gives the family $z mapsto K_z (x)$ in
-@eq:setting-compatible-set a finite rational description. Write $L$ for the
-bit length of $cal(I)$. A *valid realization* of $cal(I)$ is a pair
-$(z^star,S)$ such that $z^star in Z$, $S in (0,1]$, every
-$K_(z^star) (x)$ is nonempty, and the non-tangency condition above holds with
-constant $S$. Neither $z^star$ nor $S$ is part of the input given to the
-learner.
+A *valid realization* of $cal(I)$ is a pair $(z^star,S)$ such that
+$z^star in Z$, $S in (0,1]$, every $K_(z^star) (x)$ is nonempty, and the
+non-tangency condition above holds with constant $S$. The public part of the
+instance is $(A,D,r)$. The learner is not given $Z$, the family
+$(K_z)_(z in Z)$, $z^star$, or $S$.
+
+For the computational statements, assume that the centres and radii of $A$
+and $D$ and the coefficients of $r$ have rational binary descriptions. Write
+$cal(P)$ for this public description and $L_("pub")$ for its bit length. No
+description of $Z$ or of $(K_z)_(z in Z)$ is included in $cal(P)$ or
+$L_("pub")$.
 
 For $t>=1$, let the observed history before round $t$ be
 
@@ -226,13 +221,13 @@ A horizon-aware randomized *policy* is a single probabilistic interactive
 algorithm $pi$. Equivalently, for a private random tape $omega$ independent of
 nature's randomization, its action on round $t$ has the form
 
-$ x_t=pi_t (cal(I),1^T,h_(t-1);omega) in A. $
+$ x_t=pi_t (cal(P),1^T,h_(t-1);omega) in A. $
 
-Thus its public input before round $t$ is exactly the instance encoding, the
-unary encoding $1^T$ of the known horizon, and the observed history
-$h_(t-1)$. The policy is not given $z^star$, $S$, the conditional means
-$m_s$, or nature's conditional distributions. Since $r$ is known, the rewards
-in previous rounds are determined by $h_(t-1)$ and need not be supplied
+Thus its input before round $t$ is exactly the public description $cal(P)$,
+the unary encoding $1^T$ of the known horizon, and the observed history
+$h_(t-1)$. In particular, the policy is not given the conditional means
+$m_s$ or nature's conditional distributions. Since $r$ is public, the
+previous rewards are determined by $h_(t-1)$ and need not be supplied
 separately.
 
 A *nature policy* $nu$ is a sequence of probability kernels
@@ -243,21 +238,23 @@ the outcome $y_t$ is sampled from $nu_t (dot | h_(t-1),x_t)$.
 
 We measure computation in the arithmetic and weak-optimization model used
 below, in which the coordinates of the observed outcomes are real inputs. A
-policy is *polynomial-time* if one fixed polynomial in $L$ and $T$ bounds its
-total running time through round $T$, including the cost and requested
-accuracy of its weak-optimization calls. Since the horizon is encoded as
-$1^T$, this is polynomial in the length of the public input and observed
-transcript. The finite-precision implementation is given in the computational
-tractability subsection.
+policy is *polynomial-time* if one fixed polynomial in $L_("pub")$ and $T$
+bounds its total running time through round $T$, including the cost and
+requested accuracy of its weak-optimization calls. Since the horizon is
+encoded as $1^T$, this is polynomial in the length of the public input and
+observed transcript. The finite-precision implementation is given in the
+computational tractability subsection.
 
 #problem[
   Find a polynomial-time policy $pi$, a fixed constant $epsilon>0$, and a
-  fixed polynomial $P$ such that, for every instance $cal(I)$, every horizon
-  $T>=1$, every valid realization $(z^star,S)$, and every adaptive nature
-  policy $nu$ compatible with $z^star$,
+  fixed polynomial $P$ such that, for every instance $cal(I)$ whose public
+  part has a rational description $cal(P)$, every horizon $T>=1$, every valid
+  realization $(z^star,S)$, and every adaptive nature policy $nu$ compatible
+  with $z^star$,
 
   $ E_(pi,nu)[R_T]
-    <=P(d_A,d_D,L,R_A,R_D,norm(b)_2,C_r,S^(-1)) T^(1-epsilon). $
+    <=P(d_A,d_D,L_("pub"),R_A,R_D,norm(b)_2,C_r,S^(-1))
+      T^(1-epsilon). $
 
   The expectation is over the private randomization of $pi$ and the outcomes
   sampled by $nu$.
@@ -266,9 +263,9 @@ tractability subsection.
 #theorem(title: [efficient $T^(2/3)$ learning])[
   There is a horizon-aware policy for @prob:additive-ball-learning whose
   arithmetic and weak-optimization running time is polynomial in $T$ and the
-  input bit length and which, for every true hypothesis satisfying the uniform
-  non-tangency condition and every compatible adaptive nature policy,
-  satisfies
+  public-description length and which, for every true hypothesis satisfying
+  the uniform non-tangency condition and every compatible adaptive nature
+  policy, satisfies
 
   $ E[R_T] <= tilde(O)(
       P(d_A,d_D,R_A,R_D,norm(b)_2,C_r,S^(-1)) T^(2/3)), $
@@ -959,7 +956,7 @@ $ min_(y in hat(K)_M^("out") (x)) r(x,y)
     ). $
 
 The interior ball bounds the norm of an optimal dual vector by a polynomial
-in the input size, $T$, and
+in the bit length of the public and accumulated numerical data, $T$, and
 $min(lambda,rho-3zeta)^(-1)$. Introducing epigraph variables for the two
 square roots therefore turns the joint maximization over $x$ and $u$ into a
 bounded QCQP with a fixed number of quadratic constraints.
@@ -1036,8 +1033,8 @@ $zeta_v=(T+1)^(-3)$, and $tau=(T+1)^(-12)$ makes every
 numerical error negligible or absorbs it into the existing
 $tilde(O)(n^(-1/2))$ bound. These choices require only $O(log T)$ additional
 precision bits, and the planning error contributes at most $T zeta_v$ to
-regret. Hence the weak bit-model implementation remains polynomial-time and
-has the same regret rate.
+regret. Hence the weak bit-model implementation remains polynomial in
+$L_("pub")$ and $T$ and has the same regret rate.
 
 = NP-hardness
 
@@ -1045,13 +1042,24 @@ In this section we show that several natural variations of
 @prob:additive-ball-learning are NP-hard. Thus in some sense, the problem is
 the hardest problem that's still tractable.
 
+In this section, a *rational instance of bit length $L$* has a finite binary
+description of every set, reward coefficient, and constraint map explicitly
+presented in the relevant result, of total bit length $L$. When a fixed
+hypothesis is used for known-hypothesis planning, its rational description is
+also included in $L$. This full description is available to the reduction,
+but a learner invoked by the reduction still receives only the corresponding
+public description of $(A,D,r)$. For each variation below, that public
+description uses the set representation stated in the result, and the
+learner's running time is polynomial in its length and $T$.
+
 We first show that efficient planning can be reduced to efficient learning.
 Most proofs below show that planning is already NP-hard. Due to the reduction
 from planning to learning, this shows that learning is also NP-hard.
 
 #lemma[
-  Fix a rational imprecise-bandit instance of bit length $L$ and a hypothesis
-  $z$ such that $K_z (x)$ is nonempty for every $x in A$, and write
+  Fix a rational imprecise-bandit instance of bit length $L$ and a rational
+  hypothesis $z$ such that $K_z (x)$ is nonempty for every $x in A$, and
+  write
 
   $ v_z (x):=min_(y in K_z (x)) r(x,y), quad
     V_z:=max_(x in A) v_z (x). $
@@ -1077,7 +1085,7 @@ from planning to learning, this shows that learning is also NP-hard.
   $0<=V_z-hat(V)<=epsilon$ with certainty.
 ] <lem:planning-from-learning>
 
-*Proof.* Run the learner for
+*Proof.* Run the learner on the public description of $(A,D,r)$ for
 
 $ T:=ceil((3P(L)/epsilon)^(1/beta)) $
 
@@ -1124,9 +1132,9 @@ by a simplex. Even known-hypothesis planning then becomes NP-hard.
 
   $ E[R_T]<=P(L) T^(1-beta) $
 
-  on every such instance, where $L$ is the input bit length and $P$ is a
-  polynomial, then $"NP" subset.eq "BPP"$. For a deterministic learner, the
-  same conclusion would be $"P"="NP"$.
+  on every such instance, where $L$ is the total rational-description length
+  and $P$ is a polynomial, then $"NP" subset.eq "BPP"$. For a deterministic
+  learner, the same conclusion would be $"P"="NP"$.
 ] <thm:additive-simplex-np-hardness>
 
 *Proof.* We reduce from MAX-CUT @garey1979computers. Let $G=(V,E)$ have
@@ -1246,9 +1254,9 @@ known-hypothesis planning NP-hard.
 
   $ E[R_T]<=P(L) T^(1-beta) $
 
-  on every such instance, where $L$ is the input bit length and $P$ is a
-  polynomial, then $"NP" subset.eq "BPP"$. For a deterministic learner, the
-  same conclusion would be $"P"="NP"$.
+  on every such instance, where $L$ is the total rational-description length
+  and $P$ is a polynomial, then $"NP" subset.eq "BPP"$. For a deterministic
+  learner, the same conclusion would be $"P"="NP"$.
 ] <thm:additive-polytope-np-hardness>
 
 *Proof.* We again reduce from MAX-CUT. Let $G=(V,E)$ have $n$ vertices and
@@ -1639,8 +1647,8 @@ $ norm(cal(T))_sigma:=max_(norm(u)_2<=1,norm(x)_2<=1)
 Computing this value is NP-hard @hillar2013most. From $cal(T)$, construct an IUCB
 instance as follows. Put
 
-$ L:=1+sum_(i,j,k) abs(T_(i j k)), quad
-  alpha:=1/(2L), quad A:={x:norm(x)_2<=1}. $
+$ H:=1+sum_(i,j,k) abs(T_(i j k)), quad
+  alpha:=1/(2H), quad A:={x:norm(x)_2<=1}. $
 
 Write $z=(z_0,u)$ and $y=(w,s)$, and take
 
@@ -1664,8 +1672,8 @@ $ norm(u)_2/z_0<=3/4, $
 because
 $1-(z_0-5/3)^2-9z_0^2/16=-(15z_0-16)^2/144<=0$.
 Equality holds at $z_0=16/15$ and $norm(u)_2=4/5$ in every direction.
-Also $norm(cal(T)(u,x))_2<=L norm(u)_2 norm(x)_2$, so the fixed $w$ in
-$K_z (x)$ has norm at most $3alpha L/4=3/8$. Thus every $K_z (x)$ is
+Also $norm(cal(T)(u,x))_2<=H norm(u)_2 norm(x)_2$, so the fixed $w$ in
+$K_z (x)$ has norm at most $3alpha H/4=3/8$. Thus every $K_z (x)$ is
 nonempty, and the uniform non-tangency condition holds with
 $S>=sqrt(55)/8$. For this instance, nature chooses
 $s=-sqrt(1-norm(w)_2^2)$ when evaluating $v_z (x)$, whence
