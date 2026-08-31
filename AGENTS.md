@@ -1,5 +1,28 @@
 # Repository instructions
 
+## Draft review colour
+
+- By default, wrap every new or substantively rewritten piece of
+  user-visible Typst manuscript content authored by Codex in `#draft[...]`.
+  This includes prose, headings, theorem and lemma statements, proofs,
+  captions, list items, and displayed mathematics.
+- Do not recolour unchanged text written by the user or mechanically edited
+  notation. If a `.typ` file does not yet define the review macros, add:
+
+  ```typst
+  #let draft(body) = {
+    set text(fill: rgb("#0057d9"))
+    body
+  }
+  ```
+
+- `#draft[...]` renders the enclosed content blue. Once the user accepts a
+  passage, convert it to the normal document colour by deleting only the word
+  `draft`: `#draft[...]` becomes `#[...]`. Do not alter the accepted wording
+  during that conversion.
+- If the user explicitly requests normal-coloured text, or explicitly marks a
+  passage as accepted, use `#[...]` or leave it unwrapped.
+
 ## Document style
 
 - By default, do not give lemmas names or title-like bold prefixes; begin a

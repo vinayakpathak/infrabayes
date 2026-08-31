@@ -9,6 +9,12 @@
 )
 #set text(font: "New Computer Modern", size: 10pt, fill: black)
 #show math.equation: set text(font: "New Computer Modern Math")
+
+#let draft(body) = {
+  set text(fill: rgb("#0057d9"))
+  body
+}
+
 #set par(
   justify: true,
   leading: 0.55em,
@@ -105,6 +111,7 @@
 #let opargmin = math.op("argmin")
 #let poly = math.op("poly")
 #let Pr = math.op("Pr")
+#let cM = $cal(M)$
 
 #set document(
   title: [When are Imprecise Bandits Computationally Tractable?],
@@ -122,47 +129,69 @@
 
 = Setting
 
-Let $A subset.eq RR^(d_A)$ be the arm set and let
-$D subset.eq RR^(d_D)$ be the outcome set. We assume that $A$ and $D$ are
-Euclidean balls of radii $R_A$ and $R_D$ (not necessarily centred at the origin).
-An element $x in A$ is called an *arm*, while an element $y in D$ is a
-possible sampled outcome. The reward is affine in the arm and outcome:
+#let credal = box(
+  width: 0.68em,
+  height: 0.68em,
+  baseline: bottom,
+  stroke: 0.055em,
+) + h(0.04em)
+
+An instance of the imprecise bandits problem is a tuple $cM = (X, D, H, r)$, where $X$ is a set of arms, $D$ is a set of possible outcomes, $H$ is a set of mappings of type $X -> credal D$ where $credal D$ denotes the set of credal sets over $D$, and $r: X times D -> RR$ is a reward function.
+
+The imprecise bandits game is played between a learner and an adversary for $T$ rounds (both adversary and learner know $T$). At the beginning of the game, the adversary picks some $h^star in H$. The learner knows $X, D, H, r$, and $T$, but does not have knowledge of $h^star$. Then, at each round $t$:
+1. Learner picks an arm $x_t in X$.
+2. Adversary picks a distribution $P_t in h^star (x_t)$.
+3. An outcome $y_t ~ P_t$ is drawn and shown to the learner as feedback.
+4. Learner gets reward $r(x_t, y_t)$.
+
+Given a hypothesis $h in H$, we define the value functions:
+
+$ v_h (x) := min_(P in h(x)) EE_(y ~ P) [r(x,y)], quad
+  V_h := max_(x in X) v_h (x). $
+
+We use the shorthand $v^* (x)$ and $V^star$ to denote the value functions corresponding to the true hypothesis $h^star$.
+
+The regret over horizon $T$ is
+
+$ R_T := T V^star - EE [sum_(t=1)^T r(x_t,y_t)]. $
+
+Here the expectation in the second term is taken wrt the randomness in the learner's and the adversary's strategies as well as the randomness arising from sampling $y_t ~ P_t$.
+
+We are interested in learner strategies that can achieve a sublinear (in $T$) regret for all true hypotheses $h^star in H$. We say that an imprecise bandits instance $cM = (X, D, H, r)$ has a _statistically efficient_ learner if such a learner strategy exists.
+
+*Computational tractability.* In this paper, we are interested in studying the computational complexity of the learner. A _learner policy_ $pi$ is a randomized algorithm that takes as input a history $h_t = ((x_i,y_i))_(i=1)^t$ and the description of the problem instance $cM$ and returns a next arm $x_(t+1)$. The computational complexity of the problem depends crucially on the exact nature of access the policy is given to $cM$. For example, on one extreme, one can consider a non-uniform access such that a policy $pi^cM$ is merely indexed by the instance $cM$ as opposed to $cM$ being an input to a computational procedure. However, this makes several instances rather trivial. In this paper we mostly consider specific encodings of $cM$. We also occasionally assume $pi$ to have oracle access to $cM$ with certain specific oracles. We will make these assumptions clear in the respective sections.
+
+We will say that a learner is _computationally efficient_ if it runs in time polynomial in the size of its input and achieves a regret $R_T <= poly(|cM|)T^(1-alpha)$ for some $alpha > 0$.
+
+== Linear Imprecise Bandits
+
+For most of this work, we study the following linear specialization of the
+instance $cM=(X,D,H,r)$ defined above. Let
+$X subset.eq RR^(d_X)$ be the arm set, and let
+$D subset.eq RR^(d_D)$ be the outcome set. We assume that $X$ and $D$ are
+Euclidean balls of radii $R_X$ and $R_D$ (not necessarily centred at the origin).
+The reward is affine in the arm and outcome:
 
 $ r(x,y) := a^T x + b^T y + c. $
 
-Let $Z subset.eq RR^(d_Z)$ denote the hypothesis set, and let
-$z^star in Z$ be the unknown true hypothesis. For every $z in Z$ and $x in A$, define
+Let the hypothesis class $H$ be parametrized by $Z subset.eq RR^(d_Z)$.
+For every $z in Z$, we define the hypothesis $h_z$ by first defining the possible expected values of the distributions that $h_z$ is allowed to choose. In particular, let
 
 #set math.equation(numbering: "(1)")
 $ K_z (x) := {y in D : C_z y + B_z x + d_z = 0}. $ <eq:setting-compatible-set>
 #set math.equation(numbering: none)
 
-Here $B_z$, $C_z$, and $d_z$ of are $z$-dependent matrices and vectors of appropriate dimensions.
+Here $B_z$, $C_z$, and $d_z$ are $z$-dependent matrices and vectors of
+appropriate dimensions. Now, hypothesis $h_z: X -> credal D$ is given by
 
-For arm $x$, $K_z (x)$ denotes the set of outcomes that an adversary is allowed to pick as the expected value of its distribution. The true feasible outcome set is $K^star (x) := K_(z^star) (x)$.
+$ h_z (x) := {P in Delta D : EE_(y ~ P)[y] in K_z (x)}. $
 
-We assume throughout that $K^star (x)$ is nonempty for every $x in A$.
-
-Let $N:=opker C_(z^star)$.
-
-#lemma[
-  There exists an affine map $f_z: A -> RR^(d_D)$ and a linear subspace $N_z$ independent of $x$ such that
-
-  $ f_z (x)+N_z
-      ={y in RR^(d_D):C_(z)y+B_(z)x+d_(z)=0},
-      quad x in A. $
-
-  Consequently, there exists an $f$ and $N$ such that
-
-  $ K^star (x)=(f(x)+N) inter D, quad x in A. $
-] <lem:noiseless-affine-spaces>
-
-*Proof.* Fix $x$ and let $y_1, y_2 in K_z (x)$. Then $C_z (y_1 - y_2) = 0$, which means $y_1-y_2$ must lie in a subspace determined by $z$. We can pick some $y in K_z (x)$ arbitrarily and set $f_z (x) = y$. This is clearly an affine mapping. $qed$
-
-Note that as the proof demonstrates, $f_z$ need not be unique. Indeed, for each $z$ there can be multiple $f_z$'s that satisfy the requirement of the lemma. However, each $z$ determines a unique $N_z$.
+Let $z^star in Z$ represent the true
+hypothesis, so that $h^star=h_(z^star)$. The true feasible mean set is
+$K^star (x):=K_(z^star) (x)$.
 
 We also assume a uniform non-tangency condition: there is a constant
-$S in (0,1]$ such that, for every $x in A$ and every
+$S in (0,1]$ such that, for every $x in X$ and every
 $p in RR^(d_D)$ satisfying
 $C_(z^star)p+B_(z^star)x+d_(z^star)=0$ with $p in.not D$,
 
@@ -172,106 +201,57 @@ For a Euclidean ball, this says that the affine solution spaces defined by
 the true constraints remain uniformly bounded away from tangency to $D$.
 This is the transversality condition used in @kosoy2025imprecise.
 
-The interaction proceeds for rounds $t=1,dots,T$. Let
-$cal(F)_(t-1)$ denote the history before round $t$. The learner chooses an
-arm $x_t in A$. Nature may then choose, adaptively as a function of the
-history and $x_t$, any distribution supported on $D$ whose conditional mean
 
-$ m_t := E[y_t | cal(F)_(t-1), x_t] $
 
-belongs to $K^star (x_t)$. An outcome $y_t$ is sampled from this distribution,
-the learner observes $y_t$, and receives reward $r(x_t,y_t)$.
+Because $r$ is affine in its outcome argument, the value functions defined
+above satisfy
 
-The robust value of an arm and the optimal robust value are
-
-$ v^star (x) := min_(y in K^star (x)) r(x,y), quad
-  V^star := max_(x in A) v^star (x). $
+$ v^* (x)
+    =min_(P in h^star (x)) EE_(y ~ P)[r(x,y)]
+    =min_(y in K^star (x)) r(x,y), quad
+  V^star := max_(x in X) v^* (x). $
 
 The regret over horizon $T$ is
 
-$ R_T := T V^star - sum_(t=1)^T r(x_t,y_t). $
-
-Finally, let
-
-$ C_r := max_(x in A, y in D) r(x,y) - min_(x in A, y in D) r(x,y) $
-
-denote the reward range.
-
-The objects above define a *linear imprecise-bandit instance*
-
-$ cal(I):=(A,D,r,Z,(K_z)_(z in Z)). $
-
-A *valid realization* of $cal(I)$ is a pair $(z^star,S)$ such that
-$z^star in Z$, $S in (0,1]$, every $K_(z^star) (x)$ is nonempty, and the
-non-tangency condition above holds with constant $S$. The public part of the
-instance is $(A,D,r)$. The learner is not given $Z$, the family
-$(K_z)_(z in Z)$, $z^star$, or $S$.
-
-For the computational statements, assume that the centres and radii of $A$
-and $D$ and the coefficients of $r$ have rational binary descriptions. Write
-$cal(P)$ for this public description and $L_("pub")$ for its bit length. No
-description of $Z$ or of $(K_z)_(z in Z)$ is included in $cal(P)$ or
-$L_("pub")$.
-
-For $t>=1$, let the observed history before round $t$ be
-
-$ h_(t-1):=((x_1,y_1),dots,(x_(t-1),y_(t-1))). $
-
-A horizon-aware randomized *policy* is a single probabilistic interactive
-algorithm $pi$. Equivalently, for a private random tape $omega$ independent of
-nature's randomization, its action on round $t$ has the form
-
-$ x_t=pi_t (cal(P),1^T,h_(t-1);omega) in A. $
-
-Thus its input before round $t$ is exactly the public description $cal(P)$,
-the unary encoding $1^T$ of the known horizon, and the observed history
-$h_(t-1)$. In particular, the policy is not given the conditional means
-$m_s$ or nature's conditional distributions. Since $r$ is public, the
-previous rewards are determined by $h_(t-1)$ and need not be supplied
-separately.
-
-A *nature policy* $nu$ is a sequence of probability kernels
-$nu_t (dot | h_(t-1),x)$ supported on $D$. It is compatible with $z^star$ if
-the mean of $nu_t (dot | h_(t-1),x)$ belongs to $K_(z^star) (x)$ for every
-$t$, history $h_(t-1)$, and arm $x in A$. Conditional on $h_(t-1)$ and $x_t$,
-the outcome $y_t$ is sampled from $nu_t (dot | h_(t-1),x_t)$.
+$ R_T := T V^star - EE [sum_(t=1)^T r(x_t,y_t)]. $
 
 We measure computation in the arithmetic and weak-optimization model used
-below, in which the coordinates of the observed outcomes are real inputs. A
-policy is *polynomial-time* if one fixed polynomial in $L_("pub")$ and $T$
-bounds its total running time through round $T$, including the cost and
-requested accuracy of its weak-optimization calls. Since the horizon is
-encoded as $1^T$, this is polynomial in the length of the public input and
-observed transcript. The finite-precision implementation is given in the
-computational tractability subsection.
+below, in which the coordinates of the observed outcomes are real inputs. The
+model-oblivious policy constructed below is *polynomial-time* if one fixed
+polynomial in $L_("pub")$ and $T$ bounds its total running time through round
+$T$, including the cost and requested accuracy of its weak-optimization calls.
+Since the horizon is encoded as $1^T$, this is polynomial in the length of the
+reduced input and observed transcript. The finite-precision implementation is
+given in the computational tractability subsection.
 
 #problem[
   Find a polynomial-time policy $pi$, a fixed constant $epsilon>0$, and a
-  fixed polynomial $P$ such that, for every instance $cal(I)$ whose public
-  part has a rational description $cal(P)$, every horizon $T>=1$, every valid
-  realization $(z^star,S)$, and every adaptive nature policy $nu$ compatible
-  with $z^star$,
+  fixed polynomial $P$ such that, for every linearly presented instance $cM$
+  whose reduced part has a rational description $cal(P)$, every horizon
+  $T>=1$, every valid realization $(z^star,S)$ inducing $h^star$, and every
+  adaptive nature policy $nu$ compatible with $h^star$,
 
-  $ E_(pi,nu)[R_T]
-    <=P(d_A,d_D,L_("pub"),R_A,R_D,norm(b)_2,C_r,S^(-1))
+  $ R_T
+    <=P(d_X,d_D,L_("pub"),R_X,R_D,norm(b)_2,C_r,S^(-1))
       T^(1-epsilon). $
 
-  The expectation is over the private randomization of $pi$ and the outcomes
-  sampled by $nu$.
+  The expectation in $R_T$ is over the private randomization of $pi$ and the
+  outcomes sampled by $nu$.
 ] <prob:additive-ball-learning>
 
 #theorem(title: [efficient $T^(2/3)$ learning])[
   There is a horizon-aware policy for @prob:additive-ball-learning whose
   arithmetic and weak-optimization running time is polynomial in $T$ and the
-  public-description length and which, for every true hypothesis satisfying
+  reduced-description length and which, for every true hypothesis satisfying
   the uniform non-tangency condition and every compatible adaptive nature
   policy, satisfies
 
-  $ E[R_T] <= tilde(O)(
-      P(d_A,d_D,R_A,R_D,norm(b)_2,C_r,S^(-1)) T^(2/3)), $
+  $ R_T <= tilde(O)(
+      P(d_X,d_D,R_X,R_D,norm(b)_2,C_r,S^(-1)) T^(2/3)), $
 
   where $P$ is a fixed polynomial. Apart from the uniform non-tangency
-  condition on the true feasible sets, no geometric property of $Z$ is used.
+  condition on the true feasible sets, no geometric property of $H$ or its
+  parameter set $Z$ is used.
 ] <thm:efficient-upper-bound>
 
 Since every fixed polylogarithmic factor is $O(T^(1/12))$, this theorem solves
@@ -282,8 +262,27 @@ Since every fixed polylogarithmic factor is $O(T^(1/12))$, this theorem solves
 In this section, playing an arm $x$ reveals an exact feasible response
 $y in K^star (x)$; there is no sampling noise. However, there still is the Knightian uncertainty corresponding to the adversary picking an arbitrary outcome inside $K^star (x)$.
 
+Let $N:=opker C_(z^star)$.
+
 #lemma[
-  Suppose that, for every arm $x in A$, we have identified a nonempty set
+  There exists an affine map $f_z: X -> RR^(d_D)$ and a linear subspace $N_z$ independent of $x$ such that
+
+  $ f_z (x)+N_z
+      ={y in RR^(d_D):C_(z)y+B_(z)x+d_(z)=0},
+      quad x in X. $
+
+  Consequently, there exists an $f$ and $N$ such that
+
+  $ K^star (x)=(f(x)+N) inter D, quad x in X. $
+] <lem:noiseless-affine-spaces>
+
+*Proof.* Fix $x$ and let $y_1, y_2 in K_z (x)$. Then $C_z (y_1 - y_2) = 0$, which means $y_1-y_2$ must lie in a subspace determined by $z$. We can pick some $y in K_z (x)$ arbitrarily and set $f_z (x) = y$. This is clearly an affine mapping. $qed$
+
+Note that as the proof demonstrates, $f_z$ need not be unique. Indeed, for each $z$ there can be multiple $f_z$'s that satisfy the requirement of the lemma. However, each $z$ determines a unique $N_z$.
+
+
+#lemma[
+  Suppose that, for every arm $x in X$, we have identified a nonempty set
   $K'(x) subset.eq K^star (x)$, and suppose that whenever the learner plays
   $x$, nature chooses an outcome in $K'(x)$. Define
 
@@ -291,45 +290,45 @@ $y in K^star (x)$; there is no sampling noise. However, there still is the Knigh
 
   and choose
 
-  $ x' in opargmax_(x in A) v'(x). $
+  $ x' in opargmax_(x in X) v'(x). $
 
   Then playing $x'$ on every round incurs nonpositive regret with
   respect to the original robust benchmark, i.e. $R_T <= 0$.
 ] <lem:inner-feasible-set>
 
 #lemma[
-  There exist $d_A+1$ arms $x^((0)),dots,x^((d_A)) in A$ such that, from any
+  There exist $d_X+1$ arms $x^((0)),dots,x^((d_X)) in X$ such that, from any
   possible sequence of responses
   $y^((i)) in K^star (x^((i)))$, we can compute an affine map $hat(f)$ such that
-  $ K^star (x) = (hat(f)(x) + N) inter D, quad x in A. $
+  $ K^star (x) = (hat(f)(x) + N) inter D, quad x in X. $
 ] <lem:noiseless-anchor-identification>
 
 *Proof.* Let $f$ be any affine map supplied by
-@lem:noiseless-affine-spaces. Let $x^((0)), dots, x^((d_A))$ be any affine
-basis of $A$. Play them in sequence and let
-$y^((0)),dots, y^((d_A))$ be the corresponding outcomes chosen by the
+@lem:noiseless-affine-spaces. Let $x^((0)), dots, x^((d_X))$ be any affine
+basis of $X$. Play them in sequence and let
+$y^((0)),dots, y^((d_X))$ be the corresponding outcomes chosen by the
 adversary. Let $hat(f)$ be the unique affine interpolator for which
 $hat(f)(x^((i))) = y^((i))$ for all $i$. Since
 $y^((i)) in K^star (x^((i)))$, we have that
 $hat(f)(x^((i)))+N = f(x^((i)))+N$ for all $i$. Since the $x^((i))$ form an
-affine basis, $hat(f)(x)+N = f(x)+N$ for all $x in A$.
+affine basis, $hat(f)(x)+N = f(x)+N$ for all $x in X$.
  $qed$
 
 #algorithm(title: [Noiseless imprecise bandit])[
   #set enum(numbering: "1.", indent: 1.5em, body-indent: 0.55em)
 
-  + Play the $d_A+1$ arms from @lem:noiseless-anchor-identification and use
+  + Play the $d_X+1$ arms from @lem:noiseless-anchor-identification and use
     their responses to construct $hat(f)$.
 
-  + Initialize $N_(d_A+2) := {0}$.
+  + Initialize $N_(d_X+2) := {0}$.
 
-  + For each round $t=d_A+2,dots,T$:
-    - For every $x in A$, define the provisional feasible set
+  + For each round $t=d_X+2,dots,T$:
+    - For every $x in X$, define the provisional feasible set
       $ K'_t (x) := (hat(f)(x)+N_t) inter D. $
 
-    - If $K'_t (x)=emptyset$ for some $x in A$, choose any such arm as
+    - If $K'_t (x)=emptyset$ for some $x in X$, choose any such arm as
       $x_t$. Otherwise, choose
-      $ x_t in opargmax_(x in A) min_(y in K'_t (x)) r(x,y). $
+      $ x_t in opargmax_(x in X) min_(y in K'_t (x)) r(x,y). $
 
     - Play $x_t$ and observe $y_t$.
 
@@ -348,7 +347,7 @@ On every remaining round, all the provisional feasible sets are nonempty and
 the observed response belongs to $K'_t (x_t)$. Hence
 @lem:inner-feasible-set shows that the reward on that round is at least the
 original robust benchmark. Charging at most a constant regret to each of the
-$d_A+1$ initial rounds and to each update round gives $R_T <= O(d_A+d_D). $
+$d_X+1$ initial rounds and to each update round gives $R_T <= O(d_X+d_D). $
 
 == Computational Tractability
 
@@ -368,13 +367,13 @@ polynomial time.
 It remains to compute the arm in the planning step.
 
 #lemma[
-  Fix a round $t$. Given rational descriptions of $A,D,hat(f)$, and $N_t$,
+  Fix a round $t$. Given rational descriptions of $X,D,hat(f)$, and $N_t$,
   one can compute, in polynomially many arithmetic operations, an arm
-  $x_("emp") in A$ such that, if $K'_t (x)=emptyset$ for some $x in A$,
+  $x_("emp") in X$ such that, if $K'_t (x)=emptyset$ for some $x in X$,
   then $K'_t (x_("emp"))=emptyset$.
 ] <lem:polynomial-empty-set>
 
-*Proof.* Clearly, for a given $x$, the set $K'_t (x)$ is empty if and only if the distance between $c_D$ and $hat(f)(x) + N_t$ is bigger than $R_D$. Thus to decide if there exists an $x in A$ for which $K'_t (x)$ is empty, we need to find the arm that maximizes the distance between $c_D$ and $hat(f)(x) + N_t$. To see why this can be done in polynomial time, let $q_t (x)$ be the point in $hat(f)(x) + N_t$ that is closest to $c_D$. Note that $q_t (x)$ can be written as an affine function.
+*Proof.* Clearly, for a given $x$, the set $K'_t (x)$ is empty if and only if the distance between $c_D$ and $hat(f)(x) + N_t$ is bigger than $R_D$. Thus to decide if there exists an $x in X$ for which $K'_t (x)$ is empty, we need to find the arm that maximizes the distance between $c_D$ and $hat(f)(x) + N_t$. To see why this can be done in polynomial time, let $q_t (x)$ be the point in $hat(f)(x) + N_t$ that is closest to $c_D$. Note that $q_t (x)$ can be written as an affine function.
 
 $ q_t (x):=c_D+(I-P_t)(hat(f)(x)-c_D). $
 
@@ -431,18 +430,18 @@ Here $P_t$ is the projection on $N_t$.
 
 Now we need to compute
 
-$ x_("emp") in opargmax_(x in A) norm(q_t (x)-c_D)_2^2. $
+$ x_("emp") in opargmax_(x in X) norm(q_t (x)-c_D)_2^2. $
 
-This is a quadratic optimization problem over the Euclidean ball $A$, which is polynomial-time solvable using the result in @more1983computing. $qed$
+This is a quadratic optimization problem over the Euclidean ball $X$, which is polynomial-time solvable using the result in @more1983computing. $qed$
 
 #lemma[
-  Fix a round $t$ and suppose that $K'_t (x)$ is nonempty for every $x in A$.
+  Fix a round $t$ and suppose that $K'_t (x)$ is nonempty for every $x in X$.
   Let the rational problem data have total bit length $L$. For every
-  $epsilon in (0,1)$, one can compute an arm $x_epsilon in A$ in time
+  $epsilon in (0,1)$, one can compute an arm $x_epsilon in X$ in time
   $poly(L,log(1/epsilon))$ such that
 
   $ min_(y in K'_t (x_epsilon)) r(x_epsilon,y)
-    >= max_(x in A) min_(y in K'_t (x)) r(x,y)-epsilon. $
+    >= max_(x in X) min_(y in K'_t (x)) r(x,y)-epsilon. $
 ] <lem:polynomial-robust-planning>
 
 *Proof.* Compute the orthogonal projector $P_t$ onto $N_t$ as in the proof of
@@ -469,20 +468,20 @@ $ max_(x,s) a^T x+b^T q_t (x)+c-beta_t s $
 
 subject to
 
-$ norm(x-c_A)_2^2<=R_A^2, quad
+$ norm(x-c_X)_2^2<=R_X^2, quad
   s^2+norm(q_t (x)-c_D)_2^2=R_D^2, quad s>=0, $
 
-where $c_A$ is the centre of $A$. Represent the equality by two quadratic
-inequalities. If $R_A,R_D>0$, add the redundant constraint
+where $c_X$ is the centre of $X$. Represent the equality by two quadratic
+inequalities. If $R_X,R_D>0$, add the redundant constraint
 
-$ norm(x-c_A)_2^2/R_A^2+s^2/R_D^2<=2. $
+$ norm(x-c_X)_2^2/R_X^2+s^2/R_D^2<=2. $
 
 This is an ellipsoid in the joint variable $(x,s)$. Thus the QCQP has a fixed
 number of quadratic constraints, one of which is ellipsoidal. Bienstock's
 theorem @bienstock2016cdt returns, in time polynomial in $L$ and $log(1/delta)$, a solution $(x^star,s^star)$ such that for each constraint $g_i (x,s)<= 0$, we have that $g_i (x^star, s^star) <= delta$, and the value of the objective function $Phi_t (x,s):=a^T x+b^T q_t (x)+c-beta_t s$ at $(x^star, s^star)$ is $delta$-close to the optimal, i.e., for every feasible $(x,s)$, $Phi_t (x^star,s^star)>=Phi_t (x,s)-delta$.
 
 The output $x^star$ of Bienstock's algorithm may not be a feasible arm. But to obtain a feasible arm, we can simply project
-$x^star$ onto $A$ to obtain $x_epsilon$. It is easy to see that this does not change the value of the objective function too much. Indeed, set $s_epsilon:=sqrt(R_D^2-norm(q_t (x_epsilon)-c_D)_2^2).$
+$x^star$ onto $X$ to obtain $x_epsilon$. It is easy to see that this does not change the value of the objective function too much. Indeed, set $s_epsilon:=sqrt(R_D^2-norm(q_t (x_epsilon)-c_D)_2^2).$
 The projection moves
 $x^star$ by $O(sqrt(delta))$, and thus moves $s^star$ by at most
 $O(delta^(1/4))$. Consequently the linear objective
@@ -520,18 +519,18 @@ current ellipsoid, we expand the ellipsoid in a specific way along the direction
 of the residual.
 
 #lemma[
-  Fix $delta in (0,1)$ and $1<=n<=T$. There exist $d_A+1$ affinely
+  Fix $delta in (0,1)$ and $1<=n<=T$. There exist $d_X+1$ affinely
   independent anchor arms such that, after playing each arm for $n$ rounds
   and interpolating their empirical average outcomes, the resulting affine
   map $hat(f)$ satisfies the following with probability at least $1-delta$.
   There is an affine map $f$ and a linear subspace $N$ such that
   $K^star (x)=(f(x)+N) inter D$ and
 
-  $ sup_(x in A) norm(hat(f)(x)-f(x))_2
+  $ sup_(x in X) norm(hat(f)(x)-f(x))_2
     <= tilde(O)(n^(-1/2)). $
 ] <lem:noisy-anchor-interpolation>
 
-*Proof.* Let $x^((0)),dots,x^((d_A))$ be any affine basis of $A$. Play each
+*Proof.* Let $x^((0)),dots,x^((d_X))$ be any affine basis of $X$. Play each
 arm for $n$ rounds. Let $overline(y)^((i))$ be the average observed outcome
 for arm $i$, and let $overline(m)^((i))$ be the corresponding average conditional mean. Since
 $K^star (x^((i)))$ is convex, $overline(m)^((i)) in K^star (x^((i)))$.
@@ -539,7 +538,7 @@ Let $hat(f)$ and $f$ be the unique affine interpolators satisfying
 $hat(f) (x^((i)))=overline(y)^((i))$ and
 $f(x^((i)))=overline(m)^((i))$ for every $i$. By
 @lem:noiseless-anchor-identification,
-$K^star (x)=(f(x)+N) inter D$ for every $x in A$.
+$K^star (x)=(f(x)+N) inter D$ for every $x in X$.
 
 Within each block, $y_t-m_t$ is a martingale-difference sequence. Since $D$
 is bounded, the Azuma--Hoeffding inequality for bounded martingale
@@ -547,26 +546,26 @@ differences (see @hoeffding1963probability @azuma1967weighted), together with
 a union bound over the finitely many anchors and outcome coordinates, implies
 that, with probability at least $1-delta$,
 
-$ max_(0 <= i <= d_A)
+$ max_(0 <= i <= d_X)
     norm(overline(y)^((i))-overline(m)^((i)))_2
   <=tilde(O)(n^(-1/2)). $
 
-Now consider an arbitrary $x in A$, and let
-$alpha_0,dots,alpha_(d_A)$ be its affine coordinates with respect to the
-chosen basis. Since $A$ is compact, there is a constant $L$, independent of
+Now consider an arbitrary $x in X$, and let
+$alpha_0,dots,alpha_(d_X)$ be its affine coordinates with respect to the
+chosen basis. Since $X$ is compact, there is a constant $L$, independent of
 $x$, such that
 
-$ sum_(i=0)^(d_A) abs(alpha_i)<=L. $
+$ sum_(i=0)^(d_X) abs(alpha_i)<=L. $
 
 Since $hat(f)$ and $f$ are affine and agree with the corresponding values at
 the anchors,
 
 $ norm(hat(f) (x)-f(x))_2
-  <=sum_(i=0)^(d_A) abs(alpha_i)
+  <=sum_(i=0)^(d_X) abs(alpha_i)
     norm(overline(y)^((i))-overline(m)^((i)))_2
   <=L tilde(O)(n^(-1/2)). $
 
-Taking the supremum over $x in A$ proves the result. $qed$
+Taking the supremum over $x in X$ proves the result. $qed$
 
 In the noisy setting, taking the span of the observed residuals is unstable:
 even a small amount of noise can introduce a spurious direction. We therefore
@@ -583,7 +582,7 @@ simultaneously throughout the horizon with probability at least $1-delta$.
 
   *Parameters:* block length $n in NN$ and ridge parameter $lambda>0$.
 
-  + Choose the $d_A+1$ anchor arms from
+  + Choose the $d_X+1$ anchor arms from
     @lem:noisy-anchor-interpolation. Play each anchor for $n$ consecutive
     rounds, compute its empirical average $overline(y)^((i))$, and construct
     the affine interpolant $hat(f)$. If the horizon ends during this phase,
@@ -597,14 +596,14 @@ simultaneously throughout the horizon with probability at least $1-delta$.
         in RR^(d_D times d_D), quad
       cal(E)_M:={u in RR^(d_D):u^T V_M^(-1)u<=1}. $
 
-    For every arm $x in A$, define
+    For every arm $x in X$, define
 
     $ hat(K)_M (x):=(hat(f)(x)+cal(E)_M) inter D. $
 
-  + If $hat(K)_M (x)=emptyset$ for some $x in A$, choose any such arm.
+  + If $hat(K)_M (x)=emptyset$ for some $x in X$, choose any such arm.
     Otherwise, choose
 
-    $ x in opargmax_(x' in A)
+    $ x in opargmax_(x' in X)
         min_(y in hat(K)_M (x')) r(x',y). $
 
   + Play the chosen arm for $n$ rounds. If fewer than $n$ rounds remain, play
@@ -631,7 +630,7 @@ $ V_j:=lambda^2 I_(d_D)
 
 Every block average lies in $D$. The anchor averages also lie in $D$, and
 affine interpolation from the fixed anchors has uniformly bounded
-coefficients on the compact set $A$. Hence
+coefficients on the compact set $X$. Hence
 $norm(hat(g)_j)_2=O(1)$ for every block.
 
 When $hat(g)_j$ is stored, the block is informative, so
@@ -671,7 +670,7 @@ where the last equality uses $lambda>=n^(-1/2)$. $qed$
   anchor phase of @alg:noisy-ridge-learning, and let $f$ be the affine
   interpolant of the corresponding average conditional means, as in
   @lem:noisy-anchor-interpolation. For every current ellipsoid $cal(E)_M$,
-  every $x in A$, and every $u in cal(E)_M$,
+  every $x in X$, and every $u in cal(E)_M$,
 
   $ opdist(hat(f)(x)+u,f(x)+N) <= tilde(O)(n^(-1/2)). $
 ] <lem:ridge-residual-learning>
@@ -685,8 +684,8 @@ from $V_M$ to $V_(M+1)$.
 For the initial matrix $V_0=lambda^2 I_(d_D)$, the ellipsoid $cal(E)_0$ is
 the Euclidean ball of radius $lambda$. By @lem:noisy-anchor-interpolation,
 there exists some $beta_n<=tilde(O)(n^(-1/2))$ such that
-$norm(hat(f)(x)-f(x))_2<=beta_n$ for every $x in A$. Therefore, by the
-triangle inequality, for every $x in A$ and $u in cal(E)_0$,
+$norm(hat(f)(x)-f(x))_2<=beta_n$ for every $x in X$. Therefore, by the
+triangle inequality, for every $x in X$ and $u in cal(E)_0$,
 
 $ opdist(hat(f)(x)+u,f(x)+N)
     <=norm(hat(f)(x)-f(x))_2+norm(u)_2
@@ -728,7 +727,7 @@ explicit form of the induction claim:
 
 $ opdist(hat(f)(x)+u,f(x)+N)
     <=beta_n+lambda+M eta_n, quad
-  x in A, u in cal(E)_M. $
+  x in X, u in cal(E)_M. $
 
 The base case above establishes this claim when $M=0$.
 
@@ -744,7 +743,7 @@ After storing $hat(g)$, every $u in cal(E)_(M+1)$ can therefore be written as
 $ u=Q_M theta+a hat(g), quad norm(theta)_2^2+a^2<=1. $
 
 Set $u_0:=Q_M theta$. Then $u_0 in cal(E)_M$, and since $N$ is a linear
-subspace, for every $x in A$,
+subspace, for every $x in X$,
 
 $ opdist(hat(f)(x)+u,f(x)+N)
     <=opdist(hat(f)(x)+u_0,f(x)+N)
@@ -759,7 +758,7 @@ $ beta_n+lambda+M eta_n=tilde(O)(n^(-1/2)). $
 #h(1fr) $qed$
 
 #lemma[
-  Under the uniform non-tangency condition, for every $x in A$ and every
+  Under the uniform non-tangency condition, for every $x in X$ and every
   $y in RR^(d_D)$,
 
   $ opdist(y,K^star (x))
@@ -809,7 +808,7 @@ branch of Step 4, so its arm was selected by the planning rule. Define
 
 $ hat(v)_M (x'):=min_(y in hat(K)_M (x')) r(x',y). $
 
-For every $x' in A$ and $y in hat(K)_M (x')$,
+For every $x' in X$ and $y in hat(K)_M (x')$,
 @lem:ridge-residual-learning gives
 
 $ opdist(y,f(x')+N)<=tilde(O)(n^(-1/2)). $
@@ -868,7 +867,7 @@ $V_M-lambda^2 I_(d_D)$ is positive semidefinite, while
 $lambda>=T^(-1/2)$ and the stored residuals have bounded norm. Hence all
 inversions can be carried out to the required inverse-polynomial precision in
 polynomial time. For this implementation, one may choose the centre
-$c_A$ of $A$ and the arms $c_A+R_A e_i$, $i=1,dots,d_A$, as the affine
+$c_X$ of $X$ and the arms $c_X+R_X e_i$, $i=1,dots,d_X$, as the affine
 basis. Their interpolation coefficients and the resulting affine map are
 computed by Gaussian elimination and matrix multiplication, with
 polynomially controlled bit complexity. This conditioning detail is
@@ -912,7 +911,7 @@ After introducing nonnegative variables $s_0,s_1$ satisfying
 
 $ u^T V_M u<=s_0^2, quad norm(u)_2^2<=s_1^2, $
 
-maximizing $d_M (x)$ jointly over $x in A$ and $norm(u)_2<=1$ becomes a QCQP
+maximizing $d_M (x)$ jointly over $x in X$ and $norm(u)_2<=1$ becomes a QCQP
 with a fixed number of quadratic constraints. The only coupling between the
 arm and dual variables is the bilinear expression $u^T F x$. We impose the
 explicit bounds $norm(u)_2<=1$, $0<=s_1<=1$, and
@@ -1048,7 +1047,7 @@ presented in the relevant result, of total bit length $L$. When a fixed
 hypothesis is used for known-hypothesis planning, its rational description is
 also included in $L$. This full description is available to the reduction,
 but a learner invoked by the reduction still receives only the corresponding
-public description of $(A,D,r)$. For each variation below, that public
+public description of $(X,D,r)$. For each variation below, that public
 description uses the set representation stated in the result, and the
 learner's running time is polynomial in its length and $T$.
 
@@ -1058,11 +1057,11 @@ from planning to learning, this shows that learning is also NP-hard.
 
 #lemma[
   Fix a rational imprecise-bandit instance of bit length $L$ and a rational
-  hypothesis $z$ such that $K_z (x)$ is nonempty for every $x in A$, and
+  hypothesis $z$ such that $K_z (x)$ is nonempty for every $x in X$, and
   write
 
   $ v_z (x):=min_(y in K_z (x)) r(x,y), quad
-    V_z:=max_(x in A) v_z (x). $
+    V_z:=max_(x in X) v_z (x). $
 
   Suppose that, for every rational arm $x$ produced by the learner, one can
   compute an exact rational outcome
@@ -1085,7 +1084,7 @@ from planning to learning, this shows that learning is also NP-hard.
   $0<=V_z-hat(V)<=epsilon$ with certainty.
 ] <lem:planning-from-learning>
 
-*Proof.* Run the learner on the public description of $(A,D,r)$ for
+*Proof.* Run the learner on the public description of $(X,D,r)$ for
 
 $ T:=ceil((3P(L)/epsilon)^(1/beta)) $
 
@@ -1111,21 +1110,21 @@ simulation time are polynomial in $L$ and $1/epsilon$ because $beta$ is
 fixed. If the learner is deterministic, then the simulation is deterministic
 and the displayed bound holds without taking an expectation. $qed$
 
-== D = simplex, A = ball, F = F0 + F1
+== D = simplex, X = ball, F = F0 + F1
 
 We first replace the Euclidean outcome ball in @prob:additive-ball-learning
 by a simplex. Even known-hypothesis planning then becomes NP-hard.
 
 #theorem[
   There is a polynomial-time reduction from MAX-CUT to rational
-  imprecise-bandit instances for which $A$ is a Euclidean unit ball, $D$ is
+  imprecise-bandit instances for which $X$ is a Euclidean unit ball, $D$ is
   a simplex, $Z=[1,2]$, the maps $F_0$ and $F_1$ are bilinear, and the reward
   is linear and takes values in $[0,1]$. Every $K_z (x)$ is nonempty, and
   every $z in Z$ induces the same model.
 
   For these instances, approximating the known-hypothesis value
 
-  $ V_z:=max_(x in A) min_(y in K_z (x)) r(x,y) $
+  $ V_z:=max_(x in X) min_(y in K_z (x)) r(x,y) $
 
   to inverse-polynomial additive accuracy is NP-hard. Consequently, if, for
   some fixed $beta>0$, a randomized polynomial-time learner guaranteed
@@ -1143,7 +1142,7 @@ $B_G in RR^(m times n)$ be the resulting edge-vertex incidence matrix, and
 put
 
 $ gamma:=1/(2m n), quad
-  A:={x in RR^m:norm(x)_2<=1}, quad Z:=[1,2]. $
+  X:={x in RR^m:norm(x)_2<=1}, quad Z:=[1,2]. $
 
 Write an outcome as $y=(p,q,s) in RR^n times RR^n times RR$ and take
 
@@ -1166,7 +1165,7 @@ $ p-q=gamma B_G^T x, $
 
 so it is independent of $z$.
 
-The incidence matrix has $norm(B_G)_F=sqrt(2m)$. Hence every $x in A$
+The incidence matrix has $norm(B_G)_F=sqrt(2m)$. Hence every $x in X$
 satisfies
 
 $ norm(B_G^T x)_1
@@ -1196,7 +1195,7 @@ $ norm(B_G^T x)_1
 
 Consequently,
 
-$ max_(x in A) norm(B_G^T x)_1
+$ max_(x in X) norm(B_G^T x)_1
   =max_(sigma in {-1,1}^n) norm(B_G sigma)_2. $
 
 For a sign vector $sigma$ and an edge $e={i,j}$, the corresponding
@@ -1230,7 +1229,7 @@ preceding paragraph. This would place MAX-CUT in $"BPP"$ and hence imply
 $"NP" subset.eq "BPP"$. For a deterministic learner, the estimate is
 deterministic and gives $"P"="NP"$. $qed$
 
-== D = ball, A = polytope, F = F0 + F1
+== D = ball, X = polytope, F = F0 + F1
 
 We now keep the Euclidean outcome ball and the additive bilinear constraint,
 but allow the arm set to be a polytope given by rational inequalities. Even
@@ -1239,7 +1238,7 @@ known-hypothesis planning NP-hard.
 
 #theorem[
   There is a polynomial-time reduction from MAX-CUT to rational
-  imprecise-bandit instances for which $A=[-1,1]^n$, represented by $2n$
+  imprecise-bandit instances for which $X=[-1,1]^n$, represented by $2n$
   inequalities, $D$ is a Euclidean unit ball, $Z=[1,2]$, the maps $F_0$ and
   $F_1$ are bilinear, and the reward is linear. Every $K_z (x)$ is nonempty,
   every $z in Z$ induces the same model, and the uniform non-tangency condition
@@ -1247,7 +1246,7 @@ known-hypothesis planning NP-hard.
 
   For these instances, approximating the known-hypothesis value
 
-  $ V_z:=max_(x in A) min_(y in K_z (x)) r(x,y) $
+  $ V_z:=max_(x in X) min_(y in K_z (x)) r(x,y) $
 
   to inverse-polynomial additive accuracy is NP-hard. Consequently, if, for
   some fixed $beta>0$, a randomized polynomial-time learner guaranteed
@@ -1267,7 +1266,7 @@ $ (B_G x)_e=x_i-x_j $
 
 for an edge $e={i,j}$. Put
 
-$ epsilon:=1/(4m), quad A:=[-1,1]^n, quad Z:=[1,2]. $
+$ epsilon:=1/(4m), quad X:=[-1,1]^n, quad Z:=[1,2]. $
 
 Write outcomes as $y=(u,s) in RR^m times RR$ and take
 
@@ -1282,7 +1281,7 @@ linear. Since $z!=0$, compatibility is equivalent to
 
 $ u=epsilon B_G x, $
 
-and is therefore independent of $z$. Moreover, every $x in A$ satisfies
+and is therefore independent of $z$. Moreover, every $x in X$ satisfies
 
 $ norm(B_G x)_2^2
     =sum_({i,j} in E) (x_i-x_j)^2
@@ -1408,7 +1407,7 @@ squaring, the first inequality is equivalent to
 $(1-rho^2)(t^2-rho^2)>=0$. Thus the uniform non-tangency condition holds with
 $S=sqrt(3)/2$. $qed$
 
-== D = ball, A = ball, F = trilinear
+== D = ball, X = ball, F = trilinear
 
 In this subsection, we retain the Euclidean arm and outcome balls from
 @prob:additive-ball-learning but drop the additive restriction and allow a
@@ -1416,14 +1415,14 @@ general trilinear constraint map. It is convenient to use
 the homogeneous outcome formulation. Thus, if $Y$ is the ambient outcome
 space, $W$ is the constraint space, and
 
-$ F:RR^(d_A) times RR^(d_Z) times Y -> W $
+$ F:RR^(d_X) times RR^(d_Z) times Y -> W $
 
 is linear in each argument separately, define
 
 $ L_z (x):=opker F_(x,z), quad
   K_z (x):=L_z (x) inter D, quad
   v_z (x):=min_(y in K_z (x)) r(x,y), quad
-  V_z:=max_(x in A) v_z (x). $
+  V_z:=max_(x in X) v_z (x). $
 
 Here $D$ is a Euclidean ball in the affine normalization hyperplane, hence a
 Euclidean ball in its affine hull. The construction below shows that allowing
@@ -1467,7 +1466,7 @@ square root of the displayed quantity. $qed$
 
 #theorem[
   There is a polynomial-time reduction from CLIQUE to rational
-  imprecise-bandit instances for which $A$ is a full-dimensional Euclidean
+  imprecise-bandit instances for which $X$ is a full-dimensional Euclidean
   ball, $D$ is a Euclidean ball in its affine hull, $Z=[1,2]$ is a
   one-dimensional Euclidean ball, the reward is linear, and $F$ is
   trilinear. Every set $K_z (x)$ is a singleton independent of $z$, and the
@@ -1490,16 +1489,16 @@ $3<=k<=n$, since the excluded cases are polynomial-time decidable. Starting
 from $(G,k)$, use the cubic $p_G$ above and write an arm as
 $x=(x_0,xi) in RR times RR^d$. Take
 
-$ A:={(x_0,xi):(x_0-5/3)^2+norm(xi)_2^2<=1}. $
+$ X:={(x_0,xi):(x_0-5/3)^2+norm(xi)_2^2<=1}. $
 
-This is a full-dimensional Euclidean ball and $x_0>=2/3$ throughout $A$.
+This is a full-dimensional Euclidean ball and $x_0>=2/3$ throughout $X$.
 Moreover, the normalized coordinate $q:=xi/x_0$ ranges over exactly the ball
 $norm(q)_2<=3/4$. Indeed,
 
 $ 1-(x_0-5/3)^2-9/16 x_0^2=-(15x_0-16)^2/144<=0, $
 
 so every attainable ratio has norm at most $3/4$. Conversely, for any such
-$q$, the choice $x_0=16/15$ and $xi=x_0 q$ belongs to $A$.
+$q$, the choice $x_0=16/15$ and $xi=x_0 q$ belongs to $X$.
 
 Let $Z:=[1,2]$. Introduce the ambient outcome and constraint spaces
 
@@ -1530,7 +1529,7 @@ $ r(x,y):=1/m sum_(ell=1)^m Xi_(i_ell, j_ell, n+ell). $
 It is linear and independent of $x$; its coefficient vector has Euclidean
 norm $1/sqrt(m)<=1$.
 
-Fix $x in A$ and $z in Z$. Since $z x_0!=0$ and $y_0=1$ on $D$, the equations
+Fix $x in X$ and $z in Z$. Since $z x_0!=0$ and $y_0=1$ on $D$, the equations
 $F(x,z,y)=0$ can be solved recursively. They force the unique candidate
 
 $ eta_i=1/2 q_i, quad
@@ -1613,32 +1612,32 @@ deterministic learner, the estimate is deterministic and gives
 $"P" = "NP"$. $qed$
 
 
-== IUCB is NP-hard even when A and D are Euclidean balls
+== IUCB is NP-hard even when X and D are Euclidean balls
 
 Given rational descriptions of
-$A$, $D$, $Z$, the affine reward $r$, and the maps defining $K_z (x)$, let
+$X$, $D$, $Z$, the affine reward $r$, and the maps defining $K_z (x)$, let
 
 $ v_z (x):=min_(y in K_z (x)) r(x,y). $
 
 The *exact IUCB optimism problem* asks for the value
 
-$ V_("IUCB"):=max_(z in Z,x in A) v_z (x). $
+$ V_("IUCB"):=max_(z in Z,x in X) v_z (x). $
 
 This is the optimization performed on the first round of IUCB, when its
 confidence set is all of $Z$. The associated search problem asks for a
 globally optimal first arm
 
-$ x^star in opargmax_(x in A) max_(z in Z) v_z (x). $
+$ x^star in opargmax_(x in X) max_(z in Z) v_z (x). $
 
 #theorem[
-  Even when $A$, $D$, and $Z$ are Euclidean balls and planning for every
+  Even when $X$, $D$, and $Z$ are Euclidean balls and planning for every
   fixed hypothesis is polynomial-time, computing the exact first optimistic
   value or a globally optimal first arm of IUCB is NP-hard.
 ] <thm:iucb-np-hardness>
 
 *Proof.* We reduce from the exact tensor spectral-norm problem. Given a
-rational order-three tensor $cal(T) in QQ^(m times d times d_A)$, viewed as a
-bilinear map $cal(T):RR^d times RR^(d_A) -> RR^m$, this problem asks to
+rational order-three tensor $cal(T) in QQ^(m times d times d_X)$, viewed as a
+bilinear map $cal(T):RR^d times RR^(d_X) -> RR^m$, this problem asks to
 compute
 
 $ norm(cal(T))_sigma:=max_(norm(u)_2<=1,norm(x)_2<=1)
@@ -1648,7 +1647,7 @@ Computing this value is NP-hard @hillar2013most. From $cal(T)$, construct an IUC
 instance as follows. Put
 
 $ H:=1+sum_(i,j,k) abs(T_(i j k)), quad
-  alpha:=1/(2H), quad A:={x:norm(x)_2<=1}. $
+  alpha:=1/(2H), quad X:={x:norm(x)_2<=1}. $
 
 Write $z=(z_0,u)$ and $y=(w,s)$, and take
 
@@ -1683,7 +1682,7 @@ $ v_z (x)=h(alpha/z_0 norm(cal(T)(u,x))_2), quad
 
 For fixed $z$, a top right singular vector of
 $M_u x:=cal(T)(u,x)$ maximizes $v_z (x)$, so fixed-hypothesis planning is
-polynomial-time. IUCB instead optimizes jointly over $Z$ and $A$. Since $h$
+polynomial-time. IUCB instead optimizes jointly over $Z$ and $X$. Since $h$
 is strictly increasing and the ratio above attains $3/4$ in every direction,
 
 $ V_("IUCB")=h(3alpha/4 norm(cal(T))_sigma), $
@@ -1744,7 +1743,7 @@ The polynomial-time conclusion for our nonconvex instance has two steps.
 
 + Second, our planning problem is a QCQP with a fixed number of constraints,
   one of which is the strictly convex joint-ellipsoid constraint when
-  $R_A,R_D>0$. Thus it satisfies Bienstock's hypotheses. Applying the theorem
+  $R_X,R_D>0$. Thus it satisfies Bienstock's hypotheses. Applying the theorem
   to the negative objective computes the planning maximum to weak additive
   accuracy $epsilon$ in time $poly(L,log(1/epsilon))$. If either radius is
   zero, the problem first reduces to a lower-dimensional instance.
