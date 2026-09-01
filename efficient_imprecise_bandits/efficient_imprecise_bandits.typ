@@ -1498,15 +1498,15 @@ First we show that if, instead of a Euclidean ball, we allow $D$ to be a simplex
 ]
 
 #draft[
-*Proof.* We reduce from MAX-CUT @garey1979computers. Let $G=(V,E)$ have
-$n$ vertices and $m>=1$ edges. Orient the edges arbitrarily, let
+*Proof.* We reduce from MAX-CUT, as defined in @app:max-cut[Appendix]. Let $(G,k)$ be an
+instance, where $G=(V,E)$ has $n$ vertices and $m>=1$ edges and
+$k in {1,dots,m}$. Orient the edges arbitrarily, let
 $B_G in RR^(m times n)$ be the resulting edge-vertex incidence matrix, and
 put
 ]
 
 #draft[
-$ gamma:=1/(2m n), quad
-  X:={x in RR^m:norm(x)_2<=1}, quad Z:=[1,2]. $
+$ X:={x in RR^m:norm(x)_2<=1}, quad Z:=[1,2]. $
 ]
 
 #draft[
@@ -1519,16 +1519,24 @@ $ D:={(p,q,s):p_i>=0, q_i>=0 " for " i=1,dots,n,
 ]
 
 #draft[
-For every $z in Z$, define the constraint coefficients by
+Let $gamma>0$ be a constant to be chosen later. For every $z in Z$, let
+]
+
+#draft[
+$ K_z (x):={(p,q,s) in D:p-q=gamma B_G^T x}. $
+]
+
+#draft[
+Since $z!=0$, this is of the form in @eq:setting-compatible-set, where
 ]
 
 #draft[
 $ C_z (p,q,s):=z(p-q), quad
-  B_z x:=-gamma z B_G^T x, quad d_z:=0, $
+  B_z x:=-gamma z B_G^T x, quad d_z:=0. $
 ]
 
 #draft[
-and let
+Let the reward be
 ]
 
 #draft[
@@ -1537,22 +1545,59 @@ $ r(x,(p,q,s)):=sum_(i=1)^n (p_i+q_i). $
 
 #draft[
 The maps $z mapsto B_z$, $z mapsto C_z$, and $z mapsto d_z$ are linear, as
-required, and the reward lies in $[0,1]$ on $D$. Moreover, since $z!=0$,
+required, and the reward lies in $[0,1]$ on $D$.
 ]
 
 #draft[
-$ K_z (x)
-    ={(p,q,s) in D:C_z (p,q,s)+B_z x+d_z=0}
-    ={(p,q,s) in D:p-q=gamma B_G^T x}, $
+In particular, $K_z (x)$ is independent of $z$.
 ]
 
 #draft[
-so $K_z (x)$ is independent of $z$.
+Next we show that, for every $z in Z$, $(G,k)$ is a yes-instance of MAX-CUT
+if and only if the constructed imprecise bandit instance has an arm $x in X$
+satisfying
 ]
 
 #draft[
-The incidence matrix has $norm(B_G)_F=sqrt(2m)$. Hence every $x in X$
-satisfies
+$ v_z (x)>=2gamma sqrt(k). $
+]
+
+#draft[
+For the forward implication, suppose $(G,k)$ is a yes-instance. A vector
+$sigma in {-1,1}^n$ represents a partition of the vertices of $G$ into the
+two sides ${i:sigma_i=1}$ and ${i:sigma_i=-1}$. Let $c_G (sigma)$ denote the
+number of edges between these sides. Choose $sigma$ such that
+$c_G (sigma)>=k$, and define the arm
+]
+
+#draft[
+$ x_sigma:=B_G sigma/norm(B_G sigma)_2. $
+]
+
+#draft[
+This is well-defined because
+$norm(B_G sigma)_2=2sqrt(c_G (sigma))>=2sqrt(k)>0$. Indeed, for every edge
+$e={i,j}$,
+]
+
+#draft[
+$ (B_G sigma)_e^2=(sigma_i-sigma_j)^2
+  =cases(4 & "if " sigma_i!=sigma_j, 0 & "otherwise"). $
+]
+
+#draft[
+Summing over $e in E$ gives
+]
+
+#set math.equation(numbering: "(1)")
+#draft[
+$ norm(B_G sigma)_2=2sqrt(c_G (sigma)). $ <eq:simplex-cut-norm>
+]
+#set math.equation(numbering: none)
+
+#draft[
+By construction, $x_sigma in X$. To evaluate this arm, observe that
+$norm(B_G)_F=sqrt(2m)$, so every $x in X$ satisfies
 ]
 
 #draft[
@@ -1563,7 +1608,9 @@ $ norm(B_G^T x)_1
 ]
 
 #draft[
-For $t:=gamma B_G^T x$, it follows that $norm(t)_1<=1$. The choice
+For $t:=gamma B_G^T x$, it follows that
+$norm(t)_1<=gamma sqrt(2m n)$. Thus, provided that
+$gamma sqrt(2m n)<=1$, the choice
 ]
 
 #draft[
@@ -1572,52 +1619,64 @@ $ p_i:=max(t_i,0), quad q_i:=max(-t_i,0), quad
 ]
 
 #draft[
-therefore belongs to $D$ and satisfies $p-q=t$, proving that every
-$K_z (x)$ is nonempty.
-]
-
-#draft[
-For any compatible $(p,q,s)$, nonnegativity gives
+belongs to $D$ and satisfies $p-q=t$, proving that every $K_z (x)$ is
+nonempty. For any compatible $(p,q,s)$, nonnegativity gives
 $p_i+q_i>=abs(p_i-q_i)=abs(t_i)$. The preceding positive-negative
-decomposition attains equality in every coordinate, and therefore
+decomposition attains equality in every coordinate. Hence, for every
+$x in X$,
 ]
 
+#set math.equation(numbering: "(1)")
 #draft[
 $ v_z (x):=min_(y in K_z (x)) r(x,y)
-    =gamma norm(B_G^T x)_1. $
+    =gamma norm(B_G^T x)_1. $ <eq:simplex-arm-value>
+]
+#set math.equation(numbering: none)
+
+#draft[
+Applying @eq:simplex-arm-value to $x_sigma$ and using
+@eq:simplex-cut-norm gives
 ]
 
 #draft[
-By duality of the $ell_1$ and $ell_oo$ norms,
+$ v_z (x_sigma)
+    =gamma norm(B_G^T x_sigma)_1
+    >=gamma sigma^T B_G^T x_sigma
+    =gamma norm(B_G sigma)_2
+    =2gamma sqrt(c_G (sigma))
+    >=2gamma sqrt(k). $
 ]
 
 #draft[
-$ norm(B_G^T x)_1
-  =max_(sigma in {-1,1}^n) sigma^T B_G^T x. $
+For the reverse implication, suppose there is an arm $x in X$ satisfying
+$v_z (x)>=2gamma sqrt(k)$. By $ell_1$--$ell_oo$ duality, choose
+$sigma in {-1,1}^n$ such that
 ]
 
 #draft[
-Consequently,
+$ norm(B_G^T x)_1=sigma^T B_G^T x. $
 ]
 
 #draft[
-$ max_(x in X) norm(B_G^T x)_1
-  =max_(sigma in {-1,1}^n) norm(B_G sigma)_2. $
+Using @eq:simplex-arm-value and @eq:simplex-cut-norm,
 ]
 
 #draft[
-For a sign vector $sigma$ and an edge $e={i,j}$, the corresponding
-coordinate satisfies
+$ 2gamma sqrt(k)
+    <=v_z (x)
+    =gamma norm(B_G^T x)_1
+    =gamma x^T B_G sigma
+    <=gamma norm(x)_2 norm(B_G sigma)_2
+    <=2gamma sqrt(c_G (sigma)). $
 ]
 
 #draft[
-$ (B_G sigma)_e^2=(sigma_i-sigma_j)^2
-  =cases(4 & "if " sigma_i!=sigma_j, 0 & "otherwise"). $
+Since $gamma>0$, this implies $c_G (sigma)>=k$, so $(G,k)$ is a yes-instance.
+This proves the claimed equivalence.
 ]
 
 #draft[
-Thus $norm(B_G sigma)_2^2$ is four times the size of the cut encoded by
-$sigma$. If $M_G$ denotes the maximum cut size, then
+If $M_G$ denotes the maximum cut size, the same argument gives
 ]
 
 #draft[
@@ -1626,26 +1685,53 @@ $ V_z=2gamma sqrt(M_G). $
 
 #draft[
 The values corresponding to consecutive cut sizes satisfy, for
-$k=1,dots,m$,
+$j=1,dots,m$,
 ]
 
 #draft[
-$ 2gamma (sqrt(k)-sqrt(k-1))
-  =2gamma/(sqrt(k)+sqrt(k-1))
+$ 2gamma (sqrt(j)-sqrt(j-1))
+  =2gamma/(sqrt(j)+sqrt(j-1))
   >=gamma/m. $
 ]
 
 #draft[
-The tolerance $gamma/(3m)$ is inverse-polynomial in the encoding length.
-Approximating the candidate values $2gamma sqrt(k)$ to polynomially many
-bits, an estimate of $V_z$ within this tolerance identifies $M_G$. This
-proves the planning claim.
+It remains to choose $gamma$. Set $gamma:=1/(2m n)$. This choice has
+$O(log m+log n)$-bit representation and satisfies
+]
+
+#draft[
+$ gamma sqrt(2m n)=1/sqrt(2m n)<=1, $
+]
+
+#draft[
+so every $K_z (x)$ is nonempty. Moreover, consecutive candidate values are
+separated by at least
+]
+
+#draft[
+$ gamma/m=1/(2m^2 n). $
+]
+
+#draft[
+Thus the tolerance
+]
+
+#draft[
+$ epsilon:=gamma/(3m)=1/(6m^2 n) $
+]
+
+#draft[
+is inverse-polynomial in the encoding length and is less than half the gap.
+Approximating the candidate values $2gamma sqrt(j)$, $j=0,dots,m$, to
+polynomially many bits, any estimate of $V_z$ within $epsilon$ therefore
+identifies $M_G$ and decides whether $(G,k)$ is a yes-instance. This proves
+the planning claim.
 ]
 
 #draft[
 The positive-negative decomposition displayed above is an exact rational
 minimizing outcome and is computable in polynomial time from every rational
-arm. Applying @lem:planning-from-learning with $epsilon=gamma/(3m)$
+arm. Applying @lem:planning-from-learning with this $epsilon$
 therefore supplies, with probability at least $2/3$, the estimate used in the
 preceding paragraph. This would place MAX-CUT in $"BPP"$ and hence imply
 $"NP" subset.eq "BPP"$. For a deterministic learner, the estimate is
@@ -2713,6 +2799,48 @@ The polynomial-time conclusion for our nonconvex instance has two steps.
   accuracy $epsilon$ in time $poly(L,log(1/epsilon))$. If either radius is
   zero, the problem first reduces to a lower-dimensional instance.
   ]
+
+#draft[
+= MAX-CUT <app:max-cut>
+]
+
+#draft[
+Let $G=(V,E)$ be a finite undirected simple graph. For $S subset.eq V$, the
+edge boundary of $S$ is
+]
+
+#draft[
+$ delta_G (S):={{u,v} in E:abs({u,v} inter S)=1}. $
+]
+
+#draft[
+The decision problem MAX-CUT takes as input $G$ and an integer
+$k in {0,dots,abs(E)}$, and asks whether
+]
+
+#draft[
+$ exists S subset.eq V quad "such that" quad abs(delta_G (S))>=k. $
+]
+
+#draft[
+A set $S$ satisfying this inequality is a polynomial-size certificate, so
+MAX-CUT belongs to NP. Karp proved that weighted MAX-CUT is NP-complete
+@karp1972reducibility. Garey, Johnson, and Stockmeyer subsequently proved
+that the unweighted problem defined above remains NP-complete even when $G$
+is cubic @garey1976simplified.
+]
+
+#draft[
+The associated optimization problem computes
+]
+
+#draft[
+$ M_G:=max_(S subset.eq V) abs(delta_G (S)). $
+]
+
+#draft[
+Since the decision problem asks whether $M_G>=k$, computing $M_G$ is NP-hard.
+]
 
 #bibliography(
   "imprecise_bandits_T8_9_upper_bound_clean.bib",
