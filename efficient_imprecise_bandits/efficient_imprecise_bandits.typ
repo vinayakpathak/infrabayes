@@ -215,17 +215,24 @@ The regret over horizon $T$ is
 
 $ R_T := T V^star - EE [sum_(t=1)^T r(x_t,y_t)]. $
 
-To define the computational problem, we need to specify how the learner is given access to $cM$. We assume that $cM$ is encoded with a binary string of finite length. In particular, we encode $X$ and $D$ by specifying their centres and radii, we encode $r$ by specifying all its coefficients, and we encode $H$ by specifying the linear transforms that give us $C_z, B_z$, and $d_z$ from $z$. Assuming all magnitudes to be bounded by some universal constant, all of this can be encoded using number of bits at most $|cM| <= poly(d_X, d_D, d_Z)$.
+#draft[
+To define the computational problem, we fix a finite representation scheme
+for the data defining $cM$, and let $|cM|$ denote the length of its
+description. We represent $X$ and $D$ by their centres and radii, $r$ by its
+coefficients, and $H$ by a description of $Z$ together with the linear maps
+$z mapsto (B_z,C_z,d_z)$. We restrict attention to succinctly represented
+instances, for which $|cM| <= poly(d_X,d_D,d_Z)$.
+]
 
 Now we state our main result.
 
-#theorem(title: [efficient $T^(2/3)$ learning])[
+#draft[#theorem(title: [efficient $T^(2/3)$ learning])[
   #[
-  There exits a policy for linear imprecise bandits as defined above that, for every time horizon $T$ and every true hypothesis $h^star in H$, runs in polynomial time, and achieves a regret
+  There exists a policy for linear imprecise bandits as defined above that, for every time horizon $T$ and every true hypothesis $h^star in H$, runs in polynomial time, and achieves a regret
   ] $R_T <= tilde(O)(
       poly(|cM|) T^(2/3))$.
 ] <thm:efficient-upper-bound>
-
+]
 #draft[
 = Warmup: Noiseless Setting
 ]
@@ -1392,416 +1399,103 @@ regret. Hence the weak bit-model implementation remains polynomial in
 $L_("pub")$ and $T$ and has the same regret rate.
 ]
 
-#draft[
 = NP-hardness
-]
 
-#draft[
-In this section we show that several natural variations of are NP-hard. Thus in some sense, the problem is
+In this section we show that several natural variations of the linear imprecise bandits problem are NP-hard. Thus in some sense, the problem is
 the hardest problem that's still tractable.
-]
 
-#draft[
-In this section, a *rational instance of bit length $L$* has a finite binary
-description of every set, reward coefficient, and constraint map explicitly
-presented in the relevant result, of total bit length $L$. When a fixed
-hypothesis is used for known-hypothesis planning, its rational description is
-also included in $L$. This full description is available to the reduction,
-but a learner invoked by the reduction still receives only the corresponding
-public description of $(X,D,r)$. For each variation below, that public
-description uses the set representation stated in the result, and the
-learner's running time is polynomial in its length and $T$.
-]
-
-#draft[
 We first show that efficient planning can be reduced to efficient learning.
 Most proofs below show that planning is already NP-hard. Due to the reduction
 from planning to learning, this shows that learning is also NP-hard.
-]
 
 #lemma[
-  #draft[
-  Fix a rational imprecise-bandit instance of bit length $L$ and a rational
-  hypothesis $z$ such that $K_z (x)$ is nonempty for every $x in X$, and
-  write
+  #[
+  Fix a linear imprecise bandit instance $cM$.
+  Suppose that, for every hypothesis $z in Z$, every arm $x$, and every $eta in (0,1)$, one can compute an outcome
+  $y_(z,eta) (x)$ satisfying
   ]
 
-  #draft[
-  $ v_z (x):=min_(y in K_z (x)) r(x,y), quad
-    V_z:=max_(x in X) v_z (x). $
+  #[
+  $y_(z,eta) (x) in K_z (x)$ and $0<=r(x,y_(z,eta) (x))-v_z (x)<=eta$
+  in time polynomial in $|cM|$ and $1/eta$.
+  Suppose also that, for some fixed $beta>0$ and polynomial $P$, a
+  polynomial-time learner guarantees
   ]
+  #[$R_T<=P(|cM|) T^(1-beta)$]
 
-  #draft[
-  Suppose that, for every rational arm $x$ produced by the learner, one can
-  compute an exact rational outcome
-  ]
-
-  #draft[
-  $ y_z (x) in opargmin_(y in K_z (x)) r(x,y) $
-  ]
-
-  #draft[
-  in time polynomial in $L$ and the encoding length of $x$. Suppose also
-  that, for some fixed $beta>0$ and polynomial $P$, a polynomial-time learner
-  guarantees
-  ]
-
-  #draft[
-  $ E[R_T]<=P(L) T^(1-beta) $
-  ]
-
-  #draft[
-  against every compatible nature policy. Then, for every $epsilon in (0,1)$,
-  one can compute in time $poly(L,1/epsilon)$ an arm $hat(x)$ and its value
-  $hat(V):=v_z (hat(x))$ such that
-  ]
-
-  #draft[
-  $ Pr(0<=V_z-hat(V)<=epsilon)>=2/3. $
-  ]
-
-  #draft[
-  If the learner is deterministic, the resulting planner satisfies
-  $0<=V_z-hat(V)<=epsilon$ with certainty.
-  ]
-] <lem:planning-from-learning>
+  #[
+  Then, for every $z in Z$ and every $epsilon in (0,1)$, one can compute in
+  time $poly(|cM|,1/epsilon)$ an arm $hat(x)$ such
+  that with probability at least 2/3, $|V_z-v_z (hat(x))|<=epsilon$.
+  ]]
+ <lem:planning-from-learning>
 
 #draft[
-*Proof.* Run the learner on the public description of $(X,D,r)$ for
+*Proof.* Fix $z in Z$ and $epsilon in (0,1)$, set $eta:=epsilon/6$, and
+simulate the learner on $cM$ for
 ]
 
 #draft[
-$ T:=ceil((3P(L)/epsilon)^(1/beta)) $
+$ T:=ceil(max(1,(6P(|cM|)/epsilon)^(1/beta))) $
 ]
 
 #draft[
-rounds with true hypothesis $z$, and let nature put a point mass on
-$y_z (x_t)$ after each arm $x_t$. Choose
+rounds. Whenever the learner plays $x_t$, let nature use the point mass at
+$y_(z,eta) (x_t)$. This nature policy is compatible because
+$y_(z,eta) (x_t) in K_z (x_t)$. Put
 ]
 
 #draft[
-$ hat(t) in opargmax_(t=1,dots,T) v_z (x_t) $
+$ tilde(v)_t:=r(x_t,y_(z,eta) (x_t)), quad
+  hat(t) in opargmax_(t=1,dots,T) tilde(v)_t, $
 ]
 
 #draft[
-and return $hat(x):=x_(hat(t))$ and $hat(V):=v_z (hat(x))$.
+and return $hat(x):=x_(hat(t))$.
 ]
 
 #draft[
-Since nature always returns a minimizing outcome,
+The approximation guarantee gives
+$v_z (hat(x))>=tilde(v)_(hat(t))-eta$, and the maximality of $hat(t)$ gives
 ]
 
 #draft[
-$ 0<=V_z-hat(V)
-  <=1/T sum_(t=1)^T (V_z-v_z (x_t))
-  =R_T/T. $
+$ 0<=V_z-v_z (hat(x))
+  <=V_z-tilde(v)_(hat(t))+eta
+  <=V_z-1/T sum_(t=1)^T tilde(v)_t+eta. $
 ]
 
 #draft[
-Consequently,
+Taking expectations and using the definition of $R_T$ for this nature policy,
 ]
 
 #draft[
-$ E[V_z-hat(V)]<=P(L) T^(-beta)<=epsilon/3. $
+$ EE[V_z-v_z (hat(x))]
+  <=R_T/T+eta
+  <=P(|cM|) T^(-beta)+eta
+  <=epsilon/3. $
 ]
 
 #draft[
-Markov's inequality gives the claimed probability. The horizon and the
-simulation time are polynomial in $L$ and $1/epsilon$ because $beta$ is
-fixed. If the learner is deterministic, then the simulation is deterministic
-and the displayed bound holds without taking an expectation. $qed$
+Since $v_z (hat(x))<=V_z$, this gap equals
+$abs(V_z-v_z (hat(x)))$, so Markov's inequality gives the claimed probability.
+The horizon and the simulation time are polynomial in $|cM|$ and $1/epsilon$
+because $beta$ is fixed. $qed$
 ]
 
-#draft[
-== Efficient planning does not imply efficient learning
-]
+Below we show that the "smoothness" of $X$ and $D$ are crucial for efficiency. It is easy to land in the NP-hard territory if we make either $X$ or $D$ a convex shape with edges and corners.
 
-#draft[
-The converse of @lem:planning-from-learning fails for succinct nonconvex
-model classes. The separation below gives every known hypothesis an exact
-polynomial-time planner, but makes learning computationally hard. It is a
-variation of the setting above: the reward is allowed to be separately linear
-in the arm and outcome, and hence may contain an arm--outcome cross term.
-]
+
+== D = simplex, X = ball
+
+First we show that if, instead of a Euclidean ball, we allow $D$ to be a simplex, then even known hypothesis planning becomes NP-hard. Then, using the planning to learning reduction (@lem:planning-from-learning), we conclude that learning is NP-hard.
 
 #theorem[
-  #draft[
-  There is a succinctly represented family of rational imprecise-bandit
-  instances with finite arm and hypothesis sets, a rational-polytope outcome
-  set, additive bilinear constraints $F=F_0+F_1$ with $F_0=0$, and a reward
-  in $[0,1]$ that is separately linear in the arm and outcome, such that exact
-  known-hypothesis planning takes $O(n^2)$ time. The learning-hardness
-  conclusion already holds against a stationary deterministic nature policy.
-  ]
+  Consider a variation of the linear imprecise bandits problem where $D$ is allowed to be a simplex. If, for
+  some fixed $beta>0$, a randomized polynomial-time learner guarantees $E[R_T]<=P(|cM|) T^(1-beta)$ for every instance $cM$, then $"NP" subset.eq "BPP"$. If a deterministic learner achieves the same regret guarantee, then $"P"="NP"$.
 
-  #draft[
-  Suppose that, for some fixed $beta>0$ and polynomial $P$, one uniform
-  randomized policy runs in time polynomial in the succinct-description
-  length $L$ and horizon $N$ and has expected regret at most
-  ]
-
-  #draft[
-  $ P(L) N^(1-beta) $
-  ]
-
-  #draft[
-  for every instance in this family, every true hypothesis, and every
-  compatible nature policy. Then $"CLIQUE" in "RP"$ and hence
-  $"NP"="RP"$. A deterministic policy with the same guarantee would imply
-  $"P"="NP"$.
-  ]
-] <thm:easy-planning-hard-learning>
-
-#draft[
-*Proof.* Fix $2<=k<=n$, and let
+ <thm:additive-simplex-np-hardness>
 ]
-
-#draft[
-$ E_n:={{i,j}:1<=i<j<=n}, quad
-  m:=binom(n,2), quad q:=binom(k,2). $
-]
-
-#draft[
-For every $k$-element set $T subset.eq [n]$, define $x^T in RR^m$ by
-]
-
-#draft[
-$ x_e^T:=cases(
-    1/q & "if " e subset.eq T,
-    0 & "otherwise",
-  ), quad e in E_n, $
-]
-
-#draft[
-and take
-]
-
-#draft[
-$ X:={x^T:T subset.eq [n], abs(T)=k}. $
-]
-
-#draft[
-An arm is represented succinctly by the vertex set $T$. For every
-$k$-element set $U subset.eq [n]$, define $z^U in RR^(1+m)$ by
-]
-
-#draft[
-$ z_0^U:=1, quad
-  z_e^U:=cases(
-    1 & "if " e subset.eq U,
-    0 & "otherwise",
-  ), $
-]
-
-#draft[
-and let $Z:={z^U:U subset.eq [n], abs(U)=k}$.
-]
-
-#draft[
-Write an outcome as $y=(y_0,g,s) in RR^(1+2m)$ and set
-]
-
-#draft[
-$ D:={(1,g,s):g in [0,1]^m, s in [-1,1]^m}. $
-]
-
-#draft[
-With constraint space $W=RR^m$, let $F_0 (x,z):=0$ and define
-]
-
-#draft[
-$ (F_1 (y,z))_e
-    :=z_e (g_e-y_0-s_e)+z_0 s_e, quad e in E_n. $
-]
-
-#draft[
-For $z in Z$, set
-]
-
-#draft[
-$ K_z (x):={y in D:F_0 (x,z)+F_1 (y,z)=0}, quad
-  h_z (x):={Q in Delta D:EE_(y ~ Q)[y] in K_z (x)}, $
-]
-
-#draft[
-and let $H:={h_z:z in Z}$. The learner is given a succinct description of
-the entire instance $cM=(X,D,H,r)$, including $Z$, $F_0$, and $F_1$; only the
-true $U$ is hidden.
-]
-
-#draft[
-The maps $F_0$ and $F_1$ are bilinear in their displayed arguments. In these
-homogeneous outcome coordinates the constraint is $C_z y=0$: thus $B_z=0$,
-$d_z=0$, and $z mapsto C_z$ is linear. For $z=z^U$,
-]
-
-#draft[
-$ (F_1 (y,z^U))_e=cases(
-    g_e-y_0 & "if " e subset.eq U,
-    s_e & "otherwise".
-  ) $
-]
-
-#draft[
-Consequently, inside $D$, feasibility forces $g_e=1$ for every
-$e subset.eq U$ and $s_e=0$ for every $e subset.eq.not U$, while the graph
-coordinates outside $U$ remain free. The feasible set is nonempty: take
-$g_e=1$ on the edges of $U$, $g_e=0$ elsewhere, and $s=0$. Moreover,
-$y mapsto F_1 (y,z^U)$ is onto $W$: given $w in W$, set $y_0=0$, use
-$g_e=w_e$ and $s_e=0$ on the edges of $U$, and use $g_e=0$ and $s_e=w_e$
-elsewhere.
-]
-
-#draft[
-Define the reward
-]
-
-#draft[
-$ r(x,(y_0,g,s)):=sum_(e in E_n) x_e g_e. $
-]
-
-#draft[
-It lies in $[0,1]$ on $X times D$. For an arm $x^T$, nature minimizes the
-reward by setting every graph coordinate not forced by $U$ to zero, so
-]
-
-#draft[
-$ v_(z^U) (x^T)
-    =binom(abs(U inter T),2)/q. $
-]
-
-#draft[
-Thus $V_(z^U)=1$, uniquely attained by $x^U$. Given $z^U$, an exact planner
-returns $x^U$ by setting $x_e^U=z_e^U/q$ for every $e in E_n$, which takes
-$O(m)=O(n^2)$ time.
-]
-
-#draft[
-It remains to prove learning hardness directly. Given a CLIQUE instance
-$G=([n],E(G))$ and $k$ @garey1979computers, let
-]
-
-#draft[
-$ g_e^G:=cases(
-    1 & "if " e in E(G),
-    0 & "otherwise",
-  ), quad y^G:=(1,g^G,0) in D. $
-]
-
-#draft[
-If $U$ is a $k$-clique of $G$, then the stationary deterministic nature
-policy that returns $y^G$ on every round is compatible with $z^U$: every
-edge inside $U$ has $g_e^G=1$, and every auxiliary coordinate is zero. For
-every candidate $T$,
-]
-
-#draft[
-$ r(x^T,y^G)=abs(E(G[T]))/q. $
-]
-
-#draft[
-This reward is $1$ exactly when $T$ is a $k$-clique, and is at most
-$1-1/q$ otherwise.
-]
-
-#draft[
-Assume the policy in the theorem exists, and run it against the constant
-outcome $y^G$. If $G$ contains a $k$-clique $U$, this is a valid interaction
-with true hypothesis $z^U$, whose optimal value is $1$. If the policy plays
-$x^(T_1),dots,x^(T_N)$, define its realized shortfall by
-]
-
-#draft[
-$ cal(L)_N:=N-sum_(t=1)^N r(x^(T_t),y^G). $
-]
-
-#draft[
-This quantity is nonnegative. On the event $cal(E)$ that none of
-$T_1,dots,T_N$ is a clique, the reward gap above gives
-$cal(L)_N>=N/q$. Hence Markov's inequality and the assumed regret bound give
-]
-
-#draft[
-$ Pr(cal(E))
-    <=q E[cal(L)_N]/N
-    <=q P(L) N^(-beta). $
-]
-
-#draft[
-Choose
-]
-
-#draft[
-$ N:=ceil((4 q P(L))^(1/beta)). $
-]
-
-#draft[
-The family description has length polynomial in $n$, so $N$ and the total
-simulation time are polynomial in the CLIQUE input length. Verify each
-$k$-set proposed by the policy and accept as soon as it induces a clique in
-$G$. If $G$ has a $k$-clique, the preceding bound gives acceptance
-probability at least $3/4$. If $G$ has none, verification prevents acceptance,
-even though the simulated history need not then be compatible with any
-hypothesis. The policy is a polynomial-time algorithm on every syntactically
-valid history, so the simulation still terminates in polynomial time.
-]
-
-#draft[
-This is an RP algorithm for CLIQUE. Since CLIQUE is NP-complete, it implies
-$"NP"="RP"$. If the policy is deterministic, the same verified search gives
-$"P"="NP"$. $qed$
-]
-
-#draft[
-The construction deliberately uses exponentially large finite sets $X$ and
-$Z$ represented succinctly by $k$-subsets. It also uses a polytope $D$ and the
-bilinear reward $r(x,y)=sum_e x_e g_e$, rather than the jointly affine reward. It therefore shows
-that efficient planning alone does not suffice for efficient learning; it
-does not strengthen the positive result for Euclidean balls and affine
-rewards.
-]
-
-#draft[
-== D = simplex, X = ball, F = F0 + F1
-]
-
-#draft[
-We first replace the Euclidean outcome ball in
-by a simplex. Even known-hypothesis planning then becomes NP-hard.
-]
-
-#theorem[
-  #draft[
-  There is a polynomial-time reduction from MAX-CUT to rational
-  imprecise-bandit instances for which $X$ is a Euclidean unit ball, $D$ is
-  a simplex, $Z=[1,2]$, the maps $F_0$ and $F_1$ are bilinear, and the reward
-  is linear and takes values in $[0,1]$. Every $K_z (x)$ is nonempty, and
-  every $z in Z$ induces the same model.
-  ]
-
-  #draft[
-  For these instances, approximating the known-hypothesis value
-  ]
-
-  #draft[
-  $ V_z:=max_(x in X) min_(y in K_z (x)) r(x,y) $
-  ]
-
-  #draft[
-  to inverse-polynomial additive accuracy is NP-hard. Consequently, if, for
-  some fixed $beta>0$, a randomized polynomial-time learner guaranteed
-  ]
-
-  #draft[
-  $ E[R_T]<=P(L) T^(1-beta) $
-  ]
-
-  #draft[
-  on every such instance, where $L$ is the total rational-description length
-  and $P$ is a polynomial, then $"NP" subset.eq "BPP"$. For a deterministic
-  learner, the same conclusion would be $"P"="NP"$.
-  ]
-] <thm:additive-simplex-np-hardness>
 
 #draft[
 *Proof.* We reduce from MAX-CUT @garey1979computers. Let $G=(V,E)$ have
@@ -1825,16 +1519,16 @@ $ D:={(p,q,s):p_i>=0, q_i>=0 " for " i=1,dots,n,
 ]
 
 #draft[
-With $W=RR^n$, define
+For every $z in Z$, define the constraint coefficients by
 ]
 
 #draft[
-$ F_0 (x,z):=-gamma z B_G^T x, quad
-  F_1 ((p,q,s),z):=z(p-q), $
+$ C_z (p,q,s):=z(p-q), quad
+  B_z x:=-gamma z B_G^T x, quad d_z:=0, $
 ]
 
 #draft[
-and
+and let
 ]
 
 #draft[
@@ -1842,16 +1536,18 @@ $ r(x,(p,q,s)):=sum_(i=1)^n (p_i+q_i). $
 ]
 
 #draft[
-Both constraint maps are bilinear, and the reward lies in $[0,1]$ on $D$.
-Since $z!=0$, compatibility is equivalent to
+The maps $z mapsto B_z$, $z mapsto C_z$, and $z mapsto d_z$ are linear, as
+required, and the reward lies in $[0,1]$ on $D$. Moreover, since $z!=0$,
 ]
 
 #draft[
-$ p-q=gamma B_G^T x, $
+$ K_z (x)
+    ={(p,q,s) in D:C_z (p,q,s)+B_z x+d_z=0}
+    ={(p,q,s) in D:p-q=gamma B_G^T x}, $
 ]
 
 #draft[
-so it is independent of $z$.
+so $K_z (x)$ is independent of $z$.
 ]
 
 #draft[
@@ -1969,35 +1665,8 @@ known-hypothesis planning NP-hard.
 
 #theorem[
   #draft[
-  There is a polynomial-time reduction from MAX-CUT to rational
-  imprecise-bandit instances for which $X=[-1,1]^n$, represented by $2n$
-  inequalities, $D$ is a Euclidean unit ball, $Z=[1,2]$, the maps $F_0$ and
-  $F_1$ are bilinear, and the reward is linear. Every $K_z (x)$ is nonempty,
-  every $z in Z$ induces the same model, and the uniform non-tangency condition
-  holds with an absolute constant.
-  ]
-
-  #draft[
-  For these instances, approximating the known-hypothesis value
-  ]
-
-  #draft[
-  $ V_z:=max_(x in X) min_(y in K_z (x)) r(x,y) $
-  ]
-
-  #draft[
-  to inverse-polynomial additive accuracy is NP-hard. Consequently, if, for
-  some fixed $beta>0$, a randomized polynomial-time learner guaranteed
-  ]
-
-  #draft[
-  $ E[R_T]<=P(L) T^(1-beta) $
-  ]
-
-  #draft[
-  on every such instance, where $L$ is the total rational-description length
-  and $P$ is a polynomial, then $"NP" subset.eq "BPP"$. For a deterministic
-  learner, the same conclusion would be $"P"="NP"$.
+  Consider a variation of the linear imprecise bandits problem where $X$ is allowed to be a polytope. If, for
+  some fixed $beta>0$, a randomized polynomial-time learner guarantees $E[R_T]<=P(|cM|) T^(1-beta)$ for every instance $cM$, then $"NP" subset.eq "BPP"$. If a deterministic learner achieves the same regret guarantee, then $"P"="NP"$.
   ]
 ] <thm:additive-polytope-np-hardness>
 
@@ -2727,6 +2396,255 @@ $ max_(z in Z) v_z (x^star)=h(3alpha/4 sigma_max (N_x))=V_("IUCB"), $
 #draft[
 so the same inverse recovers $norm(cal(T))_sigma$. Producing a globally
 optimal first arm is therefore NP-hard as well. $qed$
+]
+
+#draft[
+== Efficient planning does not imply efficient learning
+]
+
+#draft[
+The converse of @lem:planning-from-learning fails for succinct nonconvex
+model classes. The separation below gives every known hypothesis an exact
+polynomial-time planner, but makes learning computationally hard. It is a
+variation of the setting above: the reward is allowed to be separately linear
+in the arm and outcome, and hence may contain an arm--outcome cross term.
+]
+
+#theorem[
+  #draft[
+  There is a succinctly represented family of rational imprecise-bandit
+  instances with finite arm and hypothesis sets, a rational-polytope outcome
+  set, additive bilinear constraints $F=F_0+F_1$ with $F_0=0$, and a reward
+  in $[0,1]$ that is separately linear in the arm and outcome, such that exact
+  known-hypothesis planning takes $O(n^2)$ time. The learning-hardness
+  conclusion already holds against a stationary deterministic nature policy.
+  ]
+
+  #draft[
+  Suppose that, for some fixed $beta>0$ and polynomial $P$, one uniform
+  randomized policy runs in time polynomial in the succinct-description
+  length $L$ and horizon $N$ and has expected regret at most
+  ]
+
+  #draft[
+  $ P(L) N^(1-beta) $
+  ]
+
+  #draft[
+  for every instance in this family, every true hypothesis, and every
+  compatible nature policy. Then $"CLIQUE" in "RP"$ and hence
+  $"NP"="RP"$. A deterministic policy with the same guarantee would imply
+  $"P"="NP"$.
+  ]
+] <thm:easy-planning-hard-learning>
+
+#draft[
+*Proof.* Fix $2<=k<=n$, and let
+]
+
+#draft[
+$ E_n:={{i,j}:1<=i<j<=n}, quad
+  m:=binom(n,2), quad q:=binom(k,2). $
+]
+
+#draft[
+For every $k$-element set $T subset.eq [n]$, define $x^T in RR^m$ by
+]
+
+#draft[
+$ x_e^T:=cases(
+    1/q & "if " e subset.eq T,
+    0 & "otherwise",
+  ), quad e in E_n, $
+]
+
+#draft[
+and take
+]
+
+#draft[
+$ X:={x^T:T subset.eq [n], abs(T)=k}. $
+]
+
+#draft[
+An arm is represented succinctly by the vertex set $T$. For every
+$k$-element set $U subset.eq [n]$, define $z^U in RR^(1+m)$ by
+]
+
+#draft[
+$ z_0^U:=1, quad
+  z_e^U:=cases(
+    1 & "if " e subset.eq U,
+    0 & "otherwise",
+  ), $
+]
+
+#draft[
+and let $Z:={z^U:U subset.eq [n], abs(U)=k}$.
+]
+
+#draft[
+Write an outcome as $y=(y_0,g,s) in RR^(1+2m)$ and set
+]
+
+#draft[
+$ D:={(1,g,s):g in [0,1]^m, s in [-1,1]^m}. $
+]
+
+#draft[
+With constraint space $W=RR^m$, let $F_0 (x,z):=0$ and define
+]
+
+#draft[
+$ (F_1 (y,z))_e
+    :=z_e (g_e-y_0-s_e)+z_0 s_e, quad e in E_n. $
+]
+
+#draft[
+For $z in Z$, set
+]
+
+#draft[
+$ K_z (x):={y in D:F_0 (x,z)+F_1 (y,z)=0}, quad
+  h_z (x):={Q in Delta D:EE_(y ~ Q)[y] in K_z (x)}, $
+]
+
+#draft[
+and let $H:={h_z:z in Z}$. The learner is given a succinct description of
+the entire instance $cM=(X,D,H,r)$, including $Z$, $F_0$, and $F_1$; only the
+true $U$ is hidden.
+]
+
+#draft[
+The maps $F_0$ and $F_1$ are bilinear in their displayed arguments. In these
+homogeneous outcome coordinates the constraint is $C_z y=0$: thus $B_z=0$,
+$d_z=0$, and $z mapsto C_z$ is linear. For $z=z^U$,
+]
+
+#draft[
+$ (F_1 (y,z^U))_e=cases(
+    g_e-y_0 & "if " e subset.eq U,
+    s_e & "otherwise".
+  ) $
+]
+
+#draft[
+Consequently, inside $D$, feasibility forces $g_e=1$ for every
+$e subset.eq U$ and $s_e=0$ for every $e subset.eq.not U$, while the graph
+coordinates outside $U$ remain free. The feasible set is nonempty: take
+$g_e=1$ on the edges of $U$, $g_e=0$ elsewhere, and $s=0$. Moreover,
+$y mapsto F_1 (y,z^U)$ is onto $W$: given $w in W$, set $y_0=0$, use
+$g_e=w_e$ and $s_e=0$ on the edges of $U$, and use $g_e=0$ and $s_e=w_e$
+elsewhere.
+]
+
+#draft[
+Define the reward
+]
+
+#draft[
+$ r(x,(y_0,g,s)):=sum_(e in E_n) x_e g_e. $
+]
+
+#draft[
+It lies in $[0,1]$ on $X times D$. For an arm $x^T$, nature minimizes the
+reward by setting every graph coordinate not forced by $U$ to zero, so
+]
+
+#draft[
+$ v_(z^U) (x^T)
+    =binom(abs(U inter T),2)/q. $
+]
+
+#draft[
+Thus $V_(z^U)=1$, uniquely attained by $x^U$. Given $z^U$, an exact planner
+returns $x^U$ by setting $x_e^U=z_e^U/q$ for every $e in E_n$, which takes
+$O(m)=O(n^2)$ time.
+]
+
+#draft[
+It remains to prove learning hardness directly. Given a CLIQUE instance
+$G=([n],E(G))$ and $k$ @garey1979computers, let
+]
+
+#draft[
+$ g_e^G:=cases(
+    1 & "if " e in E(G),
+    0 & "otherwise",
+  ), quad y^G:=(1,g^G,0) in D. $
+]
+
+#draft[
+If $U$ is a $k$-clique of $G$, then the stationary deterministic nature
+policy that returns $y^G$ on every round is compatible with $z^U$: every
+edge inside $U$ has $g_e^G=1$, and every auxiliary coordinate is zero. For
+every candidate $T$,
+]
+
+#draft[
+$ r(x^T,y^G)=abs(E(G[T]))/q. $
+]
+
+#draft[
+This reward is $1$ exactly when $T$ is a $k$-clique, and is at most
+$1-1/q$ otherwise.
+]
+
+#draft[
+Assume the policy in the theorem exists, and run it against the constant
+outcome $y^G$. If $G$ contains a $k$-clique $U$, this is a valid interaction
+with true hypothesis $z^U$, whose optimal value is $1$. If the policy plays
+$x^(T_1),dots,x^(T_N)$, define its realized shortfall by
+]
+
+#draft[
+$ cal(L)_N:=N-sum_(t=1)^N r(x^(T_t),y^G). $
+]
+
+#draft[
+This quantity is nonnegative. On the event $cal(E)$ that none of
+$T_1,dots,T_N$ is a clique, the reward gap above gives
+$cal(L)_N>=N/q$. Hence Markov's inequality and the assumed regret bound give
+]
+
+#draft[
+$ Pr(cal(E))
+    <=q E[cal(L)_N]/N
+    <=q P(L) N^(-beta). $
+]
+
+#draft[
+Choose
+]
+
+#draft[
+$ N:=ceil((4 q P(L))^(1/beta)). $
+]
+
+#draft[
+The family description has length polynomial in $n$, so $N$ and the total
+simulation time are polynomial in the CLIQUE input length. Verify each
+$k$-set proposed by the policy and accept as soon as it induces a clique in
+$G$. If $G$ has a $k$-clique, the preceding bound gives acceptance
+probability at least $3/4$. If $G$ has none, verification prevents acceptance,
+even though the simulated history need not then be compatible with any
+hypothesis. The policy is a polynomial-time algorithm on every syntactically
+valid history, so the simulation still terminates in polynomial time.
+]
+
+#draft[
+This is an RP algorithm for CLIQUE. Since CLIQUE is NP-complete, it implies
+$"NP"="RP"$. If the policy is deterministic, the same verified search gives
+$"P"="NP"$. $qed$
+]
+
+#draft[
+The construction deliberately uses exponentially large finite sets $X$ and
+$Z$ represented succinctly by $k$-subsets. It also uses a polytope $D$ and the
+bilinear reward $r(x,y)=sum_e x_e g_e$, rather than the jointly affine reward. It therefore shows
+that efficient planning alone does not suffice for efficient learning; it
+does not strengthen the positive result for Euclidean balls and affine
+rewards.
 ]
 
 #pagebreak()
