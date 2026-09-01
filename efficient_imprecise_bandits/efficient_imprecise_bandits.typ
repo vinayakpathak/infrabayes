@@ -1500,116 +1500,76 @@ First we show that if, instead of a Euclidean ball, we allow $D$ to be a simplex
  <thm:additive-simplex-np-hardness>
 ]
 
-#draft[
 *Proof.* We reduce from MAX-CUT, as defined in @app:max-cut[Appendix]. Let $(G,k)$ be an
 instance, where $G=(V,E)$ has $n$ vertices and $m>=1$ edges and
 $k in {1,dots,m}$. Orient the edges arbitrarily and let
 $B_G in RR^(m times n)$ be the resulting edge-vertex incidence matrix, i.e., if
 $e={i,j}$ is oriented from $j$ to $i$, then row $e$ has $1$ in column $i$,
 $-1$ in column $j$, and zeros elsewhere. Put
-]
 
-#draft[
 $ X:={x in RR^m:norm(x)_2<=1}, quad Z:=[1,2]. $
-]
 
-#draft[
 Write an outcome as $y=(p,q,s) in RR^n times RR^n times RR$ and take
-]
 
-#draft[
 $ D:={(p,q,s):p_i>=0, q_i>=0 " for " i=1,dots,n,
       s>=0, sum_(i=1)^n (p_i+q_i)+s=1}. $
-]
 
-#draft[
 Let $gamma>0$ be a constant to be chosen later. For every $z in Z$, let
-]
 
-#draft[
+
 $ K_z (x):={(p,q,s) in D:p-q=gamma B_G^T x}. $
-]
 
-#draft[
 This is of the form in @eq:setting-compatible-set, where
-]
 
-#draft[
 $ C_z (p,q,s):=p-q, quad
   B_z x:=-gamma B_G^T x, quad d_z:=0. $
-]
 
-#draft[
 Let the reward be
-]
 
-#draft[
 $ r(x,(p,q,s)):=sum_(i=1)^n (p_i+q_i). $
-]
 
-#draft[
 The maps $z mapsto B_z$, $z mapsto C_z$, and $z mapsto d_z$ are constant,
 hence affine, as required, and the reward lies in $[0,1]$ on $D$.
-]
 
-#draft[
 In particular, $K_z (x)$ is independent of $z$.
-]
 
-#draft[
 Next we show that, for every $z in Z$, $(G,k)$ is a yes-instance of MAX-CUT
 if and only if the constructed imprecise bandit instance has an arm $x in X$
 satisfying
-]
 
-#draft[
+
 $ v_z (x)>=2gamma sqrt(k). $
-]
 
-#draft[
 For the forward implication, suppose $(G,k)$ is a yes-instance. A vector
 $sigma in {-1,1}^n$ represents a partition of the vertices of $G$ into the
 two sides ${i:sigma_i=1}$ and ${i:sigma_i=-1}$. Let $c_G (sigma)$ denote the
 number of edges between these sides. Choose $sigma$ such that
 $c_G (sigma)>=k$, and define the arm
-]
 
-#draft[
 $ x_sigma:=B_G sigma/norm(B_G sigma)_2. $
-]
 
-#draft[
+
 This is well-defined because
 $norm(B_G sigma)_2>0$. Indeed, for every edge
 $e={i,j}$,
-]
 
-#draft[
 $ (B_G sigma)_e^2=(sigma_i-sigma_j)^2
   =cases(4 & "if " sigma_i!=sigma_j, 0 & "otherwise"). $
-]
 
-#draft[
+
 Summing over $e in E$ gives
-]
 
 #set math.equation(numbering: "(1)")
-#draft[
 $ norm(B_G sigma)_2=2sqrt(c_G (sigma)). $ <eq:simplex-cut-norm>
-]
 #set math.equation(numbering: none)
 
-#draft[
 By construction, $x_sigma in X$. Since $K_z (x)$ is independent of $z$, write
 $K(x):=K_z (x)={(p,q,s) in D:p-q=gamma B_G^T x}.$
-]
 
 #lemma[
-  #draft[
   For every $x in X$, the vector $t:=gamma B_G^T x$ satisfies
   $norm(t)_1<=gamma sqrt(2m n)$. Therefore, if
   $gamma<=1/sqrt(2m n)$, then $norm(t)_1<=1$.
-  ]
 ]
 
 #draft[
