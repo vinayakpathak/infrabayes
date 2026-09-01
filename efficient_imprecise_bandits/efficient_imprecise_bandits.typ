@@ -1576,7 +1576,7 @@ $ x_sigma:=B_G sigma/norm(B_G sigma)_2. $
 
 #draft[
 This is well-defined because
-$norm(B_G sigma)_2=2sqrt(c_G (sigma))>=2sqrt(k)>0$. Indeed, for every edge
+$norm(B_G sigma)_2>0$. Indeed, for every edge
 $e={i,j}$,
 ]
 
@@ -1596,8 +1596,23 @@ $ norm(B_G sigma)_2=2sqrt(c_G (sigma)). $ <eq:simplex-cut-norm>
 #set math.equation(numbering: none)
 
 #draft[
-By construction, $x_sigma in X$. To evaluate this arm, observe that
-$norm(B_G)_F=sqrt(2m)$, so every $x in X$ satisfies
+By construction, $x_sigma in X$. Since $K_z (x)$ is independent of $z$, write
+]
+
+#draft[
+$ K(x):=K_z (x)={(p,q,s) in D:p-q=gamma B_G^T x}. $
+]
+
+#draft[
+Thus an arm $x$ fixes the signed vector $t=gamma B_G^T x$. A compatible
+outcome decomposes $t$ as the difference $p-q$ of two nonnegative vectors,
+while $s=1-sum_(i=1)^n (p_i+q_i)$ is the remaining mass needed to obtain a
+point in the simplex $D$.
+]
+
+#draft[
+To evaluate an arm, observe that $norm(B_G)_F=sqrt(2m)$, so every $x in X$
+satisfies
 ]
 
 #draft[
@@ -1619,8 +1634,8 @@ $ p_i:=max(t_i,0), quad q_i:=max(-t_i,0), quad
 ]
 
 #draft[
-belongs to $D$ and satisfies $p-q=t$, proving that every $K_z (x)$ is
-nonempty. For any compatible $(p,q,s)$, nonnegativity gives
+belongs to $D$ and satisfies $p-q=t$, proving that $K(x)$ is nonempty for
+every $x in X$. For any compatible $(p,q,s)$, nonnegativity gives
 $p_i+q_i>=abs(p_i-q_i)=abs(t_i)$. The preceding positive-negative
 decomposition attains equality in every coordinate. Hence, for every
 $x in X$,
@@ -1628,7 +1643,7 @@ $x in X$,
 
 #set math.equation(numbering: "(1)")
 #draft[
-$ v_z (x):=min_(y in K_z (x)) r(x,y)
+$ v_z (x):=min_(y in K(x)) r(x,y)
     =gamma norm(B_G^T x)_1. $ <eq:simplex-arm-value>
 ]
 #set math.equation(numbering: none)
@@ -2733,7 +2748,14 @@ does not strengthen the positive result for Euclidean balls and affine
 rewards.
 ]
 
+#bibliography(
+  "imprecise_bandits_T8_9_upper_bound_clean.bib",
+  title: [#draft[References]],
+  style: "ieee",
+)
+
 #pagebreak()
+#heading(level: 1, numbering: none)[#draft[Appendix]]
 #counter(heading).update(0)
 #set heading(numbering: "A.")
 
@@ -2841,9 +2863,3 @@ $ M_G:=max_(S subset.eq V) abs(delta_G (S)). $
 #draft[
 Since the decision problem asks whether $M_G>=k$, computing $M_G$ is NP-hard.
 ]
-
-#bibliography(
-  "imprecise_bandits_T8_9_upper_bound_clean.bib",
-  title: [#draft[References]],
-  style: "ieee",
-)
