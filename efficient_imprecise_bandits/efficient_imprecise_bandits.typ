@@ -181,8 +181,11 @@ For every $z in Z$, we define the hypothesis $h_z$ by first defining the possibl
 $ K_z (x) := {y in D : C_z y + B_z x + d_z = 0}. $ <eq:setting-compatible-set>
 #set math.equation(numbering: none)
 
-Here $B_z$, $C_z$, and $d_z$ are matrices and vectors of
-appropriate dimensions that are linear in terms of $z$. Now, hypothesis $h_z: X -> credal D$ is given by
+#draft[
+Here $B_z$, $C_z$, and $d_z$ are matrices and vectors of appropriate
+dimensions that depend affinely on $z$. Now, hypothesis
+$h_z: X -> credal D$ is given by
+]
 
 $ h_z (x) := {P in Delta D : EE_(y ~ P)[y] in K_z (x)}. $
 
@@ -219,7 +222,7 @@ $ R_T := T V^star - EE [sum_(t=1)^T r(x_t,y_t)]. $
 To define the computational problem, we fix a finite representation scheme
 for the data defining $cM$, and let $|cM|$ denote the length of its
 description. We represent $X$ and $D$ by their centres and radii, $r$ by its
-coefficients, and $H$ by a description of $Z$ together with the linear maps
+coefficients, and $H$ by a description of $Z$ together with the affine map
 $z mapsto (B_z,C_z,d_z)$. We restrict attention to succinctly represented
 instances, for which $|cM| <= poly(d_X,d_D,d_Z)$.
 ]
@@ -1500,9 +1503,10 @@ First we show that if, instead of a Euclidean ball, we allow $D$ to be a simplex
 #draft[
 *Proof.* We reduce from MAX-CUT, as defined in @app:max-cut[Appendix]. Let $(G,k)$ be an
 instance, where $G=(V,E)$ has $n$ vertices and $m>=1$ edges and
-$k in {1,dots,m}$. Orient the edges arbitrarily, let
-$B_G in RR^(m times n)$ be the resulting edge-vertex incidence matrix, and
-put
+$k in {1,dots,m}$. Orient the edges arbitrarily and let
+$B_G in RR^(m times n)$ be the resulting edge-vertex incidence matrix, i.e., if
+$e={i,j}$ is oriented from $j$ to $i$, then row $e$ has $1$ in column $i$,
+$-1$ in column $j$, and zeros elsewhere. Put
 ]
 
 #draft[
@@ -1527,12 +1531,12 @@ $ K_z (x):={(p,q,s) in D:p-q=gamma B_G^T x}. $
 ]
 
 #draft[
-Since $z!=0$, this is of the form in @eq:setting-compatible-set, where
+This is of the form in @eq:setting-compatible-set, where
 ]
 
 #draft[
-$ C_z (p,q,s):=z(p-q), quad
-  B_z x:=-gamma z B_G^T x, quad d_z:=0. $
+$ C_z (p,q,s):=p-q, quad
+  B_z x:=-gamma B_G^T x, quad d_z:=0. $
 ]
 
 #draft[
@@ -1544,8 +1548,8 @@ $ r(x,(p,q,s)):=sum_(i=1)^n (p_i+q_i). $
 ]
 
 #draft[
-The maps $z mapsto B_z$, $z mapsto C_z$, and $z mapsto d_z$ are linear, as
-required, and the reward lies in $[0,1]$ on $D$.
+The maps $z mapsto B_z$, $z mapsto C_z$, and $z mapsto d_z$ are constant,
+hence affine, as required, and the reward lies in $[0,1]$ on $D$.
 ]
 
 #draft[
@@ -1597,35 +1601,42 @@ $ norm(B_G sigma)_2=2sqrt(c_G (sigma)). $ <eq:simplex-cut-norm>
 
 #draft[
 By construction, $x_sigma in X$. Since $K_z (x)$ is independent of $z$, write
+$K(x):=K_z (x)={(p,q,s) in D:p-q=gamma B_G^T x}.$
+]
+
+#lemma[
+  #draft[
+  For every $x in X$, the vector $t:=gamma B_G^T x$ satisfies
+  $norm(t)_1<=gamma sqrt(2m n)$. Therefore, if
+  $gamma<=1/sqrt(2m n)$, then $norm(t)_1<=1$.
+  ]
 ]
 
 #draft[
-$ K(x):=K_z (x)={(p,q,s) in D:p-q=gamma B_G^T x}. $
+*Proof.* Each edge coordinate $x_e$ contributes $x_e$ and $-x_e$ to two
+coordinates of $B_G^T x$ before contributions from different edges are
+added. The triangle inequality therefore gives
 ]
 
 #draft[
-Thus an arm $x$ fixes the signed vector $t=gamma B_G^T x$. A compatible
-outcome decomposes $t$ as the difference $p-q$ of two nonnegative vectors,
-while $s=1-sum_(i=1)^n (p_i+q_i)$ is the remaining mass needed to obtain a
-point in the simplex $D$.
+$ norm(t)_1=gamma norm(B_G^T x)_1
+  <=2gamma norm(x)_1
+  <=2gamma sqrt(m) norm(x)_2
+  <=2gamma sqrt(m)
+  <=gamma sqrt(2m n), $
 ]
 
 #draft[
-To evaluate an arm, observe that $norm(B_G)_F=sqrt(2m)$, so every $x in X$
-satisfies
+where the second inequality is Cauchy–Schwarz, the third uses
+$norm(x)_2<=1$, and the last uses $n>=2$, which follows from $m>=1$. $qed$
 ]
 
 #draft[
-$ norm(B_G^T x)_1
-  <=sqrt(n) norm(B_G^T x)_2
-  <=sqrt(n) norm(B_G)_F norm(x)_2
-  <=sqrt(2m n). $
-]
-
-#draft[
-For $t:=gamma B_G^T x$, it follows that
-$norm(t)_1<=gamma sqrt(2m n)$. Thus, provided that
-$gamma sqrt(2m n)<=1$, the choice
+Now fix $x in X$ and set $t:=gamma B_G^T x$. A compatible outcome decomposes
+$t$ as the difference $p-q$ of two nonnegative vectors, while
+$s=1-sum_(i=1)^n (p_i+q_i)$ is the remaining mass needed to obtain a point in
+the simplex $D$. Provided that
+$gamma sqrt(2m n)<=1$, the preceding lemma shows that the choice
 ]
 
 #draft[
