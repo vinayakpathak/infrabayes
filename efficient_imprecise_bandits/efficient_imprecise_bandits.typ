@@ -1591,36 +1591,33 @@ where the second inequality is Cauchy–Schwarz, the third uses
 $norm(x)_2<=1$, and the last uses $n>=2$, which follows from $m>=1$. $qed$
 ]
 
+#lemma[
+  Suppose $gamma<=1/sqrt(2m n)$. For each arm $x in X$, set
+  $t:=gamma B_G^T x$. Then $K(x)$ is nonempty, and for all $z$,
+  $v_z (x)=min_(y in K(x)) r(x,y)=norm(t)_1=gamma norm(B_G^T x)_1$. Moreover, the minimum is attained at the outcome $y=(p,q,s)$ given by
+  $p_i:=max(t_i,0)$, $q_i:=max(-t_i,0)$, and $s:=1-norm(t)_1$.
+] <lem:simplex-arm-value>
+
 #draft[
-Now fix $x in X$ and set $t:=gamma B_G^T x$. A compatible outcome decomposes
-$t$ as the difference $p-q$ of two nonnegative vectors, while
-$s=1-sum_(i=1)^n (p_i+q_i)$ is the remaining mass needed to obtain a point in
-the simplex $D$. Provided that
-$gamma sqrt(2m n)<=1$, the preceding lemma shows that the choice
+*Proof.* Since $K_z (x)=K(x)$ and the reward does not depend on $z$, neither
+does $v_z (x)$. Fix $x in X$ and set $t:=gamma B_G^T x$. The preceding lemma
+gives $norm(t)_1<=1$. For the outcome in the statement, $p,q,s$ are
+nonnegative, $p-q=t$, and
 ]
 
 #draft[
-$ p_i:=max(t_i,0), quad q_i:=max(-t_i,0), quad
-  s:=1-norm(t)_1 $
+$ sum_(i=1)^n (p_i+q_i)+s=norm(t)_1+1-norm(t)_1=1. $
 ]
 
 #draft[
-belongs to $D$ and satisfies $p-q=t$, proving that $K(x)$ is nonempty for
-every $x in X$. For any compatible $(p,q,s)$, nonnegativity gives
-$p_i+q_i>=abs(p_i-q_i)=abs(t_i)$. The preceding positive-negative
-decomposition attains equality in every coordinate. Hence, for every
-$x in X$,
+Thus this outcome belongs to $K(x)$. For any $(p,q,s) in K(x)$,
+nonnegativity gives $p_i+q_i>=abs(p_i-q_i)=abs(t_i)$ for every $i$, and hence
+$r(x,(p,q,s))>=norm(t)_1$. The outcome in the statement attains equality in
+every coordinate, proving the result. $qed$
 ]
 
-#set math.equation(numbering: "(1)")
 #draft[
-$ v_z (x):=min_(y in K(x)) r(x,y)
-    =gamma norm(B_G^T x)_1. $ <eq:simplex-arm-value>
-]
-#set math.equation(numbering: none)
-
-#draft[
-Applying @eq:simplex-arm-value to $x_sigma$ and using
+Applying @lem:simplex-arm-value to $x_sigma$ and using
 @eq:simplex-cut-norm gives
 ]
 
@@ -1644,7 +1641,7 @@ $ norm(B_G^T x)_1=sigma^T B_G^T x. $
 ]
 
 #draft[
-Using @eq:simplex-arm-value and @eq:simplex-cut-norm,
+Using @lem:simplex-arm-value and @eq:simplex-cut-norm,
 ]
 
 #draft[
