@@ -1540,28 +1540,36 @@ satisfying
 
 $ v_z (x)>=2gamma sqrt(k). $
 
-For the forward implication, suppose $(G,k)$ is a yes-instance. A vector
-$sigma in {-1,1}^n$ represents a partition of the vertices of $G$ into the
-two sides ${i:sigma_i=1}$ and ${i:sigma_i=-1}$. Let $c_G (sigma)$ denote the
-number of edges between these sides. Choose $sigma$ such that
-$c_G (sigma)>=k$, and define the arm
+A vector $sigma in {-1,1}^n$ represents a partition of the vertices of $G$
+into the two sides ${i:sigma_i=1}$ and ${i:sigma_i=-1}$. Let
+$c_G (sigma)$ denote the number of edges between these sides.
 
-$ x_sigma:=B_G sigma/norm(B_G sigma)_2. $
+#lemma[
+  #draft[
+  For every $sigma in {-1,1}^n$,
 
+  $ norm(B_G sigma)_2=2sqrt(c_G (sigma)). $
+  ]
+] <lem:simplex-cut-norm>
 
-This is well-defined because
-$norm(B_G sigma)_2>0$. Indeed, for every edge
-$e={i,j}$,
+#draft[
+*Proof.* Fix $sigma in {-1,1}^n$. For every edge $e={i,j}$,
 
 $ (B_G sigma)_e^2=(sigma_i-sigma_j)^2
   =cases(4 & "if " sigma_i!=sigma_j, 0 & "otherwise"). $
 
+Summing over $e in E$ and taking the square root proves the identity. $qed$
+]
 
-Summing over $e in E$ gives
+For the forward implication, suppose $(G,k)$ is a yes-instance. Choose
+$sigma$ such that $c_G (sigma)>=k$, and define the arm
 
-#set math.equation(numbering: "(1)")
-$ norm(B_G sigma)_2=2sqrt(c_G (sigma)). $ <eq:simplex-cut-norm>
-#set math.equation(numbering: none)
+$ x_sigma:=B_G sigma/norm(B_G sigma)_2. $
+
+#draft[
+Since $c_G (sigma)>=k>=1$, @lem:simplex-cut-norm shows that $x_sigma$ is
+well-defined.
+]
 
 By construction, $x_sigma in X$. Since $K_z (x)$ is independent of $z$, write
 $K(x):=K_z (x)={(p,q,s) in D:p-q=gamma B_G^T x}.$
@@ -1618,7 +1626,7 @@ every coordinate, proving the result. $qed$
 
 #draft[
 Applying @lem:simplex-arm-value to $x_sigma$ and using
-@eq:simplex-cut-norm gives
+@lem:simplex-cut-norm gives
 ]
 
 #draft[
@@ -1641,7 +1649,7 @@ $ norm(B_G^T x)_1=sigma^T B_G^T x. $
 ]
 
 #draft[
-Using @lem:simplex-arm-value and @eq:simplex-cut-norm,
+Using @lem:simplex-arm-value and @lem:simplex-cut-norm,
 ]
 
 #draft[
