@@ -1545,31 +1545,63 @@ into the two sides ${i:sigma_i=1}$ and ${i:sigma_i=-1}$. Let
 $c_G (sigma)$ denote the number of edges between these sides.
 
 #lemma[
-  #draft[
   For every $sigma in {-1,1}^n$,
 
   $ norm(B_G sigma)_2=2sqrt(c_G (sigma)). $
-  ]
 ] <lem:simplex-cut-norm>
 
-#draft[
 *Proof.* Fix $sigma in {-1,1}^n$. For every edge $e={i,j}$,
 
 $ (B_G sigma)_e^2=(sigma_i-sigma_j)^2
   =cases(4 & "if " sigma_i!=sigma_j, 0 & "otherwise"). $
 
 Summing over $e in E$ and taking the square root proves the identity. $qed$
-]
 
 For the forward implication, suppose $(G,k)$ is a yes-instance. Choose
 $sigma$ such that $c_G (sigma)>=k$, and define the arm
 
 $ x_sigma:=B_G sigma/norm(B_G sigma)_2. $
 
-#draft[
 Since $c_G (sigma)>=k>=1$, @lem:simplex-cut-norm shows that $x_sigma$ is
-well-defined.
+well-defined. Moreover, we get the following inequality.
+
+#lemma[
+  For every $sigma in {-1,1}^n$ such that $B_G sigma!=0$, we have
+  $norm(B_G^T x_sigma)_1>=norm(B_G sigma)_2$. Moreover, equality holds when
+  $sigma$ maximizes $norm(B_G sigma)_2$ over ${-1,1}^n$; in particular,
+  equality holds for at least one $sigma$.
+] <lem:simplex-duality>
+
+#draft[
+*Proof.* The $ell^1$--$ell^oo$ duality gives
 ]
+
+#draft[
+$ norm(B_G^T x_sigma)_1
+    =max_(tau in {-1,1}^n) tau^T B_G^T x_sigma
+    =max_(tau in {-1,1}^n) x_sigma^T B_G tau. $
+]
+
+#draft[
+Taking $tau=sigma$ yields
+$norm(B_G^T x_sigma)_1>=x_sigma^T B_G sigma=norm(B_G sigma)_2$.
+Now let $sigma^star$ maximize $norm(B_G sigma)_2$. Since $m>=1$, this maximum
+is positive, so $x_(sigma^star)$ is well-defined. For every
+$tau in {-1,1}^n$, Cauchy–Schwarz gives
+]
+
+#draft[
+$ x_(sigma^star)^T B_G tau
+    <=norm(x_(sigma^star))_2 norm(B_G tau)_2
+    <=norm(B_G sigma^star)_2. $
+]
+
+#draft[
+Taking the maximum over $tau$ in the dual representation and combining the
+resulting upper bound with the first part proves equality. $qed$
+]
+
+The lemma above gives us a way to link properties of cuts with properties of arms. The missing ingredient is to show that the value of an arm has something to do with $norm(B_G^T x)_1$. We show this in the next two lemmas.
 
 By construction, $x_sigma in X$. Since $K_z (x)$ is independent of $z$, write
 $K(x):=K_z (x)={(p,q,s) in D:p-q=gamma B_G^T x}.$
@@ -1624,110 +1656,53 @@ $r(x,(p,q,s))>=norm(t)_1$. The outcome in the statement attains equality in
 every coordinate, proving the result. $qed$
 ]
 
-#draft[
-Applying @lem:simplex-arm-value to $x_sigma$ and using
-@lem:simplex-cut-norm gives
-]
+Note that this also shows that given an arm $x$, we can compute $v_z (x)$ efficiently, which is one of the prerequisites for the application of @lem:planning-from-learning.
 
-#draft[
+For the final step, apply @lem:simplex-arm-value, @lem:simplex-duality, and
+@lem:simplex-cut-norm to obtain
+
 $ v_z (x_sigma)
     =gamma norm(B_G^T x_sigma)_1
-    >=gamma sigma^T B_G^T x_sigma
-    =gamma norm(B_G sigma)_2
+    >=gamma norm(B_G sigma)_2
     =2gamma sqrt(c_G (sigma))
     >=2gamma sqrt(k). $
-]
 
-#draft[
 For the reverse implication, suppose there is an arm $x in X$ satisfying
 $v_z (x)>=2gamma sqrt(k)$. By $ell_1$--$ell_oo$ duality, choose
 $sigma in {-1,1}^n$ such that
-]
 
-#draft[
 $ norm(B_G^T x)_1=sigma^T B_G^T x. $
-]
 
-#draft[
 Using @lem:simplex-arm-value and @lem:simplex-cut-norm,
-]
 
-#draft[
 $ 2gamma sqrt(k)
     <=v_z (x)
     =gamma norm(B_G^T x)_1
     =gamma x^T B_G sigma
     <=gamma norm(x)_2 norm(B_G sigma)_2
     <=2gamma sqrt(c_G (sigma)). $
-]
 
-#draft[
 Since $gamma>0$, this implies $c_G (sigma)>=k$, so $(G,k)$ is a yes-instance.
 This proves the claimed equivalence.
-]
 
-#draft[
-If $M_G$ denotes the maximum cut size, the same argument gives
-]
+To apply @lem:planning-from-learning, we need to show that _approximate_
+planning is hard. Although the lemma returns only an approximate optimizer,
+this is sufficient because the maximum cut size $M_G$ is an integer between
+$0$ and $m$, and the corresponding planning values are
+$V_z=2gamma sqrt(M_G)$. Taking $gamma:=1/(2m n)$ ensures that every
+$K_z (x)$ is nonempty and that consecutive planning values are separated by
+at least $1/(2m^2 n)$. Thus an additive approximation with error
+$epsilon:=1/(6m^2 n)$ distinguishes $M_G>=k$ from $M_G<=k-1$.
 
-#draft[
-$ V_z=2gamma sqrt(M_G). $
-]
+By @lem:simplex-arm-value, we can compute both the value of the returned arm
+and a minimizing outcome in polynomial time. We can therefore decide MAX-CUT
+by comparing the returned arm's value with the midpoint between
+$2gamma sqrt(k-1)$ and $2gamma sqrt(k)$, computed to sufficient precision.
+Hence @lem:planning-from-learning implies that a randomized polynomial-time
+learner would place MAX-CUT in $"BPP"$, and therefore that
+$"NP" subset.eq "BPP"$. A deterministic learner would instead imply
+$"P"="NP"$. $qed$
 
-#draft[
-The values corresponding to consecutive cut sizes satisfy, for
-$j=1,dots,m$,
-]
-
-#draft[
-$ 2gamma (sqrt(j)-sqrt(j-1))
-  =2gamma/(sqrt(j)+sqrt(j-1))
-  >=gamma/m. $
-]
-
-#draft[
-It remains to choose $gamma$. Set $gamma:=1/(2m n)$. This choice has
-$O(log m+log n)$-bit representation and satisfies
-]
-
-#draft[
-$ gamma sqrt(2m n)=1/sqrt(2m n)<=1, $
-]
-
-#draft[
-so every $K_z (x)$ is nonempty. Moreover, consecutive candidate values are
-separated by at least
-]
-
-#draft[
-$ gamma/m=1/(2m^2 n). $
-]
-
-#draft[
-Thus the tolerance
-]
-
-#draft[
-$ epsilon:=gamma/(3m)=1/(6m^2 n) $
-]
-
-#draft[
-is inverse-polynomial in the encoding length and is less than half the gap.
-Approximating the candidate values $2gamma sqrt(j)$, $j=0,dots,m$, to
-polynomially many bits, any estimate of $V_z$ within $epsilon$ therefore
-identifies $M_G$ and decides whether $(G,k)$ is a yes-instance. This proves
-the planning claim.
-]
-
-#draft[
-The positive-negative decomposition displayed above is an exact rational
-minimizing outcome and is computable in polynomial time from every rational
-arm. Applying @lem:planning-from-learning with this $epsilon$
-therefore supplies, with probability at least $2/3$, the estimate used in the
-preceding paragraph. This would place MAX-CUT in $"BPP"$ and hence imply
-$"NP" subset.eq "BPP"$. For a deterministic learner, the estimate is
-deterministic and gives $"P"="NP"$. $qed$
-]
 
 #draft[
 == D = ball, X = polytope, F = F0 + F1
