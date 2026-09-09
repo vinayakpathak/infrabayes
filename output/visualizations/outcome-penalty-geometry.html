@@ -1,0 +1,124 @@
+<div id="outcome-penalty-geometry">
+  <h3>The outcome that minimizes reward plus penalty</h3>
+  <div class="viz-controls">
+    <label class="form-label" for="opg-lambda">Penalty weight λ: <output id="opg-lambda-value" class="tabular-nums">1.65</output>
+      <input id="opg-lambda" class="form-range" type="range" min="1" max="8" step="0.05" value="1.65">
+    </label>
+    <label class="form-label" for="opg-angle">Long-axis angle: <output id="opg-angle-value" class="tabular-nums">35°</output>
+      <input id="opg-angle" class="form-range" type="range" min="0" max="180" step="1" value="35">
+    </label>
+  </div>
+  <div id="opg-plot"></div>
+  <div class="viz-row text-small" aria-label="Legend">
+    <span><span style="color:var(--viz-series-1)">○</span> Penalty center μ</span>
+    <span><span style="color:var(--viz-series-2)">＋</span> Unconstrained minimum y₀</span>
+    <span><span style="color:var(--viz-series-2)">●</span> Feasible minimum y*</span>
+  </div>
+  <div id="opg-status" class="text-small tabular-nums" aria-live="polite"></div>
+</div>
+<style>
+  #outcome-penalty-geometry #opg-plot { width:100%; }
+  #outcome-penalty-geometry .opg-svg { display:block; width:100%; }
+  #outcome-penalty-geometry .opg-svg text { fill:var(--foreground); font-size:12px; }
+</style>
+<script>
+(() => {
+  const root = document.getElementById('outcome-penalty-geometry');
+  const plot = root.querySelector('#opg-plot');
+  const weight = root.querySelector('#opg-lambda');
+  const angle = root.querySelector('#opg-angle');
+  const ns = 'http://www.w3.org/2000/svg';
+  const mu = [0.3, 0.2];
+  const eigenvalues = [6, 1.2];
+  function element(tag, attrs, parent, content) {
+    const node = document.createElementNS(ns, tag);
+    Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value));
+    if (content !== undefined) node.textContent = content;
+    parent.appendChild(node);
+    return node;
+  }
+  function draw() {
+    const lambda = Number(weight.value);
+    const theta = Number(angle.value) * Math.PI / 180;
+    const co = Math.cos(theta), si = Math.sin(theta);
+    const rotate = p => [co*p[0]-si*p[1], si*p[0]+co*p[1]];
+    const unrotate = p => [co*p[0]+si*p[1], -si*p[0]+co*p[1]];
+    const sx = eigenvalues[0]*co*co + eigenvalues[1]*si*si;
+    const sxy = (eigenvalues[0]-eigenvalues[1])*co*si;
+    const y0 = [mu[0]-sx/(2*lambda), mu[1]-sxy/(2*lambda)];
+    const y0e = unrotate(y0);
+    const boundary = Math.hypot(...y0) > 1;
+    let ystar = y0;
+    if (boundary) {
+      const at = t => rotate(y0e.map((z,i) => z/(1+t*eigenvalues[i])));
+      let low = 0, high = 1;
+      while (Math.hypot(...at(high)) > 1) high *= 2;
+      for (let i=0; i<64; i++) {
+        const mid = (low+high)/2;
+        if (Math.hypot(...at(mid)) > 1) low = mid; else high = mid;
+      }
+      ystar = at(high);
+    }
+    const ellipse = (center, radius) => Array.from({length:181}, (_, i) => {
+      const t = i*Math.PI/90;
+      const d = rotate([radius*Math.sqrt(eigenvalues[0])*Math.cos(t), radius*Math.sqrt(eigenvalues[1])*Math.sin(t)]);
+      return [center[0]+d[0], center[1]+d[1]];
+    });
+    const contours = [0.2,0.35,0.5].map(radius => ellipse(mu, radius));
+    const disk = Array.from({length:181}, (_,i) => [Math.cos(i*Math.PI/90), Math.sin(i*Math.PI/90)]);
+    const marks = [...disk, ...contours.flat(), y0, ystar, mu];
+    const xmin = Math.min(...marks.map(p=>p[0])), xmax = Math.max(...marks.map(p=>p[0]));
+    const ymin = Math.min(...marks.map(p=>p[1])), ymax = Math.max(...marks.map(p=>p[1]));
+    const width = Math.max(280, plot.getBoundingClientRect().width);
+    const height = Math.min(430, Math.max(300, width*0.65));
+    const left = 64, right = width-18, top = 18, bottom = height-42;
+    const scale = Math.min((right-left-30)/(xmax-xmin), (bottom-top-30)/(ymax-ymin));
+    const cx = (xmin+xmax)/2, cy = (ymin+ymax)/2;
+    const px = x => (left+right)/2 + (x-cx)*scale;
+    const py = y => (top+bottom)/2 - (y-cy)*scale;
+    plot.replaceChildren();
+    const svg = element('svg', {class:'opg-svg', viewBox:`0 0 ${width} ${height}`, role:'img', 'aria-labelledby':'opg-title opg-desc'}, plot);
+    element('title', {id:'opg-title'}, svg, 'Ellipsoidal penalty and minimizing outcome');
+    element('desc', {id:'opg-desc'}, svg, 'The unit circle is the feasible outcome set. Ellipses are equal-penalty contours centered at μ. Reward decreases to the left. The plus is the unconstrained minimum; the filled point is the minimum in the unit disk.');
+    element('rect', {'data-chart-frame':'', x:left,y:top,width:right-left,height:bottom-top,fill:'none',stroke:'var(--border)'}, svg);
+    const defs = element('defs', {}, svg);
+    const marker = element('marker', {id:'opg-arrow',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:6,markerHeight:6,orient:'auto-start-reverse'}, defs);
+    element('path',{d:'M 0 0 L 10 5 L 0 10 z',fill:'var(--foreground)'},marker);
+    const clip = element('clipPath',{id:'opg-clip'},defs);
+    element('rect',{x:left,y:top,width:right-left,height:bottom-top},clip);
+    const shapes = element('g',{'clip-path':'url(#opg-clip)'},svg);
+    const path = pts => pts.map((p,i)=>`${i?'L':'M'}${px(p[0])},${py(p[1])}`).join(' ');
+    element('path',{d:path(disk)+' Z',fill:'var(--foreground)','fill-opacity':0.035,stroke:'var(--foreground)','stroke-width':1.3},shapes);
+    contours.forEach(points => element('path',{d:path(points)+' Z',fill:'none',stroke:'var(--viz-series-1)','stroke-width':1.3,opacity:0.65},shapes));
+    element('path',{d:path([mu,y0]),fill:'none',stroke:'var(--viz-series-2)','stroke-width':1.5},shapes);
+    if (boundary) element('path',{d:path([y0,ystar]),fill:'none',stroke:'var(--viz-series-2)','stroke-width':1.5,'stroke-dasharray':'4 4'},shapes);
+    const arrowStart = [px(0.45),py(-0.9)], arrowEnd = [px(-0.2),py(-0.9)];
+    element('path',{d:`M${arrowStart} L${arrowEnd}`,fill:'none',stroke:'var(--foreground)','stroke-width':1.3,'marker-end':'url(#opg-arrow)'},shapes);
+    element('text',{x:(arrowStart[0]+arrowEnd[0])/2,y:arrowStart[1]-9,'text-anchor':'middle'},svg,'Lower reward');
+    element('text',{x:px(0.67),y:py(0.75),'text-anchor':'middle'},svg,'D');
+    element('circle',{cx:px(mu[0]),cy:py(mu[1]),r:5,fill:'var(--background)',stroke:'var(--viz-series-1)','stroke-width':2},shapes);
+    const a = [px(y0[0]),py(y0[1])];
+    element('path',{d:`M${a[0]-7},${a[1]} H${a[0]+7} M${a[0]},${a[1]-7} V${a[1]+7}`,stroke:'var(--viz-series-2)','stroke-width':2},shapes);
+    element('circle',{cx:px(ystar[0]),cy:py(ystar[1]),r:4,fill:'var(--viz-series-2)'},shapes);
+    const xticks = [-2,-1,0,1].filter(t=>px(t)>left+10 && px(t)<right-10);
+    const yticks = [-1,0,1].filter(t=>py(t)>top+10 && py(t)<bottom-10);
+    xticks.forEach(t => {
+      element('path',{d:`M${px(t)},${bottom} v4`,stroke:'var(--border)'},svg);
+      element('text',{x:px(t),y:bottom+17,'text-anchor':'middle'},svg,String(t));
+    });
+    yticks.forEach(t => {
+      element('path',{d:`M${left},${py(t)} h-4`,stroke:'var(--border)'},svg);
+      element('text',{x:left-10,y:py(t)+4,'text-anchor':'end'},svg,String(t));
+    });
+    element('text',{class:'axis-title','data-axis':'x',x:(left+right)/2,y:height-5,'text-anchor':'middle'},svg,'Outcome y₁');
+    element('text',{class:'axis-title','data-axis':'y',transform:`translate(15 ${(top+bottom)/2}) rotate(-90)`,'text-anchor':'middle'},svg,'Outcome y₂');
+    root.querySelector('#opg-lambda-value').textContent = lambda.toFixed(2);
+    root.querySelector('#opg-angle-value').textContent = angle.value+'°';
+    root.querySelector('#opg-status').textContent = `Minimum: (${ystar[0].toFixed(2)}, ${ystar[1].toFixed(2)}) · ${boundary ? 'on the boundary of D' : 'inside D; both minima coincide'}`;
+  }
+  weight.addEventListener('input', draw);
+  angle.addEventListener('input', draw);
+  new ResizeObserver(draw).observe(plot);
+  draw();
+})();
+</script>

@@ -1402,6 +1402,280 @@ regret. Hence the weak bit-model implementation remains polynomial in
 $L_("pub")$ and $T$ and has the same regret rate.
 ]
 
+#draft[
+= A $sqrt(T)$ learner <sec:soft-square-root>
+
+We now improve the regret bound for Euclidean arm and outcome balls to
+$tilde(O)(sqrt(T))$. The learner replaces the separate estimation of $f$
+and $N$ by a quadratic penalty on the joint arm--outcome vector. It also
+chooses block lengths adaptively: each completed block doubles a matrix
+determinant, while its contribution to the accumulated penalty remains
+bounded.
+
+Translate and rescale the balls so that
+$X={x:norm(x)<=1}$ and $D={y:norm(y)<=1}$. We retain the notation
+$r(x,y)=a^T x+b^T y+c$ for the transformed reward. Thus the new $norm(b)$
+equals $R_D norm(b)$ in the original coordinates; the non-tangency constant
+$S$ is unchanged. If either radius is zero, the expected-regret guarantee
+is immediate, so assume both radii are positive. All vector norms in this
+section are Euclidean. Put
+
+$ q:=1+d_X+d_D, quad w(x,y):=(1,x,y), quad lambda:=ceil(sqrt(T)). $
+
+For a positive-definite matrix $V$, write
+$norm(w)_(V^(-1)):=sqrt(w^T V^(-1)w)$.
+
+#block(breakable: false)[
+Given $delta in (0,1)$, define the following quantities for the analysis:
+
+$ J_T &:=ceil(q log_2 (1+3T/q)), \
+  h_T^2 &:=8d_D log((2d_D T^2)/delta), \
+  B_T^2 &:=1+J_T h_T^2, \
+  G &:=sqrt(3)(1+S^(-1))norm(b). $
+]
+
+#theorem[
+  For every compatible adaptive nature policy, the exact-arithmetic form
+  of @alg:soft-square-root satisfies, with probability at least $1-delta$,
+
+  $ T V^star-sum_(t=1)^T r(x_t,y_t)
+      <=lambda(1+sqrt(3))^2 (J_T+1)
+        +(G^2 B_T^2 T)/(4lambda)+T epsilon, $
+
+  where $epsilon$ is the additive accuracy of each planning call. The
+  algorithm admits an implementation in time polynomial in $abs(cM)$ and
+  $T$ under the weak finite-precision model. With
+  $epsilon=delta=(T+1)^(-2)$, this implementation has expected regret
+
+  $ R_T<=tilde(O)(
+      [q+(1+S^(-1))^2 norm(b)^2 q d_D]sqrt(T)
+    )+O(C_r/T), $
+
+  where $C_r:=max_(X times D) r-min_(X times D) r$ is the reward range.
+  Neither $S$ nor the quantities $J_T,h_T,B_T,G$ are inputs to the policy.
+] <thm:soft-square-root>
+
+#algorithm[
+  Initialize $V:=I_q$. At the start of each block:
+
+  + Define
+
+    $ U_V (x):=min_(y in D)
+        [r(x,y)+lambda norm(w(x,y))_(V^(-1))^2], $
+
+    and choose $x in X$ satisfying
+    $U_V (x)>=max_(x' in X) U_V (x')-epsilon$.
+
+  + Play $x$ repeatedly. After $n$ observations in the block, let
+
+    $ overline(y)_n:=1/n sum_(i=1)^n y_i, quad
+      overline(w)_n:=w(x,overline(y)_n). $
+
+    End the block at the first $n$ for which
+
+    $ n norm(overline(w)_n)_(V^(-1))^2>=1. $
+
+  + Update $V<-V+n overline(w)_n overline(w)_n^T$ and start a new block.
+    At the horizon, stop even if the current block has not ended.
+] <alg:soft-square-root>
+
+*Proof.* Let $N:=opker C_(z^star)$ and let $Q$ be the orthogonal projector
+onto $N^perp$. The minimum-norm solution of the true affine constraints is
+an affine map $f(x)=A x+d in N^perp$, and
+
+$ K^star (x)=(A x+d+N) inter D. $
+
+Every fiber is nonempty, so $norm(A x+d)<=1$ on $X$. Evaluating at zero
+and at opposite unit vectors gives $norm(d)<=1$ and
+$norm(A)_("op")<=1$. Define
+
+$ Phi(s,x,y):=Q y-A x-s d, quad cal(L):=opker Phi. $
+
+Every lifted conditional mean lies in $cal(L)$, and
+$norm(Phi)_("op")<=sqrt(3)$. Therefore, for $x in X$ and $y in D$,
+
+$ opdist(y,A x+d+N)=norm(Phi(1,x,y))
+    <=sqrt(3)opdist(w(x,y),cal(L)). $
+
+Applying @lem:noisy-ball-stability yields
+
+#set math.equation(numbering: "(1)")
+$ opdist(y,K^star (x))
+    <=sqrt(3)(1+S^(-1))opdist(w(x,y),cal(L)). $
+  <eq:soft-lifted-geometry>
+#set math.equation(numbering: none)
+
+We next bound the number and cost of the blocks. At each completed block,
+the matrix determinant lemma and the stopping rule give
+
+$ opdet(V+n overline(w)overline(w)^T)
+    =opdet(V)(1+n norm(overline(w))_(V^(-1))^2)
+    >=2opdet(V). $
+
+Since $norm(overline(w))<=sqrt(3)$, the final matrix has trace at most
+$q+3T$. If $J$ blocks are completed, it follows that
+
+$ 2^J<=opdet V<=(1+3T/q)^q, quad J<=J_T. $
+
+The first-crossing rule also bounds the overshoot. Within a block, hold
+$V$ fixed and put $S_n:=sum_(i=1)^n w(x,y_i)$. At its first crossing,
+for $n>=2$,
+
+$ norm(S_n)_(V^(-1))/sqrt(n)
+    &<=sqrt((n-1)/n)
+       norm(S_(n-1))_(V^(-1))/sqrt(n-1)
+       +norm(w(x,y_n))_(V^(-1))/sqrt(n) \
+    &<=1+sqrt(3). $
+
+Here $V succ.eq I_q$ and the test failed at $n-1$. The same bound holds
+for $n=1$; an unfinished final block has quadratic cost below one.
+Thus every block appearing in the regret sum satisfies
+
+#set math.equation(numbering: "(1)")
+$ n norm(overline(w))_(V^(-1))^2<=(1+sqrt(3))^2. $
+  <eq:soft-block-cost>
+#set math.equation(numbering: none)
+
+Write $m_t$ for the conditional mean of $y_t$ under nature's distribution
+on round $t$. Each coordinate of $y_t-m_t$ is a martingale difference
+bounded in absolute value by two. The Azuma--Hoeffding inequality and a
+union bound over the $d_D$ coordinates and at most $T^2$ deterministic
+intervals imply that, with probability at least $1-delta$,
+
+#set math.equation(numbering: "(1)")
+$ n norm(overline(y)-overline(m))^2<=h_T^2 $
+  <eq:soft-interval-noise>
+#set math.equation(numbering: none)
+
+on every interval of length $n$. Work on this event. It applies in
+particular to all adaptively chosen blocks. Fix a unit vector
+$u in cal(L)^perp$. Within a completed block the arm is constant, and
+$w(x,overline(m)) in cal(L)$, so
+
+$ n(u^T overline(w))^2
+    =n(u^T (0,0,overline(y)-overline(m)))^2<=h_T^2. $
+
+Consequently every matrix maintained by the learner satisfies
+$u^T V u<=1+J_T h_T^2=B_T^2$. Cauchy--Schwarz in the $V$ and $V^(-1)$
+norms now gives, simultaneously for all $w in RR^q$,
+
+#set math.equation(numbering: "(1)")
+$ opdist(w,cal(L))
+    =sup_(u in cal(L)^perp, norm(u)<=1) u^T w
+    <=B_T norm(w)_(V^(-1)). $
+  <eq:soft-subspace-certificate>
+#set math.equation(numbering: none)
+
+For any $x in X$ and $y in D$, project $y$ onto $K^star (x)$.
+The reward is $norm(b)$-Lipschitz in $y$, so
+@eq:soft-lifted-geometry and @eq:soft-subspace-certificate imply
+
+$ v^star (x)<=r(x,y)+G B_T norm(w(x,y))_(V^(-1)). $
+
+The inequality $G B_T ell-lambda ell^2<=(G^2 B_T^2)/(4lambda)$
+therefore gives
+
+#set math.equation(numbering: "(1)")
+$ U_V (x)>=v^star (x)-zeta_T, quad
+  zeta_T:=(G^2 B_T^2)/(4lambda). $
+  <eq:soft-optimism>
+#set math.equation(numbering: none)
+
+Consider a block played at arm $x$. The planning rule gives
+$U_V (x)>=V^star-zeta_T-epsilon$. Its empirical mean belongs to $D$,
+and hence
+
+$ U_V (x)<=r(x,overline(y))
+    +lambda norm(overline(w))_(V^(-1))^2. $
+
+Multiplying by the block length, using affineness of the reward and
+@eq:soft-block-cost, bounds the block's realized regret by
+$lambda(1+sqrt(3))^2+n(zeta_T+epsilon)$. There are at most $J_T+1$
+blocks, proving the high-probability claim. On the exceptional event,
+realized regret is at most $C_r T$, so the expected-regret bound acquires
+only the additional term $C_r T delta$.
+
+It remains to implement the planning step. Quadratic conjugacy gives
+
+$ lambda w^T V^(-1)w
+    =max_z [z^T w-(z^T V z)/(4lambda)]. $
+
+The maximizer is $z=2lambda V^(-1)w$. Since $V succ.eq I_q$ and
+$norm(w)<=sqrt(3)$, it lies in the ball $norm(z)<=4lambda$, uniformly
+over $x in X$ and $y in D$. For fixed $x$, the resulting expression is
+affine in $y$ and concave in $z$ on compact convex domains. Exchanging
+the minimum and maximum and writing $z=(z_0,z_X,z_D)$ yields
+
+#set math.equation(numbering: "(1)")
+$ U_V (x)=a^T x+c+max_(norm(z)<=4lambda)
+    [z_0+z_X^T x-norm(b+z_D)-(z^T V z)/(4lambda)]. $
+  <eq:soft-conjugate-planner>
+#set math.equation(numbering: none)
+
+#block(breakable: false)[
+Thus maximizing $U_V$ is equivalent to the QCQP
+
+$ max_(x,z,s) quad
+    a^T x+c+z_0+z_X^T x-s-(z^T V z)/(4lambda) $
+
+subject to
+
+$ norm(x)^2<=1, quad norm(z)^2<=16lambda^2, quad
+  norm(b+z_D)^2<=s^2, quad 0<=s<=H, $
+
+where $H:=1+norm(b)_1+4lambda$ is rational. Add the redundant constraint
+
+$ norm(x)^2+norm(z)^2/(16lambda^2)+s^2/H^2<=3. $
+]
+
+There are six quadratic inequalities, and the last has a positive-definite
+quadratic part in all variables. Bienstock's weak-optimization theorem
+@bienstock2016cdt therefore applies, as described in @app:qcqp.
+
+To turn a weak solution $(hat(x),hat(z),hat(s))$ into a feasible one,
+project $hat(x)$ and $hat(z)$ onto their respective balls, obtaining
+$x'$ and $z'$, and put $s':=norm(b+z'_D)$. If each constraint violation
+is at most $tau<=1$, then
+
+$ norm(x'-hat(x))<=sqrt(tau), quad
+  norm(z'-hat(z))<=sqrt(tau), quad s'-hat(s)<=4sqrt(tau). $
+
+The last estimate is one-sided, which suffices because the objective has
+coefficient $-1$ on $s$. Since $norm(V)_("op")<=1+3T$, these estimates
+bound the loss in objective by $K_T sqrt(tau)$, where one may take the
+rational bound
+
+$ K_T:=20(1+norm(a)_1+lambda+T). $
+
+Choosing $tau<=min(1/4,(epsilon/(4(K_T+1)))^2)$ makes the repaired
+objective within $epsilon/2$ of the optimum, including the weak solver's
+objective error. By @eq:soft-conjugate-planner, the same lower bound holds
+for $U_V (x')$. The required precision has bit length polynomial in
+$abs(cM)$, $log(T+1)$, and $log(1/epsilon)$, even when the reward
+coefficients have large magnitude.
+
+Finally, round played arms and observed outcomes to common rational grids
+inside their unit balls. Coordinatewise truncation toward zero preserves
+feasibility. The function $U_V$ is Lipschitz in $x$ with constant at most
+$norm(a)+2sqrt(3)lambda$; choose the arm grid finely enough that this
+rounding costs at most $epsilon/2$. For outcomes, ensure Euclidean error
+at most $tau_y:=(T+1)^(-4)$ and use the rounded observations in the block
+averages and updates. Their interval averages satisfy
+@eq:soft-interval-noise with $h_T^2$ replaced by
+$2h_T^2+2T tau_y^2$. The determinant and overshoot bounds are unchanged,
+and replacing actual rewards by rewards at the rounded observations
+changes cumulative reward by at most $norm(b)T tau_y$. Thus the same
+expected-regret rate follows, with universal changes to the displayed
+high-probability constants.
+
+The stored matrices are rational, with eigenvalues between $1$ and
+$1+3T$. Common grids give polynomial bit length for block averages,
+rank-one updates, inversions, and exact threshold comparisons. The
+number of planning calls is at most $J_T+1$, and each has polynomial
+running time by the preceding QCQP reduction. This proves the
+computational claim. $qed$
+]
+
 = NP-hardness
 
 In this section we show that several natural variations of the linear imprecise bandits problem are NP-hard. Thus in some sense, the problem is
