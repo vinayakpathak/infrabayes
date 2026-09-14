@@ -1403,14 +1403,22 @@ $L_("pub")$ and $T$ and has the same regret rate.
 ]
 
 #draft[
-= A $sqrt(T)$ learner <sec:soft-square-root>
+= Warmup: A $T^(2/3)$ Learner <sec:hard-ellipsoid-warmup>
 
-We now improve the regret bound for Euclidean arm and outcome balls to
-$tilde(O)(sqrt(T))$. The learner replaces the separate estimation of $f$
-and $N$ by a quadratic penalty on the joint arm--outcome vector. It also
-chooses block lengths adaptively: each completed block doubles a matrix
-determinant, while its contribution to the accumulated penalty remains
-bounded.
+The affine constraints define a linear subspace of the lifted
+arm--outcome space:
+
+$ q:=1+d_X+d_D, quad w(x,y):=(1,x,y), quad
+  cal(L):=opker mat(d_(z^star), B_(z^star), C_(z^star)). $
+
+Thus a conditional mean $m$ is feasible at $x$ precisely when
+$m in D$ and $w(x,m) in cal(L)$. Noisy observations need not lie in this
+subspace, but their block means locate it up to sampling error. Instead
+of estimating an affine map and a residual subspace separately, we can
+learn these joint feasible directions. We first do so with a hard
+ellipsoid constraint and fixed block lengths. This gives an
+oracle-based $tilde(O)(T^(2/3))$ regret
+bound and isolates the loss that the next section will remove.
 
 Translate and rescale the balls so that
 $X={x:norm(x)<=1}$ and $D={y:norm(y)<=1}$. We retain the notation
@@ -1418,12 +1426,9 @@ $r(x,y)=a^T x+b^T y+c$ for the transformed reward. Thus the new $norm(b)$
 equals $R_D norm(b)$ in the original coordinates; the non-tangency constant
 $S$ is unchanged. If either radius is zero, the expected-regret guarantee
 is immediate, so assume both radii are positive. All vector norms in this
-section are Euclidean. Put
-
-$ q:=1+d_X+d_D, quad w(x,y):=(1,x,y), quad lambda:=ceil(sqrt(T)). $
-
-For a positive-definite matrix $V$, write
-$norm(w)_(V^(-1)):=sqrt(w^T V^(-1)w)$.
+section and the next are Euclidean. The lifted subspace $cal(L)$ is
+understood in these normalized coordinates. For a positive-definite
+matrix $V$, write $norm(w)_(V^(-1)):=sqrt(w^T V^(-1)w)$.
 
 #block(breakable: false)[
 Given $delta in (0,1)$, define the following quantities for the analysis:
@@ -1431,149 +1436,314 @@ Given $delta in (0,1)$, define the following quantities for the analysis:
 $ J_T &:=ceil(q log_2 (1+3T/q)), \
   h_T^2 &:=8d_D log((2d_D T^2)/delta), \
   B_T^2 &:=1+J_T h_T^2, \
-  G &:=sqrt(3)(1+S^(-1))norm(b). $
+  G &:=sqrt(3)(1+S^(-1))norm(b), \
+  C_r &:=max_(X times D) r-min_(X times D) r. $
 ]
 
+The following geometric estimate relates learning $cal(L)$ to regret.
+
+#lemma[
+  For every $x in X$ and $y in D$,
+
+  $ v^star (x)<=r(x,y)+G opdist(w(x,y),cal(L)). $
+] <lem:lifted-reward-geometry>
+
+*Proof.* Let $N:=opker C_(z^star)$ and let $Q$ be the orthogonal projector
+onto $N^perp$. Since every fiber is nonempty, the minimum-norm solution
+of the affine constraints is an affine map $f(x)=A x+e in N^perp$, and
+
+$ K^star (x)=(A x+e+N) inter D. $
+
+Moreover, $norm(A x+e)<=1$ on $X$. Evaluating at zero and at opposite
+unit vectors gives $norm(e)<=1$ and $norm(A)_("op")<=1$. The linear map
+
+$ Phi(s,x,y):=Q y-A x-s e $
+
+has kernel $cal(L)$ and operator norm at most $sqrt(3)$. Indeed, the
+original constraints are equivalent to $Q y=A x+e$; their homogeneous
+forms have the same kernel. Consequently
+
+$ opdist(y,A x+e+N)=norm(Phi(1,x,y))
+    <=sqrt(3)opdist(w(x,y),cal(L)). $
+
+By @lem:noisy-ball-stability, intersecting the affine fiber with $D$
+increases this distance by a factor of at most $1+S^(-1)$. Projecting
+$y$ onto $K^star (x)$ and using the $norm(b)$-Lipschitz property of the
+reward proves the claim. $qed$
+
+We will use one concentration event for both learners. Write $m_t$ for
+the conditional mean of $y_t$ under nature's distribution on round $t$.
+Each coordinate of $y_t-m_t$ is a martingale difference bounded in
+absolute value by two. Azuma--Hoeffding and a union bound over the $d_D$
+coordinates and at most $T^2$ deterministic intervals imply that, with
+probability at least $1-delta$,
+
+#set math.equation(numbering: "(1)")
+$ m norm(overline(y)-overline(m))^2<=h_T^2 $
+  <eq:soft-interval-noise>
+#set math.equation(numbering: none)
+
+on every interval of length $m$. In particular, this event applies to
+blocks whose endpoints are chosen from the observations. The next
+lemma converts it into a simultaneous bound on distance from $cal(L)$.
+
+#lemma[
+  On the event @eq:soft-interval-noise, consider any collection of
+  constant-arm blocks, with lengths $m_j$ and lifted empirical means
+  $overline(w)_j$. For $rho>0$ and weights $alpha_j>=0$, put
+
+  $ V:=rho I_q+sum_j alpha_j overline(w)_j overline(w)_j^T. $
+
+  Then, simultaneously for every $w in RR^q$,
+
+  $ opdist(w,cal(L))
+      <=sqrt(rho+h_T^2 sum_j alpha_j/m_j) norm(w)_(V^(-1)). $
+] <lem:lifted-matrix-certificate>
+
+*Proof.* Fix $u in cal(L)^perp$ with $norm(u)<=1$. In block $j$, the arm is
+constant and $w(x_j,overline(m)_j) in cal(L)$. Hence
+
+$ (u^T overline(w)_j)^2
+    =(u^T (0,0,overline(y)_j-overline(m)_j))^2<=h_T^2/m_j, $
+
+so $u^T V u<=rho+h_T^2 sum_j alpha_j/m_j$. Cauchy--Schwarz gives
+$u^T w<=sqrt(u^T V u)norm(w)_(V^(-1))$; taking the supremum over the unit
+ball of $cal(L)^perp$ proves the claim. $qed$
+
+For a positive-definite matrix $V$, define
+
+$ p_V (x,y):=norm(w(x,y))_(V^(-1))^2, quad
+  E_V:={w in RR^q:norm(w)_(V^(-1))^2<=1}. $
+
+The ellipsoid $E_V$ represents the feasible directions learned so far
+within the bounded region of interest. It expands along empirical
+means; the preceding lemma controls its width perpendicular to the true
+subspace. It need not contain every feasible lifted mean. Accordingly,
+if an arm has no outcome in the current ellipsoid, we play it to obtain
+a direction along which to expand.
+
+#algorithm[
+  Fix a block length $n in {1,dots,T}$ and initialize $V:=n^(-1)I_q$.
+  At the start of each block:
+
+  + For each arm, form the hard feasible set
+
+    $ hat(K)_V (x):={y in D:p_V (x,y)<=1}. $
+
+    If some $hat(K)_V (x)$ is empty, choose such an arm. Otherwise choose
+
+    $ x in opargmax_(x' in X) H_V (x'), quad
+      H_V (x'):=min_(y in hat(K)_V (x')) r(x',y). $
+
+  + Play $x$ for $n$ rounds, or until the horizon if fewer rounds remain.
+    Let $overline(y)$ be the empirical mean and put
+    $overline(w):=w(x,overline(y))$.
+
+  + If the block has length $n$ and $p_V (x,overline(y))>1$, update
+    $V<-V+overline(w)overline(w)^T$. Otherwise leave $V$ unchanged.
+] <alg:hard-lifted-warmup>
+
+We analyze @alg:hard-lifted-warmup with exact planning and empty-fiber
+oracles. Call a full block _informative_ if it triggers an update.
+
 #theorem[
-  For every compatible adaptive nature policy, the exact-arithmetic form
-  of @alg:soft-square-root satisfies, with probability at least $1-delta$,
+  For every compatible adaptive nature policy,
+  @alg:hard-lifted-warmup satisfies, with probability at least $1-delta$,
 
   $ T V^star-sum_(t=1)^T r(x_t,y_t)
-      <=lambda(1+sqrt(3))^2 (J_T+1)
-        +(G^2 B_T^2 T)/(4lambda)+T epsilon, $
+      <=C_r n(J_T+1)+(G B_T T)/sqrt(n). $
 
-  where $epsilon$ is the additive accuracy of each planning call. The
-  algorithm admits an implementation in time polynomial in $abs(cM)$ and
-  $T$ under the weak finite-precision model. With
-  $epsilon=delta=(T+1)^(-2)$, this implementation has expected regret
+  Its expected regret is bounded by the same expression plus
+  $C_r T delta$. In particular, $n=ceil(T^(2/3))$ and
+  $delta=(T+1)^(-2)$ give $R_T<=tilde(O)(T^(2/3))$ for fixed problem
+  parameters.
+] <thm:hard-lifted-warmup>
 
-  $ R_T<=tilde(O)(
-      [q+(1+S^(-1))^2 norm(b)^2 q d_D]sqrt(T)
-    )+O(C_r/T), $
+*Proof.* Each informative block more than doubles the determinant:
 
-  where $C_r:=max_(X times D) r-min_(X times D) r$ is the reward range.
-  Neither $S$ nor the quantities $J_T,h_T,B_T,G$ are inputs to the policy.
-] <thm:soft-square-root>
+$ opdet(V+overline(w)overline(w)^T)
+    =opdet(V)(1+p_V (x,overline(y)))>2opdet(V). $
+
+If there are $J$ updates, then $J<=T/n$ and
+$optr V<=q/n+3J<=(q+3T)/n$. Comparing the determinant with its initial
+value $n^(-q)$ and applying the arithmetic--geometric mean inequality
+to the eigenvalues gives
+
+$ 2^J<=(opdet V)/(opdet(n^(-1)I_q))<=(1+3T/q)^q, quad J<=J_T. $
+
+Work on the event @eq:soft-interval-noise. Apply
+@lem:lifted-matrix-certificate to the informative blocks with
+$rho=1/n$, $alpha_j=1$, and $m_j=n$. Every maintained matrix satisfies
+
+#set math.equation(numbering: "(1)")
+$ opdist(w(x,y),cal(L))<=(B_T/sqrt(n))sqrt(p_V (x,y)). $
+  <eq:hard-subspace-certificate>
+#set math.equation(numbering: none)
+
+By @lem:lifted-reward-geometry, every $y in hat(K)_V (x)$ therefore obeys
+$r(x,y)>=v^star (x)-G B_T/sqrt(n)$. Whenever the hard feasible set is
+nonempty, this implies
+
+#set math.equation(numbering: "(1)")
+$ H_V (x)>=v^star (x)-G B_T/sqrt(n). $
+  <eq:hard-optimism>
+#set math.equation(numbering: none)
+
+Consider a non-informative full block. Its empirical mean belongs to
+$hat(K)_V (x)$, so the arm could not have been chosen by the empty-fiber
+rule. All hard feasible sets were nonempty, and the planning rule gives
+
+$ r(x,overline(y))>=H_V (x)=max_(x' in X) H_V (x')
+    >=V^star-G B_T/sqrt(n). $
+
+Since the reward is affine, the block's realized regret is at most
+$G B_T sqrt(n)$. Summing over at most $T/n$ such blocks gives
+$G B_T T/sqrt(n)$. Each of the at most $J_T$ informative blocks costs
+at most $C_r n$, as does a possible final incomplete block. This proves
+the stated high-probability bound. Realized regret is always at most
+$C_r T$, giving the expectation bound. $qed$
+
+The two terms have different origins. On a non-informative block, the
+hard constraint certifies average regret of order $n^(-1/2)$. On an
+informative block, the empirical mean lies outside the constraint, and
+the argument charges the full block length $n$. Such blocks are few,
+but reducing $n$ to make them cheaper also weakens the guarantee on all
+other rounds. Balancing $n J_T$ against $T/sqrt(n)$ gives the
+$T^(2/3)$ rate. The next learner removes the full-length charge by
+bounding regret quantitatively even when the mean is outside the
+ellipsoid.
+]
+
+#draft[
+= A $sqrt(T)$ learner <sec:soft-square-root>
+
+We retain the lifted subspace and ellipsoidal geometry of
+@sec:hard-ellipsoid-warmup, but replace the hard constraint by the score
+
+$ U_V (x):=min_(y in D) [r(x,y)+lambda p_V (x,y)]. $
+
+For every $y in D$, this definition gives
+$U_V (x)-r(x,y)<=lambda p_V (x,y)$. The score therefore controls how far
+the reward can fall below the planned value at every outcome, with a
+cost proportional to its quadratic penalty. The hard constraint gave
+such control only when $p_V (x,y)<=1$. For fixed $V$ and $lambda$, the
+penalized objective is the Lagrangian of that constraint plus the
+constant $lambda$; here we choose one common $lambda$ to control regret.
+
+This change suggests a stopping rule. During a block of length $m$,
+affineness of the reward gives
+
+$ m U_V (x)-sum_(i=1)^m r(x,y_i)
+    <=lambda m p_V (x,overline(y)_m). $
+
+If the empirical penalty is large, the right-hand side reaches
+$lambda$ quickly and we update after a short block. If it is small,
+we can continue playing while keeping the same bound on the block's
+total shortfall. Thus we stop at the first crossing of
+$m p_V (x,overline(y)_m)>=1$, rather than wait for a fixed number of
+observations. It remains to prove that $U_V$ is close enough to an
+optimistic value and that the resulting updates still make progress.
+
+Use the normalized coordinates and analysis quantities from the warmup,
+and set $lambda:=ceil(sqrt(T))$.
 
 #algorithm[
   Initialize $V:=I_q$. At the start of each block:
 
   + Define
 
-    $ U_V (x):=min_(y in D)
-        [r(x,y)+lambda norm(w(x,y))_(V^(-1))^2], $
+    $ U_V (x):=min_(y in D) [r(x,y)+lambda p_V (x,y)], $
 
     and choose $x in X$ satisfying
     $U_V (x)>=max_(x' in X) U_V (x')-epsilon$.
 
-  + Play $x$ repeatedly. After $n$ observations in the block, let
+  + Play $x$ repeatedly. After $m$ observations in the block, let
 
-    $ overline(y)_n:=1/n sum_(i=1)^n y_i, quad
-      overline(w)_n:=w(x,overline(y)_n). $
+    $ overline(y)_m:=1/m sum_(i=1)^m y_i, quad
+      overline(w)_m:=w(x,overline(y)_m). $
 
-    End the block at the first $n$ for which
+    End the block at the first $m$ for which
 
-    $ n norm(overline(w)_n)_(V^(-1))^2>=1. $
+    $ m p_V (x,overline(y)_m)>=1. $
 
-  + Update $V<-V+n overline(w)_n overline(w)_n^T$ and start a new block.
+  + Update $V<-V+m overline(w)_m overline(w)_m^T$ and start a new block.
     At the horizon, stop even if the current block has not ended.
 ] <alg:soft-square-root>
 
-*Proof.* Let $N:=opker C_(z^star)$ and let $Q$ be the orthogonal projector
-onto $N^perp$. The minimum-norm solution of the true affine constraints is
-an affine map $f(x)=A x+d in N^perp$, and
+The weight $m$ in the update accounts for the precision of the block
+mean. To compare the normalizations, multiplying the warmup matrix by
+$n$ gives $I_q+sum_j n overline(w)_j overline(w)_j^T$. The new learner
+uses the same weighting by block length, now allowing that length to
+vary and using the quadratic form in the objective.
 
-$ K^star (x)=(A x+d+N) inter D. $
+#theorem[
+  For every compatible adaptive nature policy, the exact-arithmetic form
+  of @alg:soft-square-root satisfies, with probability at least $1-delta$,
 
-Every fiber is nonempty, so $norm(A x+d)<=1$ on $X$. Evaluating at zero
-and at opposite unit vectors gives $norm(d)<=1$ and
-$norm(A)_("op")<=1$. Define
+  $ T V^star-sum_(t=1)^T r(x_t,y_t)
+      <=4lambda(J_T+1)+(G^2 B_T^2 T)/(4lambda)+T epsilon, $
 
-$ Phi(s,x,y):=Q y-A x-s d, quad cal(L):=opker Phi. $
+  where $epsilon$ is the additive accuracy of each planning call. The
+  algorithm admits an implementation in time polynomial in $abs(cM)$
+  and $T$ under the weak finite-precision model. With
+  $epsilon=delta=(T+1)^(-2)$, this implementation has expected regret
 
-Every lifted conditional mean lies in $cal(L)$, and
-$norm(Phi)_("op")<=sqrt(3)$. Therefore, for $x in X$ and $y in D$,
+  $ R_T<=tilde(O)(
+      [q+(1+S^(-1))^2 norm(b)^2 q d_D]sqrt(T)
+    )+O(C_r/T). $
 
-$ opdist(y,A x+d+N)=norm(Phi(1,x,y))
-    <=sqrt(3)opdist(w(x,y),cal(L)). $
+  Neither $S$ nor the quantities $J_T,h_T,B_T,G$ are inputs to the policy.
+] <thm:soft-square-root>
 
-Applying @lem:noisy-ball-stability yields
+*Proof.* At each completed block, the determinant lemma and stopping
+rule give
 
-#set math.equation(numbering: "(1)")
-$ opdist(y,K^star (x))
-    <=sqrt(3)(1+S^(-1))opdist(w(x,y),cal(L)). $
-  <eq:soft-lifted-geometry>
-#set math.equation(numbering: none)
+$ opdet(V+m overline(w)overline(w)^T)
+    =opdet(V)(1+m p_V (x,overline(y)))>=2opdet(V). $
 
-We next bound the number and cost of the blocks. At each completed block,
-the matrix determinant lemma and the stopping rule give
+Since $norm(overline(w))^2<=3$, the final matrix has trace at most
+$q+3T$. If $J$ blocks are completed, then
+$2^J<=opdet V<=(1+3T/q)^q$, so $J<=J_T$.
 
-$ opdet(V+n overline(w)overline(w)^T)
-    =opdet(V)(1+n norm(overline(w))_(V^(-1))^2)
-    >=2opdet(V). $
+The first-crossing rule also limits the cost of each block. For $m>=2$,
+convexity of the quadratic form gives
 
-Since $norm(overline(w))<=sqrt(3)$, the final matrix has trace at most
-$q+3T$. If $J$ blocks are completed, it follows that
+$ m p_V (x,overline(y)_m)
+    <=(m-1)p_V (x,overline(y)_(m-1))+p_V (x,y_m)<1+3=4. $
 
-$ 2^J<=opdet V<=(1+3T/q)^q, quad J<=J_T. $
-
-The first-crossing rule also bounds the overshoot. Within a block, hold
-$V$ fixed and put $S_n:=sum_(i=1)^n w(x,y_i)$. At its first crossing,
-for $n>=2$,
-
-$ norm(S_n)_(V^(-1))/sqrt(n)
-    &<=sqrt((n-1)/n)
-       norm(S_(n-1))_(V^(-1))/sqrt(n-1)
-       +norm(w(x,y_n))_(V^(-1))/sqrt(n) \
-    &<=1+sqrt(3). $
-
-Here $V succ.eq I_q$ and the test failed at $n-1$. The same bound holds
-for $n=1$; an unfinished final block has quadratic cost below one.
-Thus every block appearing in the regret sum satisfies
+Here the test failed at $m-1$, and $V succ.eq I_q$ implies
+$p_V (x,y_m)<=norm(w(x,y_m))^2<=3$. A block ending at $m=1$ has cost
+at most three, and an unfinished final block has cost below one. Thus
+every block appearing in the regret sum satisfies
 
 #set math.equation(numbering: "(1)")
-$ n norm(overline(w))_(V^(-1))^2<=(1+sqrt(3))^2. $
+$ m p_V (x,overline(y))<=4. $
   <eq:soft-block-cost>
 #set math.equation(numbering: none)
 
-Write $m_t$ for the conditional mean of $y_t$ under nature's distribution
-on round $t$. Each coordinate of $y_t-m_t$ is a martingale difference
-bounded in absolute value by two. The Azuma--Hoeffding inequality and a
-union bound over the $d_D$ coordinates and at most $T^2$ deterministic
-intervals imply that, with probability at least $1-delta$,
+Work on the event @eq:soft-interval-noise. In
+@lem:lifted-matrix-certificate, take $rho=1$ and $alpha_j=m_j$ for the
+completed blocks. The contribution of each block to the squared width
+perpendicular to $cal(L)$ is at most $m_j (h_T^2/m_j)=h_T^2$, regardless
+of its length. Consequently every maintained matrix satisfies
 
 #set math.equation(numbering: "(1)")
-$ n norm(overline(y)-overline(m))^2<=h_T^2 $
-  <eq:soft-interval-noise>
-#set math.equation(numbering: none)
-
-on every interval of length $n$. Work on this event. It applies in
-particular to all adaptively chosen blocks. Fix a unit vector
-$u in cal(L)^perp$. Within a completed block the arm is constant, and
-$w(x,overline(m)) in cal(L)$, so
-
-$ n(u^T overline(w))^2
-    =n(u^T (0,0,overline(y)-overline(m)))^2<=h_T^2. $
-
-Consequently every matrix maintained by the learner satisfies
-$u^T V u<=1+J_T h_T^2=B_T^2$. Cauchy--Schwarz in the $V$ and $V^(-1)$
-norms now gives, simultaneously for all $w in RR^q$,
-
-#set math.equation(numbering: "(1)")
-$ opdist(w,cal(L))
-    =sup_(u in cal(L)^perp, norm(u)<=1) u^T w
-    <=B_T norm(w)_(V^(-1)). $
+$ opdist(w,cal(L))<=B_T norm(w)_(V^(-1)). $
   <eq:soft-subspace-certificate>
 #set math.equation(numbering: none)
 
-For any $x in X$ and $y in D$, project $y$ onto $K^star (x)$.
-The reward is $norm(b)$-Lipschitz in $y$, so
-@eq:soft-lifted-geometry and @eq:soft-subspace-certificate imply
+Combining this estimate with @lem:lifted-reward-geometry gives, for
+every $x in X$ and $y in D$,
 
-$ v^star (x)<=r(x,y)+G B_T norm(w(x,y))_(V^(-1)). $
+$ v^star (x)<=r(x,y)+G B_T sqrt(p_V (x,y)). $
 
-The inequality $G B_T ell-lambda ell^2<=(G^2 B_T^2)/(4lambda)$
-therefore gives
+Writing $ell:=sqrt(p_V (x,y))$ and completing the square,
+
+$ r(x,y)+lambda p_V (x,y)
+    >=v^star (x)+lambda ell^2-G B_T ell
+    >=v^star (x)-(G^2 B_T^2)/(4lambda). $
+
+Taking the minimum over $y in D$ establishes approximate optimism:
 
 #set math.equation(numbering: "(1)")
 $ U_V (x)>=v^star (x)-zeta_T, quad
@@ -1581,19 +1751,22 @@ $ U_V (x)>=v^star (x)-zeta_T, quad
   <eq:soft-optimism>
 #set math.equation(numbering: none)
 
-Consider a block played at arm $x$. The planning rule gives
+For a block played at arm $x$, the planning rule now gives
 $U_V (x)>=V^star-zeta_T-epsilon$. Its empirical mean belongs to $D$,
-and hence
+so its realized regret is at most
 
-$ U_V (x)<=r(x,overline(y))
-    +lambda norm(overline(w))_(V^(-1))^2. $
+$ m(V^star-r(x,overline(y)))
+    <=lambda m p_V (x,overline(y))+m(zeta_T+epsilon)
+    <=4lambda+m(zeta_T+epsilon). $
 
-Multiplying by the block length, using affineness of the reward and
-@eq:soft-block-cost, bounds the block's realized regret by
-$lambda(1+sqrt(3))^2+n(zeta_T+epsilon)$. There are at most $J_T+1$
-blocks, proving the high-probability claim. On the exceptional event,
-realized regret is at most $C_r T$, so the expected-regret bound acquires
-only the additional term $C_r T delta$.
+Summing over at most $J_T+1$ blocks proves the high-probability claim.
+On the exceptional event, realized regret is at most $C_r T$, adding
+only $C_r T delta$ to the expectation bound. The warmup paid for
+informative blocks by their fixed length; here each block's penalty
+contribution is at most $4lambda$, whatever its length. Together with
+the optimism error of order $1/lambda$ per round, this yields the
+balance $lambda J_T+T/lambda$ and the square-root rate.
+
 
 It remains to implement the planning step. Quadratic conjugacy gives
 
