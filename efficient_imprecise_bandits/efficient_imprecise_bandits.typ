@@ -1405,20 +1405,11 @@ $L_("pub")$ and $T$ and has the same regret rate.
 #draft[
 = Warmup: A $T^(2/3)$ Learner <sec:hard-ellipsoid-warmup>
 
-The affine constraints define a linear subspace of the lifted
-arm--outcome space:
-
-$ q:=1+d_X+d_D, quad w(x,y):=(1,x,y), quad
-  cal(L):=opker mat(d_(z^star), B_(z^star), C_(z^star)). $
-
-Thus a conditional mean $m$ is feasible at $x$ precisely when
-$m in D$ and $w(x,m) in cal(L)$. Noisy observations need not lie in this
-subspace, but their block means locate it up to sampling error. Instead
-of estimating an affine map and a residual subspace separately, we can
-learn these joint feasible directions. We first do so with a hard
-ellipsoid constraint and fixed block lengths. This gives an
-oracle-based $tilde(O)(T^(2/3))$ regret
-bound and isolates the loss that the next section will remove.
+For an arm $x$ and outcome $y$, consider the vector $w(x,y) = (1,x,y)$.
+This vector lies in $RR^(1+d_X+d_D)$, and the constraints defining the
+feasible set of outcomes, $C_(z^star) y + B_(z^star) x + d_(z^star) = 0$,
+determine a linear subspace of this vector space. Let $q:=1+d_X+d_D$, and $cal(L):=opker mat(d_(z^star), B_(z^star), C_(z^star)).$ Thus a conditional mean $m$ is feasible at $x$ precisely when
+$m in D$ and $w(x,m) in cal(L)$. The learner's task is to identify this $cal(L)$. 
 
 Translate and rescale the balls so that
 $X={x:norm(x)<=1}$ and $D={y:norm(y)<=1}$. We retain the notation
