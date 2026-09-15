@@ -1455,6 +1455,10 @@ $overline(y)$. We then check whether $(1,x,overline(y))$ lies in $E_V$.
 If it does not, we enlarge the ellipsoid to include it. Otherwise, we
 leave the ellipsoid unchanged.
 
+For the time being, we assume that we can carry out the rule for
+choosing an arm exactly. We will consider the computational aspects
+of the algorithm later.
+
 #algorithm[
   Fix a block length $n in {1,dots,T}$ and initialize $V:=n^(-1)I_q$.
   At the start of each block:
@@ -1480,178 +1484,61 @@ leave the ellipsoid unchanged.
     $V<-V+overline(w)overline(w)^T$. Otherwise leave $V$ unchanged.
 ] <alg:hard-ellipsoid-warmup>
 
-For the time being, we assume that we can find an arm with
-$hat(K)_V (x)=emptyset$ if one exists, and otherwise maximize $H_V$
-exactly. We will consider the computational aspects of the algorithm
-later. We call a full block _informative_ if we update the ellipsoid
-at its end.
+#theorem(title: [Informal])[
+  For fixed problem parameters, @alg:hard-ellipsoid-warmup with exact
+  planning has expected regret
 
-#block(breakable: false)[
-For the analysis, fix $delta in (0,1)$ and define
+  $ R_T<=tilde(O)(n+T/sqrt(n)). $
 
-$ J_T &:=ceil(q log_2 (1+3T/q)), \
-  h_T^2 &:=8d_D log((2d_D T^2)/delta), \
-  B_T^2 &:=1+J_T h_T^2, \
-  G &:=sqrt(3)(1+S^(-1))norm(b)_2, \
-  C_r &:=max_(X times D) r-min_(X times D) r. $
-]
-
-If $w(x,y)$ is close to $cal(L)$, then $r(x,y)$ cannot be much smaller
-than the worst feasible reward $v^star (x)$. We first prove this.
-
-#lemma[
-  For every $x in X$ and $y in D$,
-
-  $ v^star (x)<=r(x,y)+G opdist(w(x,y),cal(L)). $
-] <lem:subspace-reward-bound>
-
-*Proof.* Let $N:=opker C_(z^star)$ and let $Q$ be the orthogonal projector
-onto $N^perp$. Every arm has a feasible outcome, so we can write the
-minimum-norm solution of the affine constraints as
-$f(x)=A x+e in N^perp$. Thus
-
-$ K^star (x)=(A x+e+N) inter D. $
-
-Since there is a feasible outcome in the unit ball for every arm,
-$norm(A x+e)_2<=1$ on $X$. Taking $x=0$ gives $norm(e)_2<=1$, and
-comparing opposite unit vectors gives $norm(A)_("op")<=1$. Now define
-
-$ Phi(s,x,y):=Q y-A x-s e. $
-
-This map has operator norm at most $sqrt(3)$ and kernel $cal(L)$: the
-original constraints are equivalent to $Q y=A x+e$, and homogenizing
-either equation gives the same subspace. Therefore
-
-$ opdist(y,A x+e+N)=norm(Phi(1,x,y))_2
-    <=sqrt(3)opdist(w(x,y),cal(L)). $
-
-The point in $A x+e+N$ closest to $y$ may lie outside $D$. By
-@lem:noisy-ball-stability, intersecting $A x+e+N$ with $D$ increases the
-distance by a factor of at most $1+S^(-1)$. Moving $y$ to the nearest
-point in $K^star (x)$ changes the reward by at most $norm(b)_2$ times
-this distance, which proves the claim. $qed$
-
-We also need to know how close a block average is to the average of the
-true conditional means. Write $m_t$ for the conditional mean of $y_t$
-on round $t$. Each coordinate of $y_t-m_t$ is a martingale difference
-bounded in absolute value by two. Apply Azuma--Hoeffding to each
-coordinate on each interval. There are $d_D$ coordinates and at most
-$T^2$ intervals, so a union bound gives, with probability at least
-$1-delta$,
-
-#set math.equation(numbering: "(1)")
-$ m norm(overline(y)-overline(m))_2^2<=h_T^2 $
-  <eq:soft-interval-noise>
-#set math.equation(numbering: none)
-
-on every interval of length $m$. Since this holds on every interval, we
-can use it even when we decide when to end a block from the observations.
-We will use this same event for both learners.
-
-Both learners will build a matrix $V$ from block averages. A longer
-block gives a more accurate average, so the bound below keeps track of
-each block's length and its weight in $V$.
-
-#lemma[
-  Suppose @eq:soft-interval-noise holds. Consider any collection of
-  blocks in which the arm is held fixed. For block $j$, let $m_j$ be
-  its length, $x_j$ the arm played, and $overline(y)_j$ the average
-  outcome. Put $overline(w)_j:=(1,x_j,overline(y)_j)$.
-  For $rho>0$ and weights $alpha_j>=0$, define
-
-  $ V:=rho I_q+sum_j alpha_j overline(w)_j overline(w)_j^T. $
-
-  Then for every $w in RR^q$,
-
-  $ opdist(w,cal(L))
-      <=sqrt(rho+h_T^2 sum_j alpha_j/m_j) norm(w)_(V^(-1)). $
-] <lem:subspace-distance-bound>
-
-*Proof.* Fix $u in cal(L)^perp$ with $norm(u)_2<=1$. Since the arm is
-held fixed within block $j$, $w(x_j,overline(m)_j) in cal(L)$. Thus only
-the noise contributes to $u^T overline(w)_j$:
-
-$ (u^T overline(w)_j)^2
-    =(u^T (0,0,overline(y)_j-overline(m)_j))^2<=h_T^2/m_j, $
-
-This gives $u^T V u<=rho+h_T^2 sum_j alpha_j/m_j$. For any $w$,
-Cauchy--Schwarz gives $u^T w<=sqrt(u^T V u)norm(w)_(V^(-1))$.
-Taking the supremum over the unit ball of $cal(L)^perp$ proves the
-claim. $qed$
-
-#theorem[
-  Suppose nature follows any compatible adaptive policy. Then
-  @alg:hard-ellipsoid-warmup satisfies, with probability at least $1-delta$,
-
-  $ T V^star-sum_(t=1)^T r(x_t,y_t)
-      <=C_r n(J_T+1)+(G B_T T)/sqrt(n). $
-
-  Its expected regret is at most the same expression plus
-  $C_r T delta$. Taking $n=ceil(T^(2/3))$ and
-  $delta=(T+1)^(-2)$ give $R_T<=tilde(O)(T^(2/3))$ for fixed problem
-  parameters.
+  In particular, choosing $n=ceil(T^(2/3))$ gives
+  $R_T<=tilde(O)(T^(2/3))$.
 ] <thm:hard-ellipsoid-warmup>
 
-*Proof.* First, there cannot be very many informative blocks. Each one
-more than doubles the determinant:
+*Proof sketch.* Call a full block _informative_ if we update the
+ellipsoid at its end, and _uninformative_ otherwise. We ignore constants
+and logarithmic factors for now.
+Averaging $n$ noisy observations gives an error of about $1/sqrt(n)$.
+We will show that, with high probability, every point in $E_V$ stays
+within about $1/sqrt(n)$ of $cal(L)$ throughout the run. This means
+$H_V (x)$ can underestimate $v^star (x)$ by at most about $1/sqrt(n)$:
+the ellipsoid may allow outcomes that are not truly feasible, but their
+rewards cannot be much lower than the worst truly feasible reward.
 
-$ opdet(V+overline(w)overline(w)^T)
-    =opdet(V)(1+p_V (x,overline(y)))>2opdet(V). $
+Consider an uninformative block. Its empirical mean $overline(y)$
+satisfies $w(x,overline(y)) in E_V$. An arm with an empty guessed
+feasible set would force an update, so this block must have used the
+rule that maximizes $H_V$. Since the reward is affine, the block's
+average reward is $r(x,overline(y))$, which is at least $H_V (x)$.
+This is at least the
+true best-arm value minus about $1/sqrt(n)$. Thus the block's regret
+is at most about $n/sqrt(n)=sqrt(n)$. The remaining error comes from
+our approximate constraints, even though the block average satisfies
+them.
 
-If there are $J$ updates, then $J<=T/n$. Each update adds at most three
-to the trace, so $optr V<=q/n+3J<=(q+3T)/n$. The initial determinant
-is $n^(-q)$. Using the arithmetic--geometric mean inequality on the
-eigenvalues, we get
+An informative block may have regret of order $n$. But every such
+block causes an update that at least doubles the determinant of $V$.
+The determinant can grow by only a polynomial factor in $T$ over the
+whole run, so there can be only logarithmically many informative
+blocks. Their total regret is therefore $tilde(O)(n)$.
 
-$ 2^J<=(opdet V)/(opdet(n^(-1)I_q))<=(1+3T/q)^q, quad J<=J_T. $
+There are at most $T/n$ full blocks, so the uninformative blocks
+contribute at most $tilde(O)((T/n)sqrt(n))$. A final incomplete block
+adds at most $O(n)$. Combining the two kinds of blocks gives a regret
+bound of
 
-Now suppose @eq:soft-interval-noise holds. We can apply
-@lem:subspace-distance-bound to the informative blocks with
-$rho=1/n$, $alpha_j=1$, and $m_j=n$. This gives, for every matrix $V$
-that the learner maintains,
+$ tilde(O)(n+(T/n)sqrt(n))=tilde(O)(n+T/sqrt(n)). $
 
-#set math.equation(numbering: "(1)")
-$ opdist(w(x,y),cal(L))<=(B_T/sqrt(n))sqrt(p_V (x,y)). $
-  <eq:hard-subspace-certificate>
-#set math.equation(numbering: none)
+Balancing the two terms gives $n^(3/2) approx T$, or
+$n approx T^(2/3)$. With this choice, the regret is
+$tilde(O)(T^(2/3))$. $qed$
 
-If $y in hat(K)_V (x)$, then $p_V (x,y)<=1$, so
-@lem:subspace-reward-bound gives
-$r(x,y)>=v^star (x)-G B_T/sqrt(n)$. Taking the minimum over
-$hat(K)_V (x)$, whenever this set is nonempty, gives
+The precise statement and proof are in @app:hard-ellipsoid-analysis[Appendix].
 
-#set math.equation(numbering: "(1)")
-$ H_V (x)>=v^star (x)-G B_T/sqrt(n). $
-  <eq:hard-optimism>
-#set math.equation(numbering: none)
+The difficulty is that the smaller regret bound only applies when the
+block mean lies inside the ellipsoid. In the next section, we will
+get a useful bound even when it lies outside. This will let us decide
+when to end a block from the observations.
 
-Consider a full block in which we do not update the ellipsoid. Its
-empirical mean belongs to $hat(K)_V (x)$. Such a block could not have
-used the empty-set rule, since that would force the mean outside the
-ellipsoid. Thus all the sets $hat(K)_V (x')$ were nonempty, and we
-chose $x$ by maximizing $H_V$. It follows that
-
-$ r(x,overline(y))>=H_V (x)=max_(x' in X) H_V (x')
-    >=V^star-G B_T/sqrt(n). $
-
-Since the reward is affine, $r(x,overline(y))$ is the average reward
-in the block. The block's regret is therefore at most $G B_T sqrt(n)$.
-There are at most $T/n$ such blocks, for a total of $G B_T T/sqrt(n)$.
-An informative block may cost as much as $C_r n$, but there are at most
-$J_T$ of them. A final incomplete block also costs at most $C_r n$.
-Adding these bounds proves the high-probability claim. If the noise
-bound fails, regret is still at most $C_r T$, so taking expectations
-adds at most $C_r T delta$. $qed$
-
-The problem is that we only get the smaller regret bound when the block
-mean lies inside the ellipsoid. Once it lies outside, we charge the
-whole block $C_r n$. We could make these blocks cheaper by reducing $n$,
-but then the block averages would be less accurate, and the bound on
-all the other rounds would get worse. This gives the tradeoff between
-$n J_T$ and $T/sqrt(n)$, and hence the $T^(2/3)$ rate. In the next
-section, we will get a regret bound that also tells us something useful
-when the mean lies outside the ellipsoid. This will let us decide when
-to end a block from the observations.
 ]
 
 #draft[
@@ -1678,15 +1565,15 @@ For fixed $V$, adding $lambda p_V (x,y)$ is also the same as adding the
 Lagrange term $lambda(p_V (x,y)-1)$, up to the constant $lambda$. Here
 we will use a single $lambda$ for all arms.
 
-Now play the same arm $x$ repeatedly. After $m$ observations, the
-average reward is $r(x,overline(y)_m)$, so the same inequality gives
+Now play the same arm $x$ repeatedly. After $n$ observations, the
+average reward is $r(x,overline(y)_n)$, so the same inequality gives
 
-$ m U_V (x)-sum_(i=1)^m r(x,y_i)
-    <=lambda m p_V (x,overline(y)_m). $
+$ n U_V (x)-sum_(i=1)^n r(x,y_i)
+    <=lambda n p_V (x,overline(y)_n). $
 
-As long as $m p_V (x,overline(y)_m)<1$, the total reward falls short of
-$m U_V (x)$ by less than $lambda$. This suggests playing until the first
-time $m p_V (x,overline(y)_m)>=1$. A large empirical penalty makes us
+As long as $n p_V (x,overline(y)_n)<1$, the total reward falls short of
+$n U_V (x)$ by less than $lambda$. This suggests playing until the first
+time $n p_V (x,overline(y)_n)>=1$. A large empirical penalty makes us
 stop quickly; a small one lets us keep playing for longer. Of course,
 we still need to show that stopping this way does not make the last
 observation too costly. We also need to show that $U_V (x)$ cannot be
@@ -1706,24 +1593,29 @@ $lambda:=ceil(sqrt(T))$.
     and choose an arm $x in X$ with
     $U_V (x)>=max_(x' in X) U_V (x')-epsilon$.
 
-  + Play $x$ repeatedly. After $m$ observations in the block, let
+  + Play $x$ repeatedly. After $n$ observations in the block, let
 
-    $ overline(y)_m:=1/m sum_(i=1)^m y_i, quad
-      overline(w)_m:=w(x,overline(y)_m). $
+    $ overline(y)_n:=1/n sum_(i=1)^n y_i, quad
+      overline(w)_n:=w(x,overline(y)_n). $
 
     End the block the first time
 
-    $ m p_V (x,overline(y)_m)>=1. $
+    $ n p_V (x,overline(y)_n)>=1. $
 
-  + Update $V<-V+m overline(w)_m overline(w)_m^T$ and start a new block.
+  + Update $V<-V+n overline(w)_n overline(w)_n^T$ and start a new block.
     At the horizon, stop even if the current block has not ended.
 ] <alg:soft-square-root>
 
-We give a block mean weight $m$ because averages from longer blocks are
+We give a block mean weight $n$ because averages from longer blocks are
 more accurate. This is consistent with the earlier update: multiplying
 the warmup matrix by $n$ gives
 $I_q+sum_j n overline(w)_j overline(w)_j^T$. We now allow the block
 length to vary and use the quadratic form as a penalty.
+
+For the analysis, fix $delta in (0,1)$ and use the quantities
+$J_("max"),h_T,B_T,G,C_r$ defined in @app:hard-ellipsoid-analysis[Appendix].
+We use the concentration bound from @lem:interval-noise and adapt the
+proof of @lem:subspace-distance-bound to the new matrix update.
 
 #theorem[
   Suppose nature follows any compatible adaptive policy. Then
@@ -1731,7 +1623,7 @@ length to vary and use the quadratic form as a penalty.
   probability at least $1-delta$,
 
   $ T V^star-sum_(t=1)^T r(x_t,y_t)
-      <=4lambda(J_T+1)+(G^2 B_T^2 T)/(4lambda)+T epsilon, $
+      <=4lambda(J_("max")+1)+(G^2 B_T^2 T)/(4lambda)+T epsilon, $
 
   where each planning call maximizes $U_V$ to within $epsilon$. We can
   implement the algorithm in time polynomial in $abs(cM)$ and $T$
@@ -1743,42 +1635,55 @@ length to vary and use the quadratic form as a penalty.
     )+O(C_r/T). $
 
   The learner does not need to know $S$ or the analysis quantities
-  $J_T,h_T,B_T,G$.
+  $J_("max"),h_T,B_T,G$.
 ] <thm:soft-square-root>
 
 *Proof.* As before, each completed block at least doubles the
 determinant. The stopping rule gives
 
-$ opdet(V+m overline(w)overline(w)^T)
-    =opdet(V)(1+m p_V (x,overline(y)))>=2opdet(V). $
+$ opdet(V+n overline(w)overline(w)^T)
+    =opdet(V)(1+n p_V (x,overline(y)))>=2opdet(V). $
 
 Since $norm(overline(w))_2^2<=3$, the final trace is at most $q+3T$.
 Thus, if we complete $J$ blocks,
-$2^J<=opdet V<=(1+3T/q)^q$, so $J<=J_T$.
+$2^J<=opdet V<=(1+3T/q)^q$, so $J<=J_("max")$.
 
-We also need to bound how far $m p_V (x,overline(y)_m)$ can jump above
-one on the last observation. For $m>=2$, convexity gives
+We also need to bound how far $n p_V (x,overline(y)_n)$ can jump above
+one on the last observation. For $n>=2$, convexity gives
 
-$ m p_V (x,overline(y)_m)
-    <=(m-1)p_V (x,overline(y)_(m-1))+p_V (x,y_m)<1+3=4. $
+$ n p_V (x,overline(y)_n)
+    <=(n-1)p_V (x,overline(y)_(n-1))+p_V (x,y_n)<1+3=4. $
 
-The first term is less than one because we did not stop at $m-1$.
+The first term is less than one because we did not stop at $n-1$.
 The second is at most three because $V succ.eq I_q$ and
-$p_V (x,y_m)<=norm(w(x,y_m))_2^2<=3$. If we stop at $m=1$, the bound is
+$p_V (x,y_n)<=norm(w(x,y_n))_2^2<=3$. If we stop at $n=1$, the bound is
 at most three. If the horizon ends before the test succeeds, it is less
 than one. Thus every block satisfies
 
 #set math.equation(numbering: "(1)")
-$ m p_V (x,overline(y))<=4. $
+$ n p_V (x,overline(y))<=4. $
   <eq:soft-block-cost>
 #set math.equation(numbering: none)
 
-Now suppose @eq:soft-interval-noise holds. Apply
-@lem:subspace-distance-bound with $rho=1$ and $alpha_j=m_j$ for each
-completed block. This is where the weight $m_j$ matters: it cancels the
-$1/m_j$ in the squared noise bound. Each block therefore contributes at
-most $m_j (h_T^2/m_j)=h_T^2$ to the bound in the lemma, however long
-the block is. Since there are at most $J_T$ such blocks, we get
+We now adapt the proof of @lem:subspace-distance-bound. Number the
+completed blocks $j=1,dots,J$, and let $n_j$ be the length of block $j$. Write $x_j$
+for its arm, $overline(y)_j$ and $overline(m)_j$ for its average
+observation and conditional mean, and
+$overline(w)_j:=w(x_j,overline(y)_j)$. The matrix now has the form
+
+$ V=I_q+sum_(j=1)^J n_j overline(w)_j overline(w)_j^T. $
+
+By @lem:interval-noise, with probability at least $1-delta$, the bound
+$(u^T overline(w)_j)^2<=h_T^2/n_j$ holds simultaneously for all completed
+blocks and all $u in cal(L)^perp$ with $norm(u)_2<=1$. On this event,
+
+$ u^T V u<=1+sum_(j=1)^J n_j (h_T^2/n_j)
+    =1+J h_T^2<=B_T^2. $
+
+This is where the weight $n_j$ matters: it cancels the $1/n_j$ in the
+squared noise bound. Each block contributes at most $h_T^2$, however
+long it is. Applying Cauchy--Schwarz and taking the supremum over these
+$u$ gives
 
 #set math.equation(numbering: "(1)")
 $ opdist(w,cal(L))<=B_T norm(w)_(V^(-1)). $
@@ -1791,10 +1696,10 @@ Next, we compare the score with the true value of an arm.
 $ v^star (x)<=r(x,y)+G B_T sqrt(p_V (x,y)). $
 
 The error bound grows with $sqrt(p_V (x,y))$, while the penalty grows with
-$p_V (x,y)$. Writing $ell:=sqrt(p_V (x,y))$ and completing the square,
+$p_V (x,y)$. Writing $u:=sqrt(p_V (x,y))$ and completing the square,
 
 $ r(x,y)+lambda p_V (x,y)
-    >=v^star (x)+lambda ell^2-G B_T ell
+    >=v^star (x)+lambda u^2-G B_T u
     >=v^star (x)-(G^2 B_T^2)/(4lambda). $
 
 Taking the minimum over $y in D$, we see that the score underestimates
@@ -1810,11 +1715,11 @@ We choose an arm whose score is within $epsilon$ of the highest score,
 so $U_V (x)>=V^star-zeta_T-epsilon$. The block's empirical mean is in
 $D$, and the reward is affine. Its regret is therefore at most
 
-$ m(V^star-r(x,overline(y)))
-    <=lambda m p_V (x,overline(y))+m(zeta_T+epsilon)
-    <=4lambda+m(zeta_T+epsilon). $
+$ n(V^star-r(x,overline(y)))
+    <=lambda n p_V (x,overline(y))+n(zeta_T+epsilon)
+    <=4lambda+n(zeta_T+epsilon). $
 
-Adding this over at most $J_T+1$ blocks proves the high-probability
+Adding this over at most $J_("max")+1$ blocks proves the high-probability
 bound. If the noise bound fails, regret is still at most $C_r T$,
 so taking expectations adds at most $C_r T delta$.
 
@@ -1822,7 +1727,7 @@ The difference from the warmup is that we now pay at most $4lambda$
 in penalty per block, no matter how long the block lasts. We also pay
 for the score underestimating the true value, but this costs only
 $zeta_T$ per round, which decreases as $1/lambda$. The two terms to
-balance are therefore $lambda J_T$ and $T/lambda$, giving the
+balance are therefore $lambda J_("max")$ and $T/lambda$, giving the
 square-root rate.
 
 We still need to implement the planning step. First, rewrite the penalty as
@@ -1905,7 +1810,7 @@ to the displayed high-probability constants.
 The stored matrices are rational, with eigenvalues between $1$ and
 $1+3T$. The common grids keep bit lengths polynomial when we form block
 averages, update and invert the matrices, and compare the stopping
-quantity with its threshold exactly. There are at most $J_T+1$
+quantity with its threshold exactly. There are at most $J_("max")+1$
 planning calls, and the QCQP reduction above makes each call run in
 polynomial time. This proves the computational claim. $qed$
 ]
@@ -3322,4 +3227,188 @@ $ M_G:=max_(S subset.eq V) abs(delta_G (S)). $
 
 #draft[
 Since the decision problem asks whether $M_G>=k$, computing $M_G$ is NP-hard.
+]
+
+#draft[
+= Regret analysis of the $T^(2/3)$ learner <app:hard-ellipsoid-analysis>
+
+We give the precise statement and proof of @thm:hard-ellipsoid-warmup.
+We use the coordinates and notation from @sec:hard-ellipsoid-warmup,
+and assume that the planning steps in @alg:hard-ellipsoid-warmup are
+solved exactly. A full block is _informative_ if it causes an update,
+and _uninformative_ otherwise.
+
+#block(breakable: false)[
+For the analysis, fix $delta in (0,1)$ and define
+
+$ J_("max") &:=ceil(q log_2 (1+3T/q)), \
+  h_T^2 &:=8d_D log((2d_D T^2)/delta), \
+  B_T^2 &:=1+J_("max") h_T^2, \
+  G &:=sqrt(3)(1+S^(-1))norm(b)_2, \
+  C_r &:=max_(X times D) r-min_(X times D) r. $
+]
+
+We write $J$ for the number of updates actually made. We will show
+that $J<=J_("max")$.
+
+If $w(x,y)$ is close to $cal(L)$, then $r(x,y)$ cannot be much smaller
+than the worst feasible reward $v^star (x)$. We first prove this.
+
+#lemma[
+  For every $x in X$ and $y in D$,
+
+  $ v^star (x)<=r(x,y)+G opdist(w(x,y),cal(L)). $
+] <lem:subspace-reward-bound>
+
+*Proof.* Let $N:=opker C_(z^star)$ and let $Q$ be the orthogonal projector
+onto $N^perp$. Every arm has a feasible outcome, so we can write the
+minimum-norm solution of the affine constraints as
+$f(x)=A x+e in N^perp$. Thus
+
+$ K^star (x)=(A x+e+N) inter D. $
+
+Since there is a feasible outcome in the unit ball for every arm,
+$norm(A x+e)_2<=1$ on $X$. Taking $x=0$ gives $norm(e)_2<=1$, and
+comparing opposite unit vectors gives $norm(A)_("op")<=1$. Now define
+
+$ Phi(s,x,y):=Q y-A x-s e. $
+
+This map has operator norm at most $sqrt(3)$ and kernel $cal(L)$: the
+original constraints are equivalent to $Q y=A x+e$, and homogenizing
+either equation gives the same subspace. Therefore
+
+$ opdist(y,A x+e+N)=norm(Phi(1,x,y))_2
+    <=sqrt(3)opdist(w(x,y),cal(L)). $
+
+The point in $A x+e+N$ closest to $y$ may lie outside $D$. By
+@lem:noisy-ball-stability, intersecting $A x+e+N$ with $D$ increases the
+distance by a factor of at most $1+S^(-1)$. Moving $y$ to the nearest
+point in $K^star (x)$ changes the reward by at most $norm(b)_2$ times
+this distance, which proves the claim. $qed$
+
+We also need to know how close a block average is to the average of the
+true conditional means.
+
+#lemma[
+  Let $m_t$ be the conditional mean of $y_t$ given the history and the
+  chosen arm on round $t$. For each interval in the first $T$ rounds,
+  write $n$ for its length and $overline(y)$ and $overline(m)$ for the
+  averages of $y_t$ and $m_t$ over that interval. With probability at
+  least $1-delta$, the bound
+
+  #set math.equation(numbering: "(1)")
+  $ n norm(overline(y)-overline(m))_2^2<=h_T^2 $
+    <eq:soft-interval-noise>
+  #set math.equation(numbering: none)
+
+  holds simultaneously on all these intervals.
+] <lem:interval-noise>
+
+*Proof.* Each coordinate of $y_t-m_t$ is a martingale difference
+bounded in absolute value by two. For any fixed interval of length
+$n$ and coordinate $i$, Azuma--Hoeffding gives
+
+$ Pr(abs(overline(y)_i-overline(m)_i)>h_T/sqrt(n d_D))
+    <=2 exp(-h_T^2/(8d_D))=delta/(d_D T^2). $
+
+There are $d_D$ coordinates and at most $T^2$ intervals. A union bound
+and summing the squared coordinate bounds give the claim. $qed$
+
+We need to know how far a point in $E_V$ can be from $cal(L)$.
+The next lemma bounds this distance using the noise bound we just
+proved. We can then apply @lem:subspace-reward-bound to the outcomes
+the learner treats as feasible.
+
+#lemma[
+  With probability at least $1-delta$, after any number $J$ of updates
+  in @alg:hard-ellipsoid-warmup, the matrix $V$ satisfies, for every
+  $w in RR^q$,
+
+  $ opdist(w,cal(L))
+      <=sqrt((1+J h_T^2)/n) norm(w)_(V^(-1)). $
+] <lem:subspace-distance-bound>
+
+*Proof.* Number the informative blocks $j=1,dots,J$. Write $x_j$ for
+the arm played in block $j$, and $overline(y)_j$ and $overline(m)_j$
+for its average observation and average conditional mean. With
+$overline(w)_j:=w(x_j,overline(y)_j)$, the update rule gives
+
+$ V=n^(-1)I_q+sum_(j=1)^J overline(w)_j overline(w)_j^T. $
+
+Fix $u in cal(L)^perp$ with $norm(u)_2<=1$. Since the arm is held
+fixed within each block, $w(x_j,overline(m)_j) in cal(L)$. Each
+informative block has length $n$. By @lem:interval-noise, with
+probability at least $1-delta$, the bound
+
+$ (u^T overline(w)_j)^2
+    =(u^T (0,0,overline(y)_j-overline(m)_j))^2<=h_T^2/n $
+
+holds simultaneously for all informative blocks and all such $u$.
+On this event, $u^T V u<=(1+J h_T^2)/n$. For any $w$,
+Cauchy--Schwarz gives $u^T w<=sqrt(u^T V u)norm(w)_(V^(-1))$.
+Taking the supremum over the unit ball of $cal(L)^perp$ proves the
+claim. $qed$
+
+#theorem[
+  Suppose nature follows any compatible adaptive policy. Then
+  @alg:hard-ellipsoid-warmup satisfies, with probability at least $1-delta$,
+
+  $ T V^star-sum_(t=1)^T r(x_t,y_t)
+      <=C_r n(J_("max")+1)+(G B_T T)/sqrt(n). $
+
+  Its expected regret is at most the same expression plus
+  $C_r T delta$. Taking $n=ceil(T^(2/3))$ and
+  $delta=(T+1)^(-2)$ give $R_T<=tilde(O)(T^(2/3))$ for fixed problem
+  parameters.
+] <thm:hard-ellipsoid-regret>
+
+*Proof.* First, there cannot be very many informative blocks. Each one
+more than doubles the determinant:
+
+$ opdet(V+overline(w)overline(w)^T)
+    =opdet(V)(1+p_V (x,overline(y)))>2opdet(V). $
+
+If there are $J$ updates, then $J<=T/n$. Each update adds at most three
+to the trace, so $optr V<=q/n+3J<=(q+3T)/n$. The initial determinant
+is $n^(-q)$. Using the arithmetic--geometric mean inequality on the
+eigenvalues, we get
+
+$ 2^J<=(opdet V)/(opdet(n^(-1)I_q))<=(1+3T/q)^q, quad J<=J_("max"). $
+
+Since $J<=J_("max")$, @lem:subspace-distance-bound gives, with probability
+at least $1-delta$, simultaneously for every matrix $V$ that the
+learner maintains and every $(x,y) in X times D$,
+
+#set math.equation(numbering: "(1)")
+$ opdist(w(x,y),cal(L))<=(B_T/sqrt(n))sqrt(p_V (x,y)). $
+  <eq:hard-subspace-certificate>
+#set math.equation(numbering: none)
+
+On this event, if $y in hat(K)_V (x)$, then $p_V (x,y)<=1$, so
+@lem:subspace-reward-bound gives
+$r(x,y)>=v^star (x)-G B_T/sqrt(n)$. Taking the minimum over
+$hat(K)_V (x)$, whenever this set is nonempty, gives
+
+#set math.equation(numbering: "(1)")
+$ H_V (x)>=v^star (x)-G B_T/sqrt(n). $
+  <eq:hard-optimism>
+#set math.equation(numbering: none)
+
+Consider a full block in which we do not update the ellipsoid. Its
+empirical mean belongs to $hat(K)_V (x)$. Such a block could not have
+used the empty-set rule, since that would force the mean outside the
+ellipsoid. Thus all the sets $hat(K)_V (x')$ were nonempty, and we
+chose $x$ by maximizing $H_V$. It follows that
+
+$ r(x,overline(y))>=H_V (x)=max_(x' in X) H_V (x')
+    >=V^star-G B_T/sqrt(n). $
+
+Since the reward is affine, $r(x,overline(y))$ is the average reward
+in the block. The block's regret is therefore at most $G B_T sqrt(n)$.
+There are at most $T/n$ such blocks, for a total of $G B_T T/sqrt(n)$.
+An informative block may cost as much as $C_r n$, but there are at most
+$J_("max")$ of them. A final incomplete block also costs at most $C_r n$.
+Adding these bounds proves the high-probability claim. Outside this
+event, regret is still at most $C_r T$, so taking expectations
+adds at most $C_r T delta$. $qed$
 ]

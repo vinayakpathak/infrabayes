@@ -89,10 +89,17 @@ as a template to repeat verbatim in unrelated passages.
 
 ## Document style
 
+- End proof sketches with `$qed$`, just as for full proofs.
 - By default, do not give lemmas names or title-like bold prefixes; begin a
   `#lemma[...]` block directly with its mathematical statement. Add a lemma
   name only when the user explicitly requests one. Internal reference labels
   are allowed.
+- State reusable concentration bounds as lemmas, with the probability and
+  scope of the event in the statement and the argument in a separate proof.
+- When using an established result, cite its lemma or theorem in the
+  proof rather than restating its conclusion as a new assumption. Carry
+  any probability qualification into the derived statement and use the
+  same event throughout the proof.
 - Write for a mathematically mature reader. Keep the exposition compact but
   explicit, and do not expand routine specializations that the reader can
   immediately derive from a general statement.
@@ -102,9 +109,19 @@ as a template to repeat verbatim in unrelated passages.
   shorthand: for example, explain that a block consists of repeated plays
   of one arm before referring to a "block mean." State the algorithm and
   the definitions needed to read it before presenting the lemmas and
-  proofs used to analyze it. When a parameter will be chosen later,
-  briefly say so at its introduction and explain what the choice is
-  meant to achieve.
+  proofs used to analyze it. For a regret analysis, put an informal
+  theorem and a short proof sketch after the algorithm in the main body.
+  Explain where each regret term comes from, how often its cost is incurred,
+  and how balancing the terms gives the rate. Put the exact constants,
+  technical lemmas, and detailed proofs in a dedicated appendix, with
+  explicit references from the main body. When a parameter will be chosen
+  later, briefly say so at its introduction and explain what the choice is
+  meant to achieve. Refer to multiple learners collectively only after
+  each has been introduced. Within a learner's analysis, defer remarks
+  that only matter for a later learner to that learner's section;
+  explain reuse of earlier lemmas there. State intermediate results in
+  the form needed by the current algorithm; introduce extra parameters
+  or generality for a later algorithm when that algorithm appears.
 - When technical jargon is used only once, replace it with its operative
   mathematical definition instead of introducing the term and then defining
   it separately. For outcome sets in this manuscript, do not use "fiber"
@@ -127,9 +144,23 @@ as a template to repeat verbatim in unrelated passages.
   do not call the space, vectors, or means "lifted."
 - Include explanatory material when it is needed for the next step of the
   argument; omit details that merely repeat what was just displayed.
+  When motivating a lemma, say what it proves and why the next step
+  needs that fact. Avoid vague descriptions such as "keeps track of"
+  quantities without explaining the mathematical conclusion.
 
 ## Typst mathematics
 
+- Use distinct base letters for unrelated quantities that appear together;
+  do not rely on subscripts or accents alone to distinguish their roles.
+  Reuse the notation already established for the same role in the
+  algorithm and its analysis instead of introducing an unnecessary new
+  letter. In the ellipsoid learner sections, use $n$ for interval or
+  block lengths, $n_j$ for the length of block $j$, and reserve $m_t$
+  and $overline(m)$ for conditional means.
+- Distinguish an actual count from a bound on that count in the notation,
+  and explain their relationship when introducing the bound. Prefer an
+  explicit subscript such as "max" to a time subscript that could be
+  mistaken for the actual count at that time.
 - Use unprimed variables in function definitions unless a distinction is
   needed there. A prime used to distinguish a candidate arm from the chosen
   arm in an optimization rule need not carry into the function's definition.
