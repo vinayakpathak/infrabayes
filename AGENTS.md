@@ -26,8 +26,11 @@
   When setting an issue aside temporarily, state the assumption directly
   and say that the issue will be addressed later; do not use a label such
   as "warmup" in place of that explanation.
-- Preserve the user's wording and rhythm when editing. Do not rewrite
-  their prose into a generic conference-paper voice. Match their style,
+- Preserve the user's wording, rhythm, and order of ideas when editing.
+  When they provide a rough draft or outline, keep its structure and make
+  local corrections for accuracy and readability rather than replacing it
+  with a differently organized explanation. Do not rewrite their prose
+  into a generic conference-paper voice. Match their style,
   not the typos or shorthand in their chat messages. In particular,
   "polish" or "make this publishable" does not override this default.
 
@@ -102,7 +105,9 @@ as a template to repeat verbatim in unrelated passages.
   same event throughout the proof.
 - Write for a mathematically mature reader. Keep the exposition compact but
   explicit, and do not expand routine specializations that the reader can
-  immediately derive from a general statement.
+  immediately derive from a general statement. In proof sketches, do not
+  interrupt the main argument with obvious checks of which algorithm
+  branch applies; leave those checks to the detailed proof.
 - When introducing a learner, give a short description in words of how it
   works, in the order its steps happen, before the formal algorithm.
   Explain what each step does before referring to its outputs by
@@ -114,7 +119,13 @@ as a template to repeat verbatim in unrelated passages.
   Explain where each regret term comes from, how often its cost is incurred,
   and how balancing the terms gives the rate. Put the exact constants,
   technical lemmas, and detailed proofs in a dedicated appendix, with
-  explicit references from the main body. When a parameter will be chosen
+  explicit references from the main body. In proof sketches, simplify
+  asymptotic expressions and omit additive constants used only for small
+  parameter values: write `O(log T)` instead of `O(log(T+1))`. Keep such
+  adjustments in the precise statements where needed. Omit routine
+  bookkeeping, such as the final incomplete block, when it does not
+  change the regret rate; leave it to the detailed proof.
+  When a parameter will be chosen
   later, briefly say so at its introduction and explain what the choice is
   meant to achieve. Refer to multiple learners collectively only after
   each has been introduced. Within a learner's analysis, defer remarks
@@ -130,6 +141,8 @@ as a template to repeat verbatim in unrelated passages.
 - State a general property once rather than enumerating its obvious special
   cases.
 - Integrate definitions and explanations into the proof's narrative.
+  Keep short mathematical expressions inline when they complete a sentence;
+  use a display only when it improves readability.
   Define a new function or quantity before the formula or instruction that
   uses it, including within an algorithm step or display. For example,
   define a score before writing the rule that maximizes it. When giving
