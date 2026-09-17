@@ -1,0 +1,131 @@
+<div id="rank-one-ellipsoid">
+  <style>
+    #rank-one-ellipsoid .views { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+    #rank-one-ellipsoid .view { min-width:0; }
+    #rank-one-ellipsoid .view-title { font-weight:500; margin:12px 0 0; }
+    #rank-one-ellipsoid .scene { display:block; width:100%; overflow:visible; }
+    #rank-one-ellipsoid .scene text { fill:var(--foreground); font-size:12px; }
+    #rank-one-ellipsoid .keys { display:flex; flex-wrap:wrap; gap:18px; margin:12px 0; }
+    #rank-one-ellipsoid .key { display:inline-flex; align-items:center; gap:7px; }
+    #rank-one-ellipsoid .sample { display:inline-block; width:24px; border-top:2px solid var(--viz-series-1); }
+    #rank-one-ellipsoid .sample.before { border-color:var(--foreground); border-top-style:dashed; }
+    #rank-one-ellipsoid .sample.vector { border-color:var(--viz-series-2); }
+    @media(max-width:620px) { #rank-one-ellipsoid .views { grid-template-columns:1fr; gap:0; } }
+  </style>
+  <h3>Adding one direction to an ellipsoid</h3>
+  <div class="viz-controls">
+    <label class="form-label">Direction of w: <span data-value="angle" class="tabular-nums">45°</span>
+      <input class="form-range" data-control="angle" type="range" min="0" max="180" step="1" value="45" aria-label="Direction of w in degrees">
+    </label>
+    <label class="form-label">Length of w: <span data-value="length" class="tabular-nums">2.0</span>
+      <input class="form-range" data-control="length" type="range" min="0" max="3" step="0.05" value="2" aria-label="Length of w">
+    </label>
+    <label class="form-label">Fraction of update: <span data-value="weight" class="tabular-nums">100%</span>
+      <input class="form-range" data-control="weight" type="range" min="0" max="1" step="0.01" value="1" aria-label="Fraction of rank one update applied">
+    </label>
+  </div>
+  <div class="keys text-small" aria-label="Legend">
+    <span class="key"><span class="sample before"></span>Before</span>
+    <span class="key"><span class="sample"></span>After</span>
+    <span class="key"><span class="sample vector"></span>w</span>
+  </div>
+  <div class="views">
+    <div class="view"><div class="view-title">Original coordinates</div><svg class="scene" data-view="original" role="img" aria-label="An ellipse with initial semiaxes two and one, expanded by the rank one update."></svg></div>
+    <div class="view"><div class="view-title">Rescaled: the old ellipse is a circle</div><svg class="scene" data-view="rescaled" role="img" aria-label="After rescaling the original ellipse to a circle, the update stretches only along the rescaled vector."></svg></div>
+  </div>
+  <div class="text-small" aria-live="polite">Stretch along rescaled w: <span data-value="stretch" class="tabular-nums">1.87×</span>; perpendicular stretch: 1×</div>
+  <script>
+    (function () {
+      const root = document.getElementById('rank-one-ellipsoid');
+      const ns = 'http://www.w3.org/2000/svg';
+      const controls = {};
+      ['angle','length','weight'].forEach(function (key) { controls[key] = root.querySelector('[data-control="' + key + '"]'); });
+      const state = { angle:45, length:2, weight:1 };
+      let animation = null;
+      function element(tag, attrs, parent, text) {
+        const node = document.createElementNS(ns,tag);
+        Object.keys(attrs).forEach(function (key) { node.setAttribute(key,attrs[key]); });
+        if (text !== undefined) node.textContent = text;
+        parent.appendChild(node);
+        return node;
+      }
+      function draw() {
+        const theta = state.angle * Math.PI / 180;
+        const w = [state.length*Math.cos(theta),state.length*Math.sin(theta)];
+        const a = [w[0]/2,w[1]];
+        const aa = a[0]*a[0]+a[1]*a[1];
+        const stretch = Math.sqrt(1+state.weight*aa);
+        root.querySelector('[data-value="stretch"]').textContent = stretch.toFixed(2)+'×';
+        root.querySelectorAll('.scene').forEach(function (svg) {
+          const original = svg.dataset.view === 'original';
+          const width = Math.max(260,svg.parentElement.clientWidth);
+          const margin = {left:64,right:22,top:22,bottom:48};
+          const size = width-margin.left-margin.right;
+          const height = size+margin.top+margin.bottom;
+          svg.setAttribute('viewBox','0 0 '+width+' '+height);
+          svg.setAttribute('height',height);
+          svg.replaceChildren();
+          element('title',{},svg,original ? 'Rank one update in original coordinates' : 'Rank one update after rescaling');
+          const before = [], after = [];
+          for (let j=0; j<=160; j++) {
+            const t = 2*Math.PI*j/160;
+            const z = [Math.cos(t),Math.sin(t)];
+            const c = aa === 0 ? 0 : (stretch-1)*(a[0]*z[0]+a[1]*z[1])/aa;
+            before.push([z[0]*(original?2:1),z[1]]);
+            after.push([(z[0]+c*a[0])*(original?2:1),z[1]+c*a[1]]);
+          }
+          const v = original?w:a;
+          const extent = Math.max(Math.sqrt((original?4:1)+v[0]*v[0]),Math.sqrt(1+v[1]*v[1]),Math.abs(v[0]),Math.abs(v[1]));
+          const bound = Math.max(1,extent)*1.2;
+          function sx(x) { return margin.left+size*(x/bound+1)/2; }
+          function sy(y) { return margin.top+size*(1-y/bound)/2; }
+          function line(x1,y1,x2,y2,attrs) { return element('line',Object.assign({x1:sx(x1),y1:sy(y1),x2:sx(x2),y2:sy(y2)},attrs),svg); }
+          element('rect',{x:margin.left,y:margin.top,width:size,height:size,fill:'none',stroke:'var(--border)','stroke-width':1},svg);
+          line(-bound,0,bound,0,{stroke:'var(--border)','stroke-width':1});
+          line(0,-bound,0,bound,{stroke:'var(--border)','stroke-width':1});
+          const tick = Math.floor(bound*0.8*2)/2;
+          [-tick,0,tick].forEach(function (val) {
+            const label = String(val);
+            element('text',{x:sx(val),y:margin.top+size+19,'text-anchor':'middle'},svg,label);
+            if (val!==0) element('text',{x:margin.left-9,y:sy(val)+4,'text-anchor':'end'},svg,label);
+          });
+          element('text',{x:margin.left+size/2,y:height-6,'text-anchor':'middle','class':'axis-title','data-axis':'x'},svg,original?'z₁':'z₁ / 2');
+          element('text',{x:20,y:margin.top+size/2,'text-anchor':'middle',transform:'rotate(-90 20 '+(margin.top+size/2)+')','class':'axis-title','data-axis':'y'},svg,'z₂');
+          function path(points) { return points.map(function (p,i) { return (i?'L':'M')+sx(p[0]).toFixed(2)+','+sy(p[1]).toFixed(2); }).join(' ')+' Z'; }
+          element('path',{d:path(after),fill:'var(--viz-series-1)','fill-opacity':0.08,stroke:'var(--viz-series-1)','stroke-width':2.5},svg);
+          element('path',{d:path(before),fill:'none',stroke:'var(--foreground)','stroke-width':1.5,'stroke-dasharray':'5 4'},svg);
+          const defs = element('defs',{},svg);
+          const marker = element('marker',{id:'arrow-'+svg.dataset.view,viewBox:'0 0 10 10',refX:8,refY:5,markerWidth:6,markerHeight:6,orient:'auto-start-reverse'},defs);
+          element('path',{d:'M 0 0 L 10 5 L 0 10 Z',fill:'var(--viz-series-2)'},marker);
+          if (state.length>0.02) {
+            line(0,0,v[0],v[1],{stroke:'var(--viz-series-2)','stroke-width':2.2,'marker-end':'url(#arrow-'+svg.dataset.view+')'});
+            element('text',{x:sx(v[0])+(v[0]>=0?-9:9),y:Math.max(margin.top+14,sy(v[1])-9),'text-anchor':v[0]>=0?'end':'start'},svg,original?'w':'rescaled w');
+          }
+          element('circle',{cx:sx(0),cy:sy(0),r:3,fill:'var(--foreground)'},svg);
+        });
+      }
+      function update() {
+        const target = {};
+        Object.keys(controls).forEach(function (key) {
+          target[key] = Number(controls[key].value);
+          root.querySelector('[data-value="'+key+'"]').textContent = key==='angle'?target[key]+'°':key==='length'?target[key].toFixed(2):Math.round(target[key]*100)+'%';
+        });
+        if (animation !== null) cancelAnimationFrame(animation);
+        const old = Object.assign({},state);
+        const start = performance.now();
+        const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches?0:150;
+        function frame(now) {
+          const f = duration===0?1:Math.min(1,(now-start)/duration);
+          const eased = f*(2-f);
+          Object.keys(target).forEach(function (key) { state[key]=old[key]+(target[key]-old[key])*eased; });
+          draw();
+          animation=f<1?requestAnimationFrame(frame):null;
+        }
+        animation=requestAnimationFrame(frame);
+      }
+      Object.values(controls).forEach(function (control) { control.addEventListener('input',update); });
+      new ResizeObserver(draw).observe(root);
+      draw();
+    })();
+  </script>
+</div>
