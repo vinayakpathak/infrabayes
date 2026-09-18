@@ -1,0 +1,3033 @@
+% Mechanically translated from the unchanged Typst manuscript.
+
+\section{Setting}
+
+
+An instance of the imprecise bandits problem is a tuple $\mathcal{M} = \left( X , D , H , r \right)$, where $X$ is a set of arms, $D$ is a set of possible outcomes, $H$ is a set of mappings of type $X \to \credal D$ where $\credal D$ denotes the set of credal sets over $D$, and $r : X \times D \to \mathbb{R}$ is a reward function.
+
+The imprecise bandits game is played between a learner and an adversary for $T$ rounds (both adversary and learner know $T$). At the beginning of the game, the adversary picks some $h^{\star} \in H$. The learner knows $X , D , H , r$, and $T$, but does not have knowledge of $h^{\star}$. Then, at each round $t$:
+
+\begin{enumerate}
+\item Learner picks an arm $x_{t} \in X$.
+
+\item Adversary picks a distribution $P_{t} \in h^{\star} \left( x_{t} \right)$.
+
+\item An outcome $y_{t} \sim P_{t}$ is drawn and shown to the learner as feedback.
+
+\item Learner gets reward $r \left( x_{t} , y_{t} \right)$.
+
+\end{enumerate}
+Given a hypothesis $h \in H$, we define the value functions:
+
+
+\begin{equation*}
+v_{h} \left( x \right) \coloneqq \operatorname*{min}_{P \in h \left( x \right)} \mathbb{E}_{y \sim P} \left[ r \left( x , y \right) \right] , \quad V_{h} \coloneqq \operatorname*{max}_{x \in X} v_{h} \left( x \right) .
+\end{equation*}
+
+
+We use the shorthand $v^{\ast} \left( x \right)$ and $V^{\star}$ to denote the value functions corresponding to the true hypothesis $h^{\star}$.
+
+The regret over horizon $T$ is
+
+
+\begin{equation*}
+R_{T} \coloneqq T V^{\star} - \mathbb{E} \left[ \sum_{t = 1}^{T} r \left( x_{t} , y_{t} \right) \right] .
+\end{equation*}
+
+
+Here the expectation in the second term is taken wrt the randomness in the learner's and the adversary's strategies as well as the randomness arising from sampling $y_{t} \sim P_{t}$.
+
+We are interested in learner strategies that can achieve a sublinear (in $T$) regret for all true hypotheses $h^{\star} \in H$. We say that an imprecise bandits instance $\mathcal{M} = \left( X , D , H , r \right)$ has a \emph{statistically efficient} learner if such a learner strategy exists.
+
+\textbf{Computational tractability.} In this paper, we are interested in studying the computational complexity of the learner. A \emph{learner policy} $\pi$ is a randomized algorithm that takes as input a history $h_{t} = {\left( \left( x_{i} , y_{i} \right) \right)}_{i = 1}^{t}$ and the description of the problem instance $\mathcal{M}$ and returns a next arm $x_{t + 1}$. The computational complexity of the problem depends crucially on the exact nature of access the policy is given to $\mathcal{M}$. For example, on one extreme, one can consider a non-uniform access such that a policy $\pi^{\mathcal{M}}$ is merely indexed by the instance $\mathcal{M}$ as opposed to $\mathcal{M}$ being an input to a computational procedure. However, this makes several instances rather trivial. In this paper we mostly consider specific encodings of $\mathcal{M}$. We also occasionally assume $\pi$ to have oracle access to $\mathcal{M}$ with certain specific oracles. We will make these assumptions clear in the respective sections.
+
+We will say that a learner is \emph{computationally efficient} if it runs in time polynomial in the size of its input and achieves a regret $R_{T} \le \operatorname{poly} \left( | \mathcal{M} | \right) T^{1 - \alpha}$ for some $\alpha > 0$.
+
+
+\subsection{Linear Imprecise Bandits}
+
+For most of this work, we study the following linear specialization of the
+instance $\mathcal{M} = \left( X , D , H , r \right)$ defined above. Let
+$X \subseteq \mathbb{R}^{d_{X}}$ be the arm set, and let
+$D \subseteq \mathbb{R}^{d_{D}}$ be the outcome set. We assume that $X$ and $D$ are
+Euclidean balls of radii $R_{X}$ and $R_{D}$ (not necessarily centred at the origin).
+The reward is affine in the arm and outcome:
+
+
+\begin{equation*}
+r \left( x , y \right) \coloneqq a^{T} x + b^{T} y + c .
+\end{equation*}
+
+
+Let the hypothesis class $H$ be parametrized by $Z \subseteq \mathbb{R}^{d_{Z}}$.
+For every $z \in Z$, we define the hypothesis $h_{z}$ by first defining the possible expected values of the distributions that $h_{z}$ is allowed to choose. In particular, let
+
+
+
+\begin{equation}
+K_{z} \left( x \right) \coloneqq \left\{ y \in D : C_{z} y + B_{z} x + d_{z} = 0 \right\} .\label{eq:setting-compatible-set}
+\end{equation}
+
+
+
+\draft{
+Here $B_{z}$, $C_{z}$, and $d_{z}$ are matrices and vectors of appropriate
+dimensions that depend affinely on $z$. Now, hypothesis
+$h_{z} : X \to \credal D$ is given by
+}
+
+
+\begin{equation*}
+h_{z} \left( x \right) \coloneqq \left\{ P \in \Delta D : \mathbb{E}_{y \sim P} \left[ y \right] \in K_{z} \left( x \right) \right\} .
+\end{equation*}
+
+
+Let $z^{\star} \in Z$ represent the true
+hypothesis, so that $h^{\star} = h_{z^{\star}}$. The true feasible mean set is
+$K^{\star} \left( x \right) \coloneqq K_{z^{\star}} \left( x \right)$.
+
+\draft{We also assume a uniform non-tangency condition: there is a constant
+$S \in \left( 0 , 1 \right]$ such that, for every $x \in X$ and every
+$p \in \mathbb{R}^{d_{D}}$ satisfying
+$C_{z^{\star}} p + B_{z^{\star}} x + d_{z^{\star}} = 0$ with $p \notin D$,
+
+
+\begin{equation*}
+\operatorname{dist} \left( p , D \right) \ge S \operatorname{dist} \left( p , K^{\star} \left( x \right) \right) .
+\end{equation*}
+
+
+For a Euclidean ball, this says that the affine solution spaces defined by
+the true constraints remain uniformly bounded away from tangency to $D$.
+This is the transversality condition used in \citep{kosoy2025imprecise}.
+}
+
+
+Because $r$ is affine in its outcome argument, the value functions defined
+above satisfy
+
+
+\begin{equation*}
+v^{\ast} \left( x \right) = \operatorname*{min}_{P \in h^{\star} \left( x \right)} \mathbb{E}_{y \sim P} \left[ r \left( x , y \right) \right] = \operatorname*{min}_{y \in K^{\star} \left( x \right)} r \left( x , y \right) , \quad V^{\star} \coloneqq \operatorname*{max}_{x \in X} v^{\ast} \left( x \right) .
+\end{equation*}
+
+
+The regret over horizon $T$ is
+
+
+\begin{equation*}
+R_{T} \coloneqq T V^{\star} - \mathbb{E} \left[ \sum_{t = 1}^{T} r \left( x_{t} , y_{t} \right) \right] .
+\end{equation*}
+
+
+\draft{
+To define the computational problem, we fix a finite representation scheme
+for the data defining $\mathcal{M}$, and let $| \mathcal{M} |$ denote the length of its
+description. We represent $X$ and $D$ by their centres and radii, $r$ by its
+coefficients, and $H$ by a description of $Z$ together with the affine map
+$z \mapsto \left( B_{z} , C_{z} , d_{z} \right)$. We restrict attention to succinctly represented
+instances, for which $| \mathcal{M} | \le \operatorname{poly} \left( d_{X} , d_{D} , d_{Z} \right)$.
+}
+
+Now we state our main result.
+
+\draft{
+\begin{sourcetheorem}[efficient $\sqrt{T}$ learning]\label{thm:efficient-upper-bound}
+
+  There exists a policy for linear imprecise bandits as defined above that,
+  for every time horizon $T$ and every true hypothesis $h^{\star} \in H$,
+  runs in time polynomial in $| \mathcal{M} |$ and $T$ and achieves regret
+
+  
+\begin{equation*}
+R_{T} \le \tilde{O} \left( \sqrt{T} \right) .
+\end{equation*}
+
+
+  The hidden factor depends polynomially on the dimensions, $S^{- 1}$,
+  and the reward range. The precise dependence is given in
+  Theorem~\ref{thm:soft-square-root}.
+
+\end{sourcetheorem}
+
+
+This dependence on $T$ is tight up to logarithmic factors: we can reuse
+the $\Omega \left( \sqrt{T} \right)$ worst-case lower bound for stochastic bandits
+\citep[Theorem 5.1]{auer2002nonstochastic}. To see this, take
+$X = \left[ - 1 , 1 \right]$, $D = \left[ 0 , 1 \right]$, $r \left( x , y \right) = y$, and, for unknown
+$\mu = \left( \mu_{1} , \mu_{2} \right) \in {\left[ 0 , 1 \right]}^{2}$, set
+
+
+\begin{equation*}
+K_{\mu} \left( x \right) = \frac{\{ \left( 1 - x \right)}{2} \mu_{1} + \frac{1 + x}{2} \mu_{2} \} .
+\end{equation*}
+
+
+These are affine constraints of the required form, with $S = 1$.
+Given a two-armed Bernoulli bandit with means $\mu_{1}$ and $\mu_{2}$, we can
+simulate a play of $x$ by pulling its first arm with probability
+$\frac{1 - x}{2}$ and its second arm otherwise, and returning the observed reward
+as $y$. This gives a compatible outcome distribution at $x$ and preserves
+expected regret, since $V^{\star} = \operatorname*{max} \left( \mu_{1} , \mu_{2} \right)$. Thus a better worst-case
+regret bound here would give a better bound for two-armed stochastic bandits.
+}
+
+{
+
+\section{Warmup: A $T^{\frac{2}{3}}$ Learner}\label{sec:hard-ellipsoid-warmup}
+
+For an arm $x$ and outcome $y$, consider the vector $w \left( x , y \right) = \left( 1 , x , y \right)$.
+This vector lies in $\mathbb{R}^{1 + d_{X} + d_{D}}$, and the constraints defining the
+feasible set of outcomes, $C_{z^{\star}} y + B_{z^{\star}} x + d_{z^{\star}} = 0$,
+determine a linear subspace of this vector space. Define $\mathcal{L} \coloneqq \operatorname{ker} \begin{pmatrix}d_{z^{\star}} & B_{z^{\star}} & C_{z^{\star}}\end{pmatrix} .$ A conditional mean $m$ is feasible at $x$ precisely when
+$m \in D$ and $w \left( x , m \right) \in \mathcal{L}$.
+}{The learner's task is to learn enough about $\mathcal{L}$ to get low regret.
+Of course, we may never learn all of $\mathcal{L}$. For example, if nature keeps
+choosing conditional means in a strictly smaller subspace, then we cannot
+distinguish that subspace from the true $\mathcal{L}$. But this is fine, since we do
+not need to learn directions that nature never uses.}
+
+The fact that we never get to observe the true conditional mean, but only a noisy observation of it, adds an extra complication. In a noiseless world, a new observation tells us a new direction of $\mathcal{L}$. Thus we can simply maintain a linear subspace of $\mathbb{R}^{1 + d_{Z} + d_{D}}$, and incrementally grow it every time we get new information. However, in the presence of noise, no observation can be used to add an entire direction with certainty. Instead, we encode our knowledge of $\mathcal{L}$ with an \emph{ellipsoid}, and incrementally grow it as we get new information. The details are written below.
+
+{
+We first translate and rescale the balls so that
+$X = \left\{ x : {\left\Vert x \right\Vert}_{2} \le 1 \right\}$ and $D = \left\{ y : {\left\Vert y \right\Vert}_{2} \le 1 \right\}$. We continue to write the
+reward as $r \left( x , y \right) = a^{T} x + b^{T} y + c$ and the true subspace as $\mathcal{L}$ in
+these coordinates. The new ${\left\Vert b \right\Vert}_{2}$ equals $R_{D} {\left\Vert b \right\Vert}_{2}$ in the
+original coordinates, and the non-tangency constant $S$ stays the same.
+Write $q \coloneqq 1 + d_{X} + d_{D}$ for the number of coordinates of $w \left( x , y \right)$.
+For a positive-definite matrix $V$, write
+${\left\Vert w \right\Vert}_{V^{- 1}} \coloneqq \sqrt{w^{T} V^{- 1} w}$.
+
+
+Define $p_{V} \left( x , y \right) \coloneqq {\left\Vert w \left( x , y \right) \right\Vert}_{V^{- 1}}^{2} ,$ and $E_{V} \coloneqq \left\{ w \in \mathbb{R}^{q} : {\left\Vert w \right\Vert}_{V^{- 1}}^{2} \le 1 \right\} .$
+
+
+Here $E_{V}$ is the ellipsoid we described above, which we incrementally
+expand as we get new information about $\mathcal{L}$.
+The algorithm works in blocks of length $n$ (we will choose $n$ later
+to get a small regret). At the beginning of each block, we choose an
+arm $x$ and play the same arm throughout the block.
+The ellipsoid $E_{V}$ stays fixed during these rounds.
+
+To choose an arm, we use our current guess for the feasible conditional
+means. For each $x$, this consists of the $m \in D$ with
+$\left( 1 , x , m \right) \in E_{V}$. If some arm has no such $m$, we choose it to learn
+more about it. Otherwise, we choose the arm with the largest worst-case
+reward over its guessed feasible means.
+
+At the end of a full block, we average its $n$ observations to get
+$\overline{y}$. We then check whether $\left( 1 , x , \overline{y} \right)$ lies in $E_{V}$.
+If it does not, we enlarge the ellipsoid to include it. Otherwise, we
+leave the ellipsoid unchanged.
+
+For the time being, we assume that we can carry out the rule for
+choosing an arm exactly. We will consider the computational aspects
+of the algorithm later.
+
+
+\begin{sourcealgorithm}\label{alg:hard-ellipsoid-warmup}
+
+  Fix a block length $n \in \left\{ 1 , \ldots , T \right\}$ and initialize $V \coloneqq n^{- 1} I_{q}$.
+  At the start of each block:
+
+
+\begin{enumerate}
+\item For each arm, let
+
+    
+\begin{equation*}
+{\hat{K}}_{V} \left( x \right) \coloneqq \left\{ y \in D : p_{V} \left( x , y \right) \le 1 \right\} .
+\end{equation*}
+
+
+    If any of these sets is empty, choose an arm $x$ with
+    ${\hat{K}}_{V} \left( x \right) = \varnothing$. Otherwise, define
+
+    
+\begin{equation*}
+H_{V} \left( x \right) \coloneqq \operatorname*{min}_{y \in {\hat{K}}_{V} \left( x \right)} r \left( x , y \right) ,
+\end{equation*}
+
+
+    and choose
+
+    
+\begin{equation*}
+x \in \operatorname{argmax}_{x^{\prime} \in X} H_{V} \left( x^{\prime} \right) .
+\end{equation*}
+
+\item Play $x$ for $n$ rounds, or until the horizon if fewer rounds remain.
+    Let $\overline{y}$ be the empirical mean of observed outcomes and
+    $\overline{w} \coloneqq w \left( x , \overline{y} \right)$.
+
+\item If the block has length $n$ and $p_{V} \left( x , \overline{y} \right) > 1$, update
+    $V \leftarrow V + \overline{w} {\overline{w}}^{T}$. Otherwise leave $V$ unchanged.
+
+\end{enumerate}
+
+\end{sourcealgorithm}
+
+
+
+\begin{sourcetheorem}[Informal]\label{thm:hard-ellipsoid-warmup}
+
+  For fixed problem parameters, Algorithm~\ref{alg:hard-ellipsoid-warmup} with exact
+  planning has expected regret
+
+  
+\begin{equation*}
+R_{T} \le \tilde{O} \left( n + \frac{T}{\sqrt{n}} \right) .
+\end{equation*}
+
+
+  In particular, choosing $n = \left\lceil T^{\frac{2}{3}} \right\rceil$ gives
+  $R_{T} \le \tilde{O} \left( T^{\frac{2}{3}} \right)$.
+
+\end{sourcetheorem}
+
+}
+
+{
+\textbf{Proof sketch.} We will show that, with high probability, throughout the
+$T$ time steps, every point in $E_{V}$ is at most about $\frac{1}{\sqrt{n}}$ away
+from the true $\mathcal{L}$ (Lemma~\ref{lem:subspace-distance-bound}). We ignore
+constants depending on the fixed problem parameters and logarithmic
+factors in this sketch.
+
+Now consider an uninformative block, meaning a full block in which we
+do not update $V$. The arm $x$ that we play during this block is picked
+by maximizing $H_{V}$. Since the block is uninformative, its
+empirical mean outcome satisfies $w \left( x , \overline{y} \right) \in E_{V}$. These two
+facts, together with the distance bound and Lemma~\ref{lem:subspace-reward-bound},
+imply that the average reward is at least $V^{\star}$ minus about
+$\frac{1}{\sqrt{n}}$. Thus the block's regret (the best arm's guaranteed reward
+$n V^{\star}$ minus the reward we actually achieved) is at most about
+$\frac{n}{\sqrt{n}} = \sqrt{n}$.
+
+On the other hand, for an informative block, the empirical mean can
+lie outside the ellipsoid, so we only have the trivial regret bound
+of $O \left( n \right)$.
+
+Finally, the update rule for $V$ ensures that there are at most
+$O \left( \operatorname{log} T \right)$ informative blocks: each update more than doubles the
+determinant, whose total growth is bounded by a polynomial in $T$
+(see the proof of Theorem~\ref{thm:hard-ellipsoid-regret}). There are at most $\frac{T}{n}$
+uninformative blocks, so the total regret is about $n \operatorname{log} T + \sqrt{n} \frac{T}{n}$.
+
+Ignoring logarithmic factors, this bound is minimized by choosing
+$n = \left\lceil T^{\frac{2}{3}} \right\rceil$, giving an upper bound of
+$\tilde{O} \left( T^{\frac{2}{3}} \right)$ on the regret. $\blacksquare$
+
+The precise statement and proof are in Appendix~\ref{app:hard-ellipsoid-analysis}.
+}
+
+\draft{
+
+\subsection{Computational tractability}\label{sec:hard-computation}
+
+The matrix updates and the test $p_{V} \left( x , \overline{y} \right) > 1$ can be computed
+in polynomial time. The main issue is choosing an arm: we need to find
+an empty guessed feasible set, or maximize the worst-case reward if
+all these sets are nonempty. We now show how to carry out these steps
+to finite precision while retaining the $\tilde{O} \left( T^{\frac{2}{3}} \right)$ regret bound.
+
+Exact emptiness tests can be unstable when the two constraints just
+touch. To allow some numerical slack, the implementation uses
+
+
+\begin{equation*}
+{\hat{K}}_{V}^{\text{\normalfont in}} \left( x \right) \coloneqq \left\{ y \in D : p_{V} \left( x , y \right) \le 4 \right\} , \quad {\hat{K}}_{V}^{\text{\normalfont out}} \left( x \right) \coloneqq \left\{ y \in D : p_{V} \left( x , y \right) \le 9 \right\} .
+\end{equation*}
+
+
+It looks for an arm whose inner set is empty, and otherwise plans
+against the outer sets. The update rule still uses $p_{V} > 1$. Thus we
+only change the arm-selection rule by constant factors in the
+ellipsoid's radius.
+
+To find an empty inner set, let $d_{V} \left( x \right)$ be the Euclidean distance
+between $2 E_{V}$ and $\{ \left( 1 , x , y \right) : y \in D \}$. Writing $z = \left( z_{0} , z_{X} , z_{D} \right)$,
+the support functions of the ellipsoid and the unit ball give
+
+
+\begin{equation*}
+d_{V} \left( x \right) = \operatorname*{max}_{{\left\Vert z \right\Vert}_{2} \le 1} \left[ z_{0} + z_{X}^{T} x - 2 \sqrt{z^{T} V z} - {\left\Vert z_{D} \right\Vert}_{2} \right] .
+\end{equation*}
+
+
+In particular, $d_{V} \left( x \right) > 0$ certifies that the inner set is empty.
+Maximize this expression jointly over $x \in X$ and $z$, to additive
+accuracy $\eta \coloneqq \frac{1}{10 n}$. If the returned lower bound exceeds $\eta$,
+play the corresponding arm. Otherwise $d_{V} \left( x \right) \le 2 \eta$ for every arm.
+The gap between $2 E_{V}$ and $3 E_{V}$ then guarantees that every outer set
+is nonempty, with enough room to carry out the remaining optimization.
+
+Define the value used for planning by
+
+
+\begin{equation*}
+H_{V}^{\text{\normalfont out}} \left( x \right) \coloneqq \operatorname*{min}_{y \in {\hat{K}}_{V}^{\text{\normalfont out}} \left( x \right)} r \left( x , y \right) .
+\end{equation*}
+
+
+Convex duality gives
+
+
+\begin{equation*}
+H_{V}^{\text{\normalfont out}} \left( x \right) = a^{T} x + c + \operatorname*{max}_{{\left\Vert z \right\Vert}_{2} \le M} \left[ z_{0} + z_{X}^{T} x - 3 \sqrt{z^{T} V z} - {\left\Vert b + z_{D} \right\Vert}_{2} \right] ,
+\end{equation*}
+
+
+where $M \coloneqq 4 n \left( 1 + {\left\Vert b \right\Vert}_{1} \right)$ suffices. The strict margin obtained above
+is what lets us bound the dual variable uniformly over all arms.
+
+Both maximizations reduce to a quadratic program with a fixed number
+of quadratic constraints. For example, replace the two norms in the
+last display by nonnegative variables $t , s$ satisfying
+$z^{T} V z \le t^{2}$ and ${\left\Vert b + z_{D} \right\Vert}_{2}^{2} \le s^{2}$. The objective becomes
+quadratic in $\left( x , z , t , s \right)$. All variables have explicit bounds, so we
+can also add a redundant enclosing ball. Bienstock's theorem
+\citep{bienstock2016cdt}, stated in Appendix~\ref{app:qcqp}, solves these problems
+to weak additive accuracy in polynomial time. The dual formulas,
+the bound on $M$, and the conversion of a weak solution into a valid
+arm and a certified lower bound are justified in
+Appendix~\ref{app:hard-computation}.
+
+The regret argument still works. An empty inner set forces an update,
+whereas an uninformative block has its empirical mean in the outer
+set. Points in $3 E_{V}$ are at most three times as far from $\mathcal{L}$
+as the earlier bound for $E_{V}$. Thus the two types of blocks still
+cost $\tilde{O} \left( n \right)$ and $\tilde{O} \left( \sqrt{n} \right)$, respectively. Maximizing
+$H_{V}^{\text{\normalfont out}}$ to additive accuracy $\varepsilon$ adds at most $T \varepsilon$
+to the regret. Taking $\varepsilon = {\left( T + 1 \right)}^{- 2}$, and rounding the observations
+to the precision specified in the appendix, gives a polynomial-time
+implementation with the same $\tilde{O} \left( T^{\frac{2}{3}} \right)$ rate.
+
+}
+
+{
+
+\section{A $\sqrt{T}$ learner}\label{sec:soft-square-root}
+
+In the previous section, our bound on the regret incurred during a block
+depended on two things: (a) the set of outcomes considered in $H_{V}$ to
+pick the arm for that block, and (b) where the empirical mean of the
+actual outcomes lay relative to that set. The learner closes its eyes
+during the block, and only looks at the end to see whether
+$w \left( x , \overline{y} \right)$ lies inside or outside the ellipsoid $E_{V}$. Ideally,
+if the observations collected so far have an empirical mean
+$\overline{y}$ with $w \left( x , \overline{y} \right)$ already far outside $E_{V}$, that
+should suggest that the $V$ picked for the block was not appropriate
+and we need to update it soon. In this section, we construct a learner
+that monitors an observable quantity that lets us bound the regret
+accumulated throughout the block, and updates $V$ as soon as this
+quantity becomes large. This is the main insight that leads to a $\sqrt{T}$ regret.
+}
+
+\draft{
+To do this, we need an arm-selection rule that gives us a bound we can
+evaluate throughout the block, even when $w \left( x , \overline{y} \right)$ lies outside
+$E_{V}$. We obtain this by replacing the hard constraint $p_{V} \left( x , y \right) \le 1$
+in $H_{V}$ with a penalty. For a parameter $\lambda > 0$, which we will
+choose later to get a small regret, define
+
+
+\begin{equation*}
+U_{V} \left( x \right) \coloneqq \operatorname*{min}_{y \in D} \left[ r \left( x , y \right) + \lambda p_{V} \left( x , y \right) \right] .
+\end{equation*}
+
+
+We pick the arm $x$ by maximizing $U_{V}$. By definition, every outcome
+$y \in D$ satisfies $U_{V} \left( x \right) - r \left( x , y \right) \le \lambda p_{V} \left( x , y \right)$. This is what
+the penalty buys us: even if an outcome is outside our guessed
+feasible set, we still have a bound on how far its reward can fall
+below the score. We will show that the chosen arm's score is at least
+$V^{\star}$ up to a small error, so controlling this shortfall will also
+let us control regret.
+
+To use this bound during a block, we keep $V$ fixed and play the same
+arm $x$ repeatedly, but recompute the empirical mean after every
+observation. Let ${\overline{y}}_{n}$ be the mean of the first $n$ outcomes
+in the block. Since the reward is affine, the reward accumulated so far
+is $n r \left( x , {\overline{y}}_{n} \right)$. Applying the inequality above to this mean
+gives
+
+
+\begin{equation*}
+n U_{V} \left( x \right) - \sum_{i = 1}^{n} r \left( x , y_{i} \right) \le \lambda n p_{V} \left( x , {\overline{y}}_{n} \right) .
+\end{equation*}
+
+
+The right-hand side is the observable quantity described in the first
+paragraph. We can compute it after every observation, and it bounds
+how far our accumulated reward falls below $n U_{V} \left( x \right)$. We end the
+block and update $V$ the first time this bound reaches $\lambda$, or
+equivalently, when $n p_{V} \left( x , {\overline{y}}_{n} \right) \ge 1$. Before this happens,
+the accumulated reward falls short of $n U_{V} \left( x \right)$ by less than
+$\lambda$.
+
+A large empirical penalty can therefore make us update after only a
+few observations. A small one lets us keep playing the arm for longer.
+The factor $n$ accounts for how long we have been playing: we may need
+to update even while the empirical mean satisfies the ellipsoid
+constraint, because its penalty has been multiplied by a large block
+length. Thus we choose when to update $V$ by monitoring this bound
+throughout the block, rather than waiting for a fixed number of rounds.
+
+We use the same coordinates and notation as in the previous section, and set
+$\lambda \coloneqq \left\lceil \sqrt{T} \right\rceil$.
+
+
+\begin{sourcealgorithm}\label{alg:soft-square-root}
+
+  Initialize $V \coloneqq I_{q}$. At the start of each block:
+
+
+\begin{enumerate}
+\item Define
+
+    
+\begin{equation*}
+U_{V} \left( x \right) \coloneqq \operatorname*{min}_{y \in D} \left[ r \left( x , y \right) + \lambda p_{V} \left( x , y \right) \right] ,
+\end{equation*}
+
+
+    and choose an arm $x \in X$ with
+    $U_{V} \left( x \right) \ge \operatorname*{max}_{x^{\prime} \in X} U_{V} \left( x^{\prime} \right) - \varepsilon$.
+
+\item Play $x$ repeatedly. After $n$ observations in the block, let
+
+    
+\begin{equation*}
+{\overline{y}}_{n} \coloneqq \frac{1}{n} \sum_{i = 1}^{n} y_{i} , \quad {\overline{w}}_{n} \coloneqq w \left( x , {\overline{y}}_{n} \right) .
+\end{equation*}
+
+
+    End the block the first time
+
+    
+\begin{equation*}
+n p_{V} \left( x , {\overline{y}}_{n} \right) \ge 1 .
+\end{equation*}
+
+\item Update $V \leftarrow V + n {\overline{w}}_{n} {\overline{w}}_{n}^{T}$ and start a new block.
+    At the horizon, stop even if the current block has not ended.
+
+\end{enumerate}
+
+\end{sourcealgorithm}
+
+
+We give a block mean weight $n$ because averages from longer blocks are
+more accurate. This is consistent with the earlier update: multiplying
+the warmup matrix by $n$ gives
+$I_{q} + \sum_{j} n {\overline{w}}_{j} {\overline{w}}_{j}^{T}$. We now allow the block
+length to vary and use the quadratic form as a penalty.
+
+For the analysis, fix $\delta \in \left( 0 , 1 \right)$ and use the quantities
+$J_{\text{\normalfont max}} , h_{T} , B_{T} , G , C_{r}$ defined in Appendix~\ref{app:hard-ellipsoid-analysis}.
+We use the concentration bound from Lemma~\ref{lem:interval-noise} and adapt the
+proof of Lemma~\ref{lem:subspace-distance-bound} to the new matrix update.
+
+
+\begin{sourcetheorem}\label{thm:soft-square-root}
+
+  Suppose nature follows any compatible adaptive policy. Then
+  Algorithm~\ref{alg:soft-square-root}, run in exact arithmetic, satisfies with
+  probability at least $1 - \delta$,
+
+  
+\begin{equation*}
+T V^{\star} - \sum_{t = 1}^{T} r \left( x_{t} , y_{t} \right) \le 4 \lambda \left( J_{\text{\normalfont max}} + 1 \right) + \frac{G^{2} B_{T}^{2} T}{4 \lambda} + T \varepsilon ,
+\end{equation*}
+
+
+  where each planning call maximizes $U_{V}$ to within $\varepsilon$. We can
+  implement the algorithm in time polynomial in $\left| \mathcal{M} \right|$ and $T$
+  under the weak finite-precision model. Taking
+  $\varepsilon = \delta = {\left( T + 1 \right)}^{- 2}$ gives expected regret
+
+  
+\begin{equation*}
+R_{T} \le \tilde{O} \left( \left[ q + {\left( 1 + S^{- 1} \right)}^{2} {\left\Vert b \right\Vert}_{2}^{2} q d_{D} \right] \sqrt{T} \right) + O \left( \frac{C_{r}}{T} \right) .
+\end{equation*}
+
+
+  The learner does not need to know $S$ or the analysis quantities
+  $J_{\text{\normalfont max}} , h_{T} , B_{T} , G$.
+
+\end{sourcetheorem}
+
+
+\textbf{Proof.} As before, each completed block at least doubles the
+determinant. The stopping rule gives
+
+
+\begin{equation*}
+\operatorname{det} \left( V + n \overline{w} {\overline{w}}^{T} \right) = \operatorname{det} \left( V \right) \left( 1 + n p_{V} \left( x , \overline{y} \right) \right) \ge 2 \operatorname{det} \left( V \right) .
+\end{equation*}
+
+
+Since ${\left\Vert \overline{w} \right\Vert}_{2}^{2} \le 3$, the final trace is at most $q + 3 T$.
+Thus, if we complete $J$ blocks,
+$2^{J} \le \operatorname{det} V \le {\left( 1 + 3 \frac{T}{q} \right)}^{q}$, so $J \le J_{\text{\normalfont max}}$.
+
+We also need to bound how far $n p_{V} \left( x , {\overline{y}}_{n} \right)$ can jump above
+one on the last observation. For $n \ge 2$, convexity gives
+
+
+\begin{equation*}
+n p_{V} \left( x , {\overline{y}}_{n} \right) \le \left( n - 1 \right) p_{V} \left( x , {\overline{y}}_{n - 1} \right) + p_{V} \left( x , y_{n} \right) < 1 + 3 = 4 .
+\end{equation*}
+
+
+The first term is less than one because we did not stop at $n - 1$.
+The second is at most three because $V \succeq I_{q}$ and
+$p_{V} \left( x , y_{n} \right) \le {\left\Vert w \left( x , y_{n} \right) \right\Vert}_{2}^{2} \le 3$. If we stop at $n = 1$, the bound is
+at most three. If the horizon ends before the test succeeds, it is less
+than one. Thus every block satisfies
+
+
+
+\begin{equation}
+n p_{V} \left( x , \overline{y} \right) \le 4 .\label{eq:soft-block-cost}
+\end{equation}
+
+
+
+We now adapt the proof of Lemma~\ref{lem:subspace-distance-bound}. Number the
+completed blocks $j = 1 , \ldots , J$, and let $n_{j}$ be the length of block $j$. Write $x_{j}$
+for its arm, ${\overline{y}}_{j}$ and ${\overline{m}}_{j}$ for its average
+observation and conditional mean, and
+${\overline{w}}_{j} \coloneqq w \left( x_{j} , {\overline{y}}_{j} \right)$. The matrix now has the form
+
+
+\begin{equation*}
+V = I_{q} + \sum_{j = 1}^{J} n_{j} {\overline{w}}_{j} {\overline{w}}_{j}^{T} .
+\end{equation*}
+
+
+By Lemma~\ref{lem:interval-noise}, with probability at least $1 - \delta$, the bound
+${\left( u^{T} {\overline{w}}_{j} \right)}^{2} \le \frac{h_{T}^{2}}{n_{j}}$ holds simultaneously for all completed
+blocks and all $u \in {\mathcal{L}}^{\perp}$ with ${\left\Vert u \right\Vert}_{2} \le 1$. On this event,
+
+
+\begin{equation*}
+u^{T} V u \le 1 + \sum_{j = 1}^{J} n_{j} \left( \frac{h_{T}^{2}}{n_{j}} \right) = 1 + J h_{T}^{2} \le B_{T}^{2} .
+\end{equation*}
+
+
+This is where the weight $n_{j}$ matters: it cancels the $\frac{1}{n_{j}}$ in the
+squared noise bound. Each block contributes at most $h_{T}^{2}$, however
+long it is. Applying Cauchy--Schwarz and taking the supremum over these
+$u$ gives
+
+
+
+\begin{equation}
+\operatorname{dist} \left( w , \mathcal{L} \right) \le B_{T} {\left\Vert w \right\Vert}_{V^{- 1}} .\label{eq:soft-subspace-certificate}
+\end{equation}
+
+
+
+Next, we compare the score with the true value of an arm.
+Lemma~\ref{lem:subspace-reward-bound} gives, for every $x \in X$ and $y \in D$,
+
+
+\begin{equation*}
+v^{\star} \left( x \right) \le r \left( x , y \right) + G B_{T} \sqrt{p_{V} \left( x , y \right)} .
+\end{equation*}
+
+
+The error bound grows with $\sqrt{p_{V} \left( x , y \right)}$, while the penalty grows with
+$p_{V} \left( x , y \right)$. Writing $u \coloneqq \sqrt{p_{V} \left( x , y \right)}$ and completing the square,
+
+
+\begin{equation*}
+r \left( x , y \right) + \lambda p_{V} \left( x , y \right) \ge v^{\star} \left( x \right) + \lambda u^{2} - G B_{T} u \ge v^{\star} \left( x \right) - \frac{G^{2} B_{T}^{2}}{4 \lambda} .
+\end{equation*}
+
+
+Taking the minimum over $y \in D$, we see that the score underestimates
+the true value by at most $\zeta_{T}$:
+
+
+
+\begin{equation}
+U_{V} \left( x \right) \ge v^{\star} \left( x \right) - \zeta_{T} , \quad \zeta_{T} \coloneqq \frac{G^{2} B_{T}^{2}}{4 \lambda} .\label{eq:soft-optimism}
+\end{equation}
+
+
+
+We choose an arm whose score is within $\varepsilon$ of the highest score,
+so $U_{V} \left( x \right) \ge V^{\star} - \zeta_{T} - \varepsilon$. The block's empirical mean is in
+$D$, and the reward is affine. Its regret is therefore at most
+
+
+\begin{equation*}
+n \left( V^{\star} - r \left( x , \overline{y} \right) \right) \le \lambda n p_{V} \left( x , \overline{y} \right) + n \left( \zeta_{T} + \varepsilon \right) \le 4 \lambda + n \left( \zeta_{T} + \varepsilon \right) .
+\end{equation*}
+
+
+Adding this over at most $J_{\text{\normalfont max}} + 1$ blocks proves the high-probability
+bound. If the noise bound fails, regret is still at most $C_{r} T$,
+so taking expectations adds at most $C_{r} T \delta$.
+
+The difference from the warmup is that we now pay at most $4 \lambda$
+in penalty per block, no matter how long the block lasts. We also pay
+for the score underestimating the true value, but this costs only
+$\zeta_{T}$ per round, which decreases as $\frac{1}{\lambda}$. The two terms to
+balance are therefore $\lambda J_{\text{\normalfont max}}$ and $\frac{T}{\lambda}$, giving the
+square-root rate.
+
+We still need to implement the planning step. First, rewrite the penalty as
+
+
+\begin{equation*}
+\lambda w^{T} V^{- 1} w = \operatorname*{max}_{z} \left[ z^{T} w - \frac{z^{T} V z}{4 \lambda} \right] .
+\end{equation*}
+
+
+The maximizer is $z = 2 \lambda V^{- 1} w$. Since $V \succeq I_{q}$ and
+${\left\Vert w \right\Vert}_{2} \le \sqrt{3}$, we can restrict the maximum to the ball
+${\left\Vert z \right\Vert}_{2} \le 4 \lambda$ for every $x \in X$ and $y \in D$. For fixed $x$,
+the expression is affine in $y$ and concave in $z$, and both domains
+are compact and convex. We can therefore exchange the minimum and
+maximum. Writing $z = \left( z_{0} , z_{X} , z_{D} \right)$ gives
+
+
+
+\begin{equation}
+U_{V} \left( x \right) = a^{T} x + c + \operatorname*{max}_{{\left\Vert z \right\Vert}_{2} \le 4 \lambda} \left[ z_{0} + z_{X}^{T} x - {\left\Vert b + z_{D} \right\Vert}_{2} - \frac{z^{T} V z}{4 \lambda} \right] .\label{eq:soft-conjugate-planner}
+\end{equation}
+
+
+
+
+We can now maximize $U_{V}$ by solving the QCQP
+
+
+\begin{equation*}
+\operatorname*{max}_{x , z , s} \quad a^{T} x + c + z_{0} + z_{X}^{T} x - s - \frac{z^{T} V z}{4 \lambda}
+\end{equation*}
+
+
+subject to
+
+
+\begin{equation*}
+{\left\Vert x \right\Vert}_{2}^{2} \le 1 , \quad {\left\Vert z \right\Vert}_{2}^{2} \le 16 \lambda^{2} , \quad {\left\Vert b + z_{D} \right\Vert}_{2}^{2} \le s^{2} , \quad 0 \le s \le H ,
+\end{equation*}
+
+
+where $H \coloneqq 1 + {\left\Vert b \right\Vert}_{1} + 4 \lambda$ is rational. We also add the redundant
+constraint
+
+
+\begin{equation*}
+{\left\Vert x \right\Vert}_{2}^{2} + \frac{{\left\Vert z \right\Vert}_{2}^{2}}{16 \lambda^{2}} + \frac{s^{2}}{H^{2}} \le 3 .
+\end{equation*}
+
+
+
+This gives six quadratic inequalities. The last has a positive-definite
+quadratic part in all variables, so we can apply Bienstock's
+weak-optimization theorem \citep{bienstock2016cdt} as described in Section~\ref{app:qcqp}.
+
+The solver may return a point that slightly violates the constraints.
+We can make its output $\left( \hat{x} , \hat{z} , \hat{s} \right)$ feasible by projecting
+$\hat{x}$ and $\hat{z}$ onto their respective balls. Call the resulting
+points $x^{\prime}$ and $z^{\prime}$, and put $s^{\prime} \coloneqq {\left\Vert b + z_{D}^{\prime} \right\Vert}_{2}$. If each constraint
+violation is at most $\tau \le 1$, then
+
+
+\begin{equation*}
+{\left\Vert x^{\prime} - \hat{x} \right\Vert}_{2} \le \sqrt{\tau} , \quad {\left\Vert z^{\prime} - \hat{z} \right\Vert}_{2} \le \sqrt{\tau} , \quad s^{\prime} - \hat{s} \le 4 \sqrt{\tau} .
+\end{equation*}
+
+
+The last bound only controls an increase, but this is all we need: the
+objective has coefficient $- 1$ on $s$. Since
+${\left\Vert V \right\Vert}_{\text{\normalfont op}} \le 1 + 3 T$, the repair decreases the objective by at most
+$K_{T} \sqrt{\tau}$, where we can take the rational bound
+
+
+\begin{equation*}
+K_{T} \coloneqq 20 \left( 1 + {\left\Vert a \right\Vert}_{1} + \lambda + T \right) .
+\end{equation*}
+
+
+Choose $\tau \le \operatorname*{min} \left( \frac{1}{4} , {\left( \frac{\varepsilon}{4 \left( K_{T} + 1 \right)} \right)}^{2} \right)$. Including the solver's
+objective error, the objective at the repaired point is then within
+$\frac{\varepsilon}{2}$ of the optimum. By Equation~\ref{eq:soft-conjugate-planner}, the same lower bound holds for
+$U_{V} \left( x^{\prime} \right)$. The number of precision bits we need is polynomial in
+$\left| \mathcal{M} \right|$, $\operatorname{log} \left( T + 1 \right)$, and $\operatorname{log} \left( \frac{1}{\varepsilon} \right)$, even when the reward
+coefficients are large.
+
+Finally, we round the played arms and observed outcomes to common
+rational grids inside their unit balls. Truncating each coordinate
+toward zero keeps these points in the balls. The function $U_{V}$ is
+Lipschitz in $x$ with constant at most
+${\left\Vert a \right\Vert}_{2} + 2 \sqrt{3} \lambda$, so we choose the arm grid finely enough
+that rounding costs at most $\frac{\varepsilon}{2}$. For outcomes, keep the
+Euclidean error at most $\tau_{y} \coloneqq {\left( T + 1 \right)}^{- 4}$ and use the rounded
+observations in the block averages and updates. Their interval averages
+still satisfy Equation~\ref{eq:soft-interval-noise} after replacing $h_{T}^{2}$ by
+$2 h_{T}^{2} + 2 T \tau_{y}^{2}$. The bounds on the determinant and the penalty per block stay the
+same. Replacing actual rewards by rewards at the rounded observations
+changes the cumulative reward by at most ${\left\Vert b \right\Vert}_{2} T \tau_{y}$. We
+therefore obtain the same expected-regret rate, with universal changes
+to the displayed high-probability constants.
+
+The stored matrices are rational, with eigenvalues between $1$ and
+$1 + 3 T$. The common grids keep bit lengths polynomial when we form block
+averages, update and invert the matrices, and compare the stopping
+quantity with its threshold exactly. There are at most $J_{\text{\normalfont max}} + 1$
+planning calls, and the QCQP reduction above makes each call run in
+polynomial time. This proves the computational claim. $\blacksquare$
+}
+
+
+\section{NP-hardness}
+
+In this section we show that several natural variations of the linear imprecise bandits problem are NP-hard. Thus in some sense, the problem is
+the hardest problem that's still tractable.
+
+We first show that efficient planning can be reduced to efficient learning.
+Most proofs below show that planning is already NP-hard. Due to the reduction
+from planning to learning, this shows that learning is also NP-hard.
+
+
+\begin{sourcelemma}\label{lem:planning-from-learning}
+
+  {
+  Fix a linear imprecise bandit instance $\mathcal{M}$.
+  Suppose that, for every hypothesis $z \in Z$, every arm $x$, and every $\eta \in \left( 0 , 1 \right)$, one can compute an outcome
+  $y_{z , \eta} \left( x \right)$ satisfying
+  }
+
+  {
+  $y_{z , \eta} \left( x \right) \in K_{z} \left( x \right)$ and $0 \le r \left( x , y_{z , \eta} \left( x \right) \right) - v_{z} \left( x \right) \le \eta$
+  in time polynomial in $| \mathcal{M} |$ and $\frac{1}{\eta}$.
+  Suppose also that, for some fixed $\beta > 0$ and polynomial $P$, a
+  polynomial-time learner guarantees
+  }
+  {$R_{T} \le P \left( | \mathcal{M} | \right) T^{1 - \beta}$}
+
+  {
+  Then, for every $z \in Z$ and every $\varepsilon \in \left( 0 , 1 \right)$, one can compute in
+  time $\operatorname{poly} \left( | \mathcal{M} | , \frac{1}{\varepsilon} \right)$ an arm $\hat{x}$ such
+  that with probability at least 2/3, $| V_{z} - v_{z} \left( \hat{x} \right) | \le \varepsilon$.
+  }
+\end{sourcelemma}
+
+
+\draft{
+\textbf{Proof.} Fix $z \in Z$ and $\varepsilon \in \left( 0 , 1 \right)$, set $\eta \coloneqq \frac{\varepsilon}{6}$, and
+simulate the learner on $\mathcal{M}$ for
+}
+
+\draft{
+
+\begin{equation*}
+T \coloneqq \left\lceil \operatorname*{max} \left( 1 , {\left( 6 \frac{P \left( | \mathcal{M} | \right)}{\varepsilon} \right)}^{\frac{1}{\beta}} \right) \right\rceil
+\end{equation*}
+
+}
+
+\draft{
+rounds. Whenever the learner plays $x_{t}$, let nature use the point mass at
+$y_{z , \eta} \left( x_{t} \right)$. This is allowed because
+$y_{z , \eta} \left( x_{t} \right) \in K_{z} \left( x_{t} \right)$. Record the rewards and choose the round
+with the largest reward:
+}
+
+\draft{
+
+\begin{equation*}
+{\tilde{v}}_{t} \coloneqq r \left( x_{t} , y_{z , \eta} \left( x_{t} \right) \right) , \quad \hat{t} \in \operatorname{argmax}_{t = 1 , \ldots , T} {\tilde{v}}_{t} ,
+\end{equation*}
+
+}
+
+\draft{
+and return $\hat{x} \coloneqq x_{\hat{t}}$.
+}
+
+\draft{
+The approximation guarantee gives
+$v_{z} \left( \hat{x} \right) \ge {\tilde{v}}_{\hat{t}} - \eta$. Our choice of $\hat{t}$ therefore gives
+}
+
+\draft{
+
+\begin{equation*}
+0 \le V_{z} - v_{z} \left( \hat{x} \right) \le V_{z} - {\tilde{v}}_{\hat{t}} + \eta \le V_{z} - \frac{1}{T} \sum_{t = 1}^{T} {\tilde{v}}_{t} + \eta .
+\end{equation*}
+
+}
+
+\draft{
+Taking expectations and using the definition of $R_{T}$ for this nature policy,
+}
+
+\draft{
+
+\begin{equation*}
+\mathbb{E} \left[ V_{z} - v_{z} \left( \hat{x} \right) \right] \le \frac{R_{T}}{T} + \eta \le P \left( | \mathcal{M} | \right) T^{- \beta} + \eta \le \frac{\varepsilon}{3} .
+\end{equation*}
+
+}
+
+\draft{
+The gap $V_{z} - v_{z} \left( \hat{x} \right)$ is nonnegative, so Markov's inequality shows
+that it exceeds $\varepsilon$ with probability at most $\frac{1}{3}$.
+The horizon and the simulation time are polynomial in $| \mathcal{M} |$ and $\frac{1}{\varepsilon}$
+because $\beta$ is fixed. $\blacksquare$
+}
+
+Below we show that the ``smoothness'' of $X$ and $D$ are crucial for efficiency. It is easy to land in the NP-hard territory if we make either $X$ or $D$ a convex shape with edges and corners.
+
+
+
+\subsection{D = simplex, X = ball}
+
+First we show that if, instead of a Euclidean ball, we allow $D$ to be a simplex, then even known hypothesis planning becomes NP-hard. Then, using the planning to learning reduction (Lemma~\ref{lem:planning-from-learning}), we conclude that learning is NP-hard.
+
+
+\begin{sourcetheorem}
+
+  Consider a variation of the linear imprecise bandits problem where $D$ is allowed to be a simplex. If, for
+  some fixed $\beta > 0$, a randomized polynomial-time learner guarantees $E \left[ R_{T} \right] \le P \left( | \mathcal{M} | \right) T^{1 - \beta}$ for every instance $\mathcal{M}$, then $\text{\normalfont NP} \subseteq \text{\normalfont BPP}$. If a deterministic learner achieves the same regret guarantee, then $\text{\normalfont P} = \text{\normalfont NP}$.
+
+ \label{thm:additive-simplex-np-hardness}
+
+\end{sourcetheorem}
+
+
+\textbf{Proof.} We reduce from MAX-CUT, as defined in Appendix~\ref{app:max-cut}. Let $\left( G , k \right)$ be an
+instance, where $G = \left( V , E \right)$ has $n$ vertices and $m \ge 1$ edges and
+$k \in \left\{ 1 , \ldots , m \right\}$. Orient the edges arbitrarily and let
+$B_{G} \in \mathbb{R}^{m \times n}$ be the resulting edge-vertex incidence matrix, i.e., if
+$e = \left\{ i , j \right\}$ is oriented from $j$ to $i$, then row $e$ has $1$ in column $i$,
+$- 1$ in column $j$, and zeros elsewhere. Put
+
+
+\begin{equation*}
+X \coloneqq \left\{ x \in \mathbb{R}^{m} : {\left\Vert x \right\Vert}_{2} \le 1 \right\} , \quad Z \coloneqq \left[ 1 , 2 \right] .
+\end{equation*}
+
+
+Write an outcome as $y = \left( p , q , s \right) \in \mathbb{R}^{n} \times \mathbb{R}^{n} \times \mathbb{R}$ and take
+
+
+\begin{equation*}
+D \coloneqq \left\{ \left( p , q , s \right) : p_{i} \ge 0 , q_{i} \ge 0 \text{\normalfont  for } i = 1 , \ldots , n , s \ge 0 , \sum_{i = 1}^{n} \left( p_{i} + q_{i} \right) + s = 1 \right\} .
+\end{equation*}
+
+
+Let $\gamma > 0$ be a constant to be chosen later. For every $z \in Z$, let
+
+
+
+\begin{equation*}
+K_{z} \left( x \right) \coloneqq \left\{ \left( p , q , s \right) \in D : p - q = \gamma B_{G}^{T} x \right\} .
+\end{equation*}
+
+
+This is of the form in Equation~\ref{eq:setting-compatible-set}, where
+
+
+\begin{equation*}
+C_{z} \left( p , q , s \right) \coloneqq p - q , \quad B_{z} x \coloneqq - \gamma B_{G}^{T} x , \quad d_{z} \coloneqq 0 .
+\end{equation*}
+
+
+Let the reward be
+
+
+\begin{equation*}
+r \left( x , \left( p , q , s \right) \right) \coloneqq \sum_{i = 1}^{n} \left( p_{i} + q_{i} \right) .
+\end{equation*}
+
+
+The maps $z \mapsto B_{z}$, $z \mapsto C_{z}$, and $z \mapsto d_{z}$ are constant,
+hence affine, as required, and the reward lies in $\left[ 0 , 1 \right]$ on $D$.
+
+In particular, $K_{z} \left( x \right)$ is independent of $z$.
+
+Next we show that, for every $z \in Z$, $\left( G , k \right)$ is a yes-instance of MAX-CUT
+if and only if the constructed imprecise bandit instance has an arm $x \in X$
+satisfying
+
+
+
+\begin{equation*}
+v_{z} \left( x \right) \ge 2 \gamma \sqrt{k} .
+\end{equation*}
+
+
+A vector $\sigma \in {\left\{ - 1 , 1 \right\}}^{n}$ represents a partition of the vertices of $G$
+into the two sides $\left\{ i : \sigma_{i} = 1 \right\}$ and $\left\{ i : \sigma_{i} = - 1 \right\}$. Let
+$c_{G} \left( \sigma \right)$ denote the number of edges between these sides.
+
+
+\begin{sourcelemma}\label{lem:simplex-cut-norm}
+
+  For every $\sigma \in {\left\{ - 1 , 1 \right\}}^{n}$,
+
+  
+\begin{equation*}
+{\left\Vert B_{G} \sigma \right\Vert}_{2} = 2 \sqrt{c_{G} \left( \sigma \right)} .
+\end{equation*}
+
+
+\end{sourcelemma}
+
+
+\textbf{Proof.} Fix $\sigma \in {\left\{ - 1 , 1 \right\}}^{n}$. For every edge $e = \left\{ i , j \right\}$,
+
+
+\begin{equation*}
+{\left( B_{G} \sigma \right)}_{e}^{2} = {\left( \sigma_{i} - \sigma_{j} \right)}^{2} = \begin{cases}
+4 & \text{\normalfont if } \sigma_{i} \ne \sigma_{j} \\
+0 & \text{\normalfont otherwise}
+\end{cases} .
+\end{equation*}
+
+
+Summing over $e \in E$ and taking the square root proves the identity. $\blacksquare$
+
+For the forward implication, suppose $\left( G , k \right)$ is a yes-instance. Choose
+$\sigma$ such that $c_{G} \left( \sigma \right) \ge k$, and define the arm
+
+
+\begin{equation*}
+x_{\sigma} \coloneqq B_{G} \frac{\sigma}{{\left\Vert B_{G} \sigma \right\Vert}_{2}} .
+\end{equation*}
+
+
+Since $c_{G} \left( \sigma \right) \ge k \ge 1$, Lemma~\ref{lem:simplex-cut-norm} shows that $x_{\sigma}$ is
+well-defined. Moreover, we get the following inequality.
+
+
+\begin{sourcelemma}\label{lem:simplex-duality}
+
+  For every $\sigma \in {\left\{ - 1 , 1 \right\}}^{n}$ such that $B_{G} \sigma \ne 0$, we have
+  ${\left\Vert B_{G}^{T} x_{\sigma} \right\Vert}_{1} \ge {\left\Vert B_{G} \sigma \right\Vert}_{2}$. Moreover, equality holds when
+  $\sigma$ maximizes ${\left\Vert B_{G} \sigma \right\Vert}_{2}$ over ${\left\{ - 1 , 1 \right\}}^{n}$; in particular,
+  equality holds for at least one $\sigma$.
+
+\end{sourcelemma}
+
+
+\draft{
+\textbf{Proof.} Choosing the sign of each coordinate gives
+}
+
+\draft{
+
+\begin{equation*}
+{\left\Vert B_{G}^{T} x_{\sigma} \right\Vert}_{1} = \operatorname*{max}_{\tau \in {\left\{ - 1 , 1 \right\}}^{n}} \tau^{T} B_{G}^{T} x_{\sigma} = \operatorname*{max}_{\tau \in {\left\{ - 1 , 1 \right\}}^{n}} x_{\sigma}^{T} B_{G} \tau .
+\end{equation*}
+
+}
+
+\draft{
+Taking $\tau = \sigma$ yields
+${\left\Vert B_{G}^{T} x_{\sigma} \right\Vert}_{1} \ge x_{\sigma}^{T} B_{G} \sigma = {\left\Vert B_{G} \sigma \right\Vert}_{2}$.
+Now let $\sigma^{\star}$ maximize ${\left\Vert B_{G} \sigma \right\Vert}_{2}$. Since $m \ge 1$, this maximum
+is positive, so $x_{\sigma^{\star}}$ is well-defined. For every
+$\tau \in {\left\{ - 1 , 1 \right\}}^{n}$, Cauchy--Schwarz gives
+}
+
+\draft{
+
+\begin{equation*}
+x_{\sigma^{\star}}^{T} B_{G} \tau \le {\left\Vert x_{\sigma^{\star}} \right\Vert}_{2} {\left\Vert B_{G} \tau \right\Vert}_{2} \le {\left\Vert B_{G} \sigma^{\star} \right\Vert}_{2} .
+\end{equation*}
+
+}
+
+\draft{
+Taking the maximum over $\tau$ gives the reverse inequality, proving
+equality. $\blacksquare$
+}
+
+The lemma above gives us a way to link properties of cuts with properties of arms. The missing ingredient is to show that the value of an arm has something to do with ${\left\Vert B_{G}^{T} x \right\Vert}_{1}$. We show this in the next two lemmas.
+
+By construction, $x_{\sigma} \in X$. Since $K_{z} \left( x \right)$ is independent of $z$, write
+$K \left( x \right) \coloneqq K_{z} \left( x \right) = \left\{ \left( p , q , s \right) \in D : p - q = \gamma B_{G}^{T} x \right\} .$
+
+
+\begin{sourcelemma}
+
+  For every $x \in X$, the vector $t \coloneqq \gamma B_{G}^{T} x$ satisfies
+  ${\left\Vert t \right\Vert}_{1} \le \gamma \sqrt{2 m n}$. Therefore, if
+  $\gamma \le \frac{1}{\sqrt{2 m n}}$, then ${\left\Vert t \right\Vert}_{1} \le 1$.
+
+\end{sourcelemma}
+
+
+\draft{
+\textbf{Proof.} Each edge coordinate $x_{e}$ contributes $x_{e}$ and $- x_{e}$ to two
+coordinates of $B_{G}^{T} x$ before contributions from different edges are
+added. The triangle inequality therefore gives
+}
+
+\draft{
+
+\begin{equation*}
+{\left\Vert t \right\Vert}_{1} = \gamma {\left\Vert B_{G}^{T} x \right\Vert}_{1} \le 2 \gamma {\left\Vert x \right\Vert}_{1} \le 2 \gamma \sqrt{m} {\left\Vert x \right\Vert}_{2} \le 2 \gamma \sqrt{m} \le \gamma \sqrt{2 m n} ,
+\end{equation*}
+
+}
+
+\draft{
+where the second inequality is Cauchy--Schwarz, the third uses
+${\left\Vert x \right\Vert}_{2} \le 1$, and the last uses $n \ge 2$, which follows from $m \ge 1$. $\blacksquare$
+}
+
+
+\begin{sourcelemma}\label{lem:simplex-arm-value}
+
+  Suppose $\gamma \le \frac{1}{\sqrt{2 m n}}$. For each arm $x \in X$, set
+  $t \coloneqq \gamma B_{G}^{T} x$. Then $K \left( x \right)$ is nonempty, and for all $z$,
+  $v_{z} \left( x \right) = \operatorname*{min}_{y \in K \left( x \right)} r \left( x , y \right) = {\left\Vert t \right\Vert}_{1} = \gamma {\left\Vert B_{G}^{T} x \right\Vert}_{1}$. Moreover, the minimum is attained at the outcome $y = \left( p , q , s \right)$ given by
+  $p_{i} \coloneqq \operatorname*{max} \left( t_{i} , 0 \right)$, $q_{i} \coloneqq \operatorname*{max} \left( - t_{i} , 0 \right)$, and $s \coloneqq 1 - {\left\Vert t \right\Vert}_{1}$.
+
+\end{sourcelemma}
+
+
+\draft{
+\textbf{Proof.} Fix $x \in X$ and set $t \coloneqq \gamma B_{G}^{T} x$. The preceding lemma
+gives ${\left\Vert t \right\Vert}_{1} \le 1$. For the outcome in the statement, $p , q , s$ are
+nonnegative, $p - q = t$, and
+}
+
+\draft{
+
+\begin{equation*}
+\sum_{i = 1}^{n} \left( p_{i} + q_{i} \right) + s = {\left\Vert t \right\Vert}_{1} + 1 - {\left\Vert t \right\Vert}_{1} = 1 .
+\end{equation*}
+
+}
+
+\draft{
+Thus this outcome belongs to $K \left( x \right)$. For any $\left( p , q , s \right) \in K \left( x \right)$,
+nonnegativity gives $p_{i} + q_{i} \ge \left| p_{i} - q_{i} \right| = \left| t_{i} \right|$ for every $i$, and hence
+$r \left( x , \left( p , q , s \right) \right) \ge {\left\Vert t \right\Vert}_{1}$. The outcome in the statement attains equality in
+every coordinate, so its reward is the minimum. $\blacksquare$
+}
+
+Note that this also shows that given an arm $x$, we can compute $v_{z} \left( x \right)$ efficiently, which is one of the prerequisites for the application of Lemma~\ref{lem:planning-from-learning}.
+
+For the final step, apply Lemma~\ref{lem:simplex-arm-value}, Lemma~\ref{lem:simplex-duality}, and
+Lemma~\ref{lem:simplex-cut-norm} to obtain
+
+
+\begin{equation*}
+v_{z} \left( x_{\sigma} \right) = \gamma {\left\Vert B_{G}^{T} x_{\sigma} \right\Vert}_{1} \ge \gamma {\left\Vert B_{G} \sigma \right\Vert}_{2} = 2 \gamma \sqrt{c_{G} \left( \sigma \right)} \ge 2 \gamma \sqrt{k} .
+\end{equation*}
+
+
+For the reverse implication, suppose there is an arm $x \in X$ satisfying
+$v_{z} \left( x \right) \ge 2 \gamma \sqrt{k}$. By $\ell_{1}$--$\ell_{\infty}$ duality, choose
+$\sigma \in {\left\{ - 1 , 1 \right\}}^{n}$ such that
+
+
+\begin{equation*}
+{\left\Vert B_{G}^{T} x \right\Vert}_{1} = \sigma^{T} B_{G}^{T} x .
+\end{equation*}
+
+
+Using Lemma~\ref{lem:simplex-arm-value} and Lemma~\ref{lem:simplex-cut-norm},
+
+
+\begin{equation*}
+2 \gamma \sqrt{k} \le v_{z} \left( x \right) = \gamma {\left\Vert B_{G}^{T} x \right\Vert}_{1} = \gamma x^{T} B_{G} \sigma \le \gamma {\left\Vert x \right\Vert}_{2} {\left\Vert B_{G} \sigma \right\Vert}_{2} \le 2 \gamma \sqrt{c_{G} \left( \sigma \right)} .
+\end{equation*}
+
+
+Since $\gamma > 0$, this implies $c_{G} \left( \sigma \right) \ge k$, so $\left( G , k \right)$ is a yes-instance.
+This proves the claimed equivalence.
+
+To apply Lemma~\ref{lem:planning-from-learning}, we need to show that \emph{approximate}
+planning is hard. Although the lemma returns only an approximate optimizer,
+this is sufficient because the maximum cut size $M_{G}$ is an integer between
+$0$ and $m$, and the corresponding planning values are
+$V_{z} = 2 \gamma \sqrt{M_{G}}$. Taking $\gamma \coloneqq \frac{1}{2 m n}$ ensures that every
+$K_{z} \left( x \right)$ is nonempty and that consecutive planning values are separated by
+at least $\frac{1}{2 m^{2} n}$. Thus an additive approximation with error
+$\varepsilon \coloneqq \frac{1}{6 m^{2} n}$ distinguishes $M_{G} \ge k$ from $M_{G} \le k - 1$.
+
+By Lemma~\ref{lem:simplex-arm-value}, we can compute both the value of the returned arm
+and a minimizing outcome in polynomial time. We can therefore decide MAX-CUT
+by comparing the returned arm's value with the midpoint between
+$2 \gamma \sqrt{k - 1}$ and $2 \gamma \sqrt{k}$, computed to sufficient precision.
+Hence Lemma~\ref{lem:planning-from-learning} implies that a randomized polynomial-time
+learner would place MAX-CUT in $\text{\normalfont BPP}$, and therefore that
+$\text{\normalfont NP} \subseteq \text{\normalfont BPP}$. A deterministic learner would instead imply
+$\text{\normalfont P} = \text{\normalfont NP}$. $\blacksquare$
+
+
+\draft{
+
+\subsection{A Euclidean outcome ball and a polytope of arms}
+}
+
+\draft{
+We now keep the Euclidean outcome ball and the additive bilinear constraint,
+but allow the arm set to be a polytope given by rational inequalities.
+Planning is NP-hard even when the hypothesis is known and the arm set is
+the cube. The cube has only $2 n$ defining inequalities, but $2^{n}$ vertices.
+}
+
+
+\begin{sourcetheorem}\label{thm:additive-polytope-np-hardness}
+
+  \draft{
+  Suppose we allow $X$ to be a polytope in the linear imprecise bandits
+  problem. If, for some fixed $\beta > 0$ and polynomial $P$, a randomized
+  polynomial-time learner guarantees $R_{T} \le P \left( | \mathcal{M} | \right) T^{1 - \beta}$ for every
+  instance $\mathcal{M}$, then
+  $\text{\normalfont NP} \subseteq \text{\normalfont BPP}$. If a deterministic learner achieves the same
+  regret guarantee, then $\text{\normalfont P} = \text{\normalfont NP}$.
+  }
+
+\end{sourcetheorem}
+
+
+\draft{
+\textbf{Proof.} We again reduce from MAX-CUT. Let $G = \left( V , E \right)$ have $n$ vertices and
+$m \ge 1$ edges. Orient the edges arbitrarily and let
+$B_{G} \in \mathbb{R}^{m \times n}$ be the edge-vertex incidence matrix, so that
+}
+
+\draft{
+
+\begin{equation*}
+{\left( B_{G} x \right)}_{e} = x_{i} - x_{j}
+\end{equation*}
+
+}
+
+\draft{
+for an edge $e = \left\{ i , j \right\}$. Put
+}
+
+\draft{
+
+\begin{equation*}
+\varepsilon \coloneqq \frac{1}{4 m} , \quad X \coloneqq {\left[ - 1 , 1 \right]}^{n} , \quad Z \coloneqq \left[ 1 , 2 \right] .
+\end{equation*}
+
+}
+
+\draft{
+Write outcomes as $y = \left( u , s \right) \in \mathbb{R}^{m} \times \mathbb{R}$ and take
+}
+
+\draft{
+
+\begin{equation*}
+D \coloneqq \left\{ \left( u , s \right) : {\left\Vert u \right\Vert}_{2}^{2} + s^{2} \le 1 \right\} .
+\end{equation*}
+
+}
+
+\draft{
+With $W = \mathbb{R}^{m}$, define
+}
+
+\draft{
+
+\begin{equation*}
+F_{0} \left( x , z \right) \coloneqq - \varepsilon z B_{G} x , \quad F_{1} \left( \left( u , s \right) , z \right) \coloneqq z u ,
+\end{equation*}
+
+}
+
+\draft{
+The constraint is $F_{0} \left( x , z \right) + F_{1} \left( \left( u , s \right) , z \right) = 0$, and the reward is
+$r \left( x , \left( u , s \right) \right) \coloneqq s$. Both constraint maps are bilinear and the reward is
+linear. Since $z \ne 0$, the constraint is equivalent to
+}
+
+\draft{
+
+\begin{equation*}
+u = \varepsilon B_{G} x ,
+\end{equation*}
+
+}
+
+\draft{
+so the feasible outcomes do not depend on $z$. Every $x \in X$ satisfies
+}
+
+\draft{
+
+\begin{equation*}
+{\left\Vert B_{G} x \right\Vert}_{2}^{2} = \sum_{\left\{ i , j \right\} \in E} {\left( x_{i} - x_{j} \right)}^{2} \le 4 m ,
+\end{equation*}
+
+}
+
+\draft{
+so
+}
+
+\draft{
+
+\begin{equation*}
+{\left\Vert \varepsilon B_{G} x \right\Vert}_{2}^{2} \le \frac{1}{4 m} \le \frac{1}{4} .
+\end{equation*}
+
+}
+
+\draft{
+Thus the feasible outcome set $K_{z} \left( x \right)$ is nonempty for every $x \in X$
+and $z \in Z$. Minimizing $s$ over this set gives
+}
+
+\draft{
+
+\begin{equation*}
+v_{z} \left( x \right) = - \sqrt{1 - \varepsilon^{2} {\left\Vert B_{G} x \right\Vert}_{2}^{2}} .
+\end{equation*}
+
+}
+
+\draft{
+Set $q \left( x \right) \coloneqq {\left\Vert B_{G} x \right\Vert}_{2}^{2}$. With every coordinate except $x_{i}$ fixed,
+$q \left( x \right)$ is a convex quadratic in $x_{i}$, so replacing $x_{i}$ by one of the
+endpoints of $\left[ - 1 , 1 \right]$ does not decrease $q$. Applying this replacement one
+coordinate at a time produces a sign vector $\sigma \in {\left\{ - 1 , 1 \right\}}^{n}$ with
+$q \left( \sigma \right) \ge q \left( x \right)$. At a sign vector,
+}
+
+\draft{
+
+\begin{equation*}
+q \left( \sigma \right) = \sum_{\left\{ i , j \right\} \in E} {\left( \sigma_{i} - \sigma_{j} \right)}^{2} = 4 \, \left| \text{\normalfont cut} \left( \sigma \right) \right| .
+\end{equation*}
+
+}
+
+\draft{
+Consequently,
+}
+
+\draft{
+
+\begin{equation*}
+\operatorname*{max}_{x \in {\left[ - 1 , 1 \right]}^{n}} q \left( x \right) = 4 \text{\normalfont MaxCut} \left( G \right) .
+\end{equation*}
+
+}
+
+\draft{
+Since $v_{z} \left( x \right)$ is strictly increasing in $q \left( x \right)$, if the maximum cut has
+size $k$, the optimal robust value is
+}
+
+\draft{
+
+\begin{equation*}
+V_{k} = - \sqrt{1 - \frac{k}{4 m^{2}}} .
+\end{equation*}
+
+}
+
+\draft{
+For $k = 1 , \ldots , m$, consecutive possible values satisfy
+}
+
+\draft{
+
+\begin{equation*}
+V_{k} - V_{k - 1} = \frac{\frac{1}{4 m^{2}}}{\sqrt{1 - \frac{k - 1}{4 m^{2}}} + \sqrt{1 - \frac{k}{4 m^{2}}}} \ge \frac{1}{8 m^{2}} .
+\end{equation*}
+
+}
+
+\draft{
+Hence an estimate of $V_{z}$ within
+}
+
+\draft{
+
+\begin{equation*}
+\Delta \coloneqq \frac{1}{32 m^{2}}
+\end{equation*}
+
+}
+
+\draft{
+identifies $k$ after we compute the $m + 1$ candidate values to polynomially
+many bits. Thus approximating the optimal robust value is NP-hard.
+}
+
+\draft{
+We now show how to use the learner to find a maximum cut. To simulate
+the learner, we need rational outcomes in $K_{z} \left( x \right)$. The outcome attaining
+$v_{z} \left( x \right)$ need not be rational, so we compute a rational feasible
+approximation. Suppose the learner in the theorem exists and set
+}
+
+\draft{
+
+\begin{equation*}
+\eta \coloneqq \frac{\Delta}{6} , \quad T \coloneqq \left\lceil {\left( 6 \frac{P \left( | \mathcal{M} | \right)}{\Delta} \right)}^{\frac{1}{\beta}} \right\rceil .
+\end{equation*}
+
+}
+
+\draft{
+In the weak bit model the learner outputs rationally encoded arms. For each
+played arm $x_{t}$, we can use binary search to compute a rational $a_{t}$ in
+polynomial time such that
+}
+
+\draft{
+
+\begin{equation*}
+0 \le \sqrt{1 - \varepsilon^{2} q \left( x_{t} \right)} - a_{t} \le \eta , \quad a_{t}^{2} \le 1 - \varepsilon^{2} q \left( x_{t} \right) .
+\end{equation*}
+
+}
+
+\draft{
+Let nature return the point
+}
+
+\draft{
+
+\begin{equation*}
+y_{t} \coloneqq \left( \varepsilon B_{G} x_{t} , - a_{t} \right) .
+\end{equation*}
+
+}
+
+\draft{
+This is a rational point of $K_{z} \left( x_{t} \right)$, and its reward satisfies
+}
+
+\draft{
+
+\begin{equation*}
+0 \le r \left( x_{t} , y_{t} \right) - v_{z} \left( x_{t} \right) \le \eta .
+\end{equation*}
+
+}
+
+\draft{
+Writing $V_{z} = V_{k}$ and
+}
+
+\draft{
+
+\begin{equation*}
+S_{T} \coloneqq \sum_{t = 1}^{T} \left( V_{z} - v_{z} \left( x_{t} \right) \right) ,
+\end{equation*}
+
+}
+
+\draft{
+the definition of expected regret gives
+}
+
+\draft{
+
+\begin{equation*}
+E \left[ S_{T} \right] \le R_{T} + T \eta .
+\end{equation*}
+
+}
+
+\draft{
+Applying the learner's regret guarantee,
+}
+
+\draft{
+
+\begin{equation*}
+E \left[ S_{T} \right] \le P \left( | \mathcal{M} | \right) T^{1 - \beta} + T \eta .
+\end{equation*}
+
+}
+
+\draft{
+If the learner never plays a $\Delta$-optimal arm, then $S_{T} > \Delta T$.
+Markov's inequality and the choices of $T$ and $\eta$ imply
+}
+
+\draft{
+
+\begin{equation*}
+\operatorname{Pr} \left( \text{\normalfont no } \Delta \text{\normalfont -optimal arm is played} \right) \le \frac{P \left( | \mathcal{M} | \right)}{\Delta T^{\beta}} + \frac{\eta}{\Delta} \le \frac{1}{3} .
+\end{equation*}
+
+}
+
+\draft{
+Select a played arm maximizing the rational quantity $q \left( x_{t} \right)$ and round its
+coordinates to endpoints without decreasing $q$. With probability at least
+$\frac{2}{3}$, the resulting sign vector has robust value at least $V_{k} - \Delta$. A cut
+of size at most $k - 1$ would instead have robust value at most
+$V_{k - 1} \le V_{k} - \frac{1}{8 m^{2}} < V_{k} - \Delta$. The rounded sign vector therefore encodes
+a maximum cut. The horizon, the square-root approximations, and the rounding
+all have polynomial bit complexity, proving $\text{\normalfont NP} \subseteq \text{\normalfont BPP}$. If the
+learner is deterministic, the same argument succeeds with certainty and gives
+$\text{\normalfont P} = \text{\normalfont NP}$.
+}
+
+\draft{
+It remains to verify non-tangency. For a fixed $x$, put
+}
+
+\draft{
+
+\begin{equation*}
+a \coloneqq {\left\Vert \varepsilon B_{G} x \right\Vert}_{2} , \quad \rho \coloneqq \sqrt{1 - a^{2}} \ge \frac{\sqrt{3}}{2} .
+\end{equation*}
+
+}
+
+\draft{
+The outcomes satisfying the affine constraint form the line $L_{z} \left( x \right)$,
+whose intersection with $D$ is $K_{z} \left( x \right)$:
+}
+
+\draft{
+
+\begin{equation*}
+L_{z} \left( x \right) = \left\{ \left( \varepsilon B_{G} x , s \right) : s \in \mathbb{R} \right\} , \quad K_{z} \left( x \right) = \left\{ \left( \varepsilon B_{G} x , s \right) : \left| s \right| \le \rho \right\} .
+\end{equation*}
+
+}
+
+\draft{
+If $p = \left( \varepsilon B_{G} x , s \right) \in L_{z} \left( x \right)$ lies outside $D$ and $t \coloneqq \left| s \right| > \rho$,
+then
+}
+
+\draft{
+
+\begin{equation*}
+\operatorname{dist} \left( p , K_{z} \left( x \right) \right) = t - \rho , \quad \operatorname{dist} \left( p , D \right) = \sqrt{a^{2} + t^{2}} - 1 .
+\end{equation*}
+
+}
+
+\draft{
+Factoring the second expression gives
+}
+
+\draft{
+
+\begin{equation*}
+\frac{\operatorname{dist} \left( p , D \right)}{\operatorname{dist} \left( p , K_{z} \left( x \right) \right)} = \frac{t + \rho}{\sqrt{a^{2} + t^{2}} + 1} \ge \rho \ge \frac{\sqrt{3}}{2} .
+\end{equation*}
+
+}
+
+\draft{
+To check the first inequality, multiply by the positive denominator,
+subtract $\rho$ from both sides, and square. This gives the equivalent inequality
+$\left( 1 - \rho^{2} \right) \left( t^{2} - \rho^{2} \right) \ge 0$. Thus the uniform non-tangency condition holds with
+$S = \frac{\sqrt{3}}{2}$. $\blacksquare$
+}
+
+\draft{
+
+\subsection{Trilinear constraints with Euclidean arm and outcome balls}
+}
+
+\draft{
+We keep the Euclidean arm and outcome balls, but allow the coefficients in
+the equations for $y$ to depend on $x$. We add an outcome coordinate
+that is fixed to one, so that the constraints are linear in the full
+outcome vector with no constant term. Let $Y$ be the ambient outcome
+space, let $W$ be the constraint space, and let
+}
+
+\draft{
+
+\begin{equation*}
+F : \mathbb{R}^{d_{X}} \times \mathbb{R}^{d_{Z}} \times Y \to W
+\end{equation*}
+
+}
+
+\draft{
+be linear in each argument separately. For each $x$ and $z$, write
+$F_{x , z} \left( y \right) \coloneqq F \left( x , z , y \right)$ and define
+}
+
+\draft{
+
+\begin{equation*}
+L_{z} \left( x \right) \coloneqq \operatorname{ker} F_{x , z} , \quad K_{z} \left( x \right) \coloneqq L_{z} \left( x \right) \cap D , \quad v_{z} \left( x \right) \coloneqq \operatorname*{min}_{y \in K_{z} \left( x \right)} r \left( x , y \right) , \quad V_{z} \coloneqq \operatorname*{max}_{x \in X} v_{z} \left( x \right) .
+\end{equation*}
+
+}
+
+\draft{
+Here $D$ is a Euclidean ball in the hyperplane where the added
+coordinate equals one. We will show that planning is now NP-hard even
+when $z$ is known.
+}
+
+\draft{
+Let $G = \left( V , E \right)$ be an undirected graph with $V = \left\{ 1 , \ldots , n \right\}$ and
+$E = \left\{ e_{1} , \ldots , e_{m} \right\}$, where $m \ge 1$ and $e_{\ell} = \left\{ i_{\ell} , j_{\ell} \right\}$. Put $d \coloneqq n + m$.
+For $q = \left( u , w \right) \in \mathbb{R}^{n} \times \mathbb{R}^{m}$, define the homogeneous cubic
+}
+
+\draft{
+
+\begin{equation*}
+p_{G} \left( q \right) \coloneqq \sum_{\ell = 1}^{m} u_{i_{\ell}} u_{j_{\ell}} w_{\ell} .
+\end{equation*}
+
+}
+
+
+\begin{sourcelemma}\label{lem:clique-cubic}
+
+  \draft{
+  If $\omega \left( G \right)$ is the clique number of $G$, then
+  }
+
+  \draft{
+  
+\begin{equation*}
+\operatorname*{max}_{{\left\Vert q \right\Vert}_{2} = 1} p_{G} {\left( q \right)}^{2} = \frac{2}{27} \left( 1 - \frac{1}{\omega \left( G \right)} \right) .
+\end{equation*}
+
+  }
+
+\end{sourcelemma}
+
+
+\draft{
+\textbf{Proof.} Write $\rho \coloneqq {\left\Vert u \right\Vert}_{2}$ and $\sigma \coloneqq {\left\Vert w \right\Vert}_{2}$. For fixed $u$ and
+$\sigma$, Cauchy--Schwarz gives
+}
+
+\draft{
+
+\begin{equation*}
+\operatorname*{max}_{{\left\Vert w \right\Vert}_{2} = \sigma} p_{G} \left( u , w \right) = \sigma \sqrt{\sum_{\ell = 1}^{m} u_{i_{\ell}}^{2} u_{j_{\ell}}^{2}} .
+\end{equation*}
+
+}
+
+\draft{
+Write $u = \rho s$ with ${\left\Vert s \right\Vert}_{2} = 1$ and set $\pi_{i} \coloneqq s_{i}^{2}$. The
+Motzkin--Straus theorem \citep{motzkin1965maxima} gives
+}
+
+\draft{
+
+\begin{equation*}
+\operatorname*{max}_{{\left\Vert s \right\Vert}_{2} = 1} \sum_{\left\{ i , j \right\} \in E} s_{i}^{2} s_{j}^{2} = \operatorname*{max}_{\pi_{i} \ge 0 , \sum_{i} \pi_{i} = 1} \sum_{\left\{ i , j \right\} \in E} \pi_{i} \pi_{j} = \frac{1}{2} \left( 1 - \frac{1}{\omega \left( G \right)} \right) .
+\end{equation*}
+
+}
+
+\draft{
+Finally,
+}
+
+\draft{
+
+\begin{equation*}
+\operatorname*{max}_{\rho^{2} + \sigma^{2} = 1 , \rho \ge 0 , \sigma \ge 0} \rho^{2} \sigma = \frac{2}{3 \sqrt{3}} .
+\end{equation*}
+
+}
+
+\draft{
+Substituting these bounds into the first display and squaring proves
+the claim. Since $p_{G}$ is odd, its
+maximum equals its maximum absolute value. $\blacksquare$
+}
+
+
+\begin{sourcetheorem}\label{thm:trilinear-balls-np-hardness}
+
+  \draft{
+  There is a polynomial-time reduction from CLIQUE to imprecise-bandit
+  instances with rational coefficients for which $X$ is a full-dimensional
+  Euclidean ball, $D$ is a Euclidean ball in its affine hull, $Z = \left[ 1 , 2 \right]$ is a
+  one-dimensional Euclidean ball, the reward is linear, and $F$ is
+  trilinear. Every set $K_{z} \left( x \right)$ is a singleton independent of $z$.
+  The non-tangency inequality holds uniformly for every point in
+  $L_{z} \left( x \right)$ outside $D$, with a constant $S > 0.88$.
+  }
+
+  \draft{
+  For these instances, approximating $V_{z}$ to inverse-polynomial additive
+  accuracy is NP-hard even when $z$ is known. Thus, if, for some
+  fixed $\beta > 0$, a randomized polynomial-time learner guaranteed
+  }
+
+  \draft{
+  
+\begin{equation*}
+R_{T} \le P \left( | \mathcal{M} | \right) T^{1 - \beta}
+\end{equation*}
+
+  }
+
+  \draft{
+  on every such instance for a polynomial $P$, then $\text{\normalfont NP} \subseteq \text{\normalfont BPP}$.
+  For a deterministic learner, the same conclusion would be $\text{\normalfont P} = \text{\normalfont NP}$.
+  }
+
+\end{sourcetheorem}
+
+
+\draft{
+\textbf{Proof.} We may restrict CLIQUE to instances with $m \ge 1$ and
+$3 \le k \le n$, since we can decide the other cases in polynomial time. Given
+$\left( G , k \right)$, use the cubic $p_{G}$ above and write an arm as
+$x = \left( x_{0} , \xi \right) \in \mathbb{R} \times \mathbb{R}^{d}$. Take
+}
+
+\draft{
+
+\begin{equation*}
+X \coloneqq \left\{ \left( x_{0} , \xi \right) : {\left( x_{0} - \frac{5}{3} \right)}^{2} + {\left\Vert \xi \right\Vert}_{2}^{2} \le 1 \right\} .
+\end{equation*}
+
+}
+
+\draft{
+This is a full-dimensional Euclidean ball and $x_{0} \ge \frac{2}{3}$ throughout $X$.
+The ratio $q \coloneqq \frac{\xi}{x_{0}}$ ranges over exactly the ball
+${\left\Vert q \right\Vert}_{2} \le \frac{3}{4}$. Indeed,
+}
+
+\draft{
+
+\begin{equation*}
+1 - {\left( x_{0} - \frac{5}{3} \right)}^{2} - \frac{9}{16} x_{0}^{2} = - \frac{{\left( 15 x_{0} - 16 \right)}^{2}}{144} \le 0 ,
+\end{equation*}
+
+}
+
+\draft{
+so every ratio has norm at most $\frac{3}{4}$. Conversely, for any such
+$q$, the choice $x_{0} = \frac{16}{15}$ and $\xi = x_{0} q$ belongs to $X$.
+}
+
+\draft{
+Let $Z \coloneqq \left[ 1 , 2 \right]$, and take the outcome and constraint spaces to be
+}
+
+\draft{
+
+\begin{equation*}
+Y \coloneqq \mathbb{R} \times \mathbb{R}^{d} \times \mathbb{R}^{d \times d} \times \mathbb{R}^{d \times d \times d} ,
+\end{equation*}
+
+}
+
+\draft{
+
+\begin{equation*}
+W \coloneqq \mathbb{R}^{d} \times \mathbb{R}^{d \times d} \times \mathbb{R}^{d \times d \times d} ,
+\end{equation*}
+
+}
+
+\draft{
+and write $y = \left( y_{0} , \eta , \Theta , \Xi \right) \in Y$. We fix $y_{0} = 1$ and take the
+remaining coordinates to lie in the Euclidean unit ball:
+}
+
+\draft{
+
+\begin{equation*}
+D \coloneqq \left\{ \left( 1 , \eta , \Theta , \Xi \right) : {\left\Vert \eta \right\Vert}_{2}^{2} + {\left\Vert \Theta \right\Vert}_{F}^{2} + {\left\Vert \Xi \right\Vert}_{F}^{2} \le 1 \right\} .
+\end{equation*}
+
+}
+
+\draft{
+For $x = \left( x_{0} , \xi \right)$, $z \in \mathbb{R}$, and $y \in Y$, define $F \left( x , z , y \right)$ coordinatewise
+by
+}
+
+\draft{
+
+\begin{equation*}
+F_{i} \left( x , z , y \right) \coloneqq z \left( x_{0} \eta_{i} - \frac{1}{2} \xi_{i} y_{0} \right) ,
+\end{equation*}
+
+}
+
+\draft{
+
+\begin{equation*}
+F_{i j} \left( x , z , y \right) \coloneqq z \left( x_{0} \Theta_{i j} - \xi_{i} \eta_{j} \right) ,
+\end{equation*}
+
+}
+
+\draft{
+
+\begin{equation*}
+F_{i j \ell} \left( x , z , y \right) \coloneqq z \left( x_{0} \Xi_{i j \ell} - \xi_{i} \Theta_{j \ell} \right) .
+\end{equation*}
+
+}
+
+\draft{
+Each term contains one coordinate from each of $x$, $z$, and $y$, so $F$ is
+trilinear. Define the reward by
+}
+
+\draft{
+
+\begin{equation*}
+r \left( x , y \right) \coloneqq \frac{1}{m} \sum_{\ell = 1}^{m} \Xi_{i_{\ell} , j_{\ell} , n + \ell} .
+\end{equation*}
+
+}
+
+\draft{
+It is linear and independent of $x$; its coefficient vector has Euclidean
+norm $\frac{1}{\sqrt{m}} \le 1$.
+}
+
+\draft{
+Fix $x \in X$ and $z \in Z$. Since $z x_{0} \ne 0$ and $y_{0} = 1$ on $D$, we can solve
+$F \left( x , z , y \right) = 0$ first for $\eta$, then for $\Theta$, and then for $\Xi$. This gives
+}
+
+\draft{
+
+\begin{equation*}
+\eta_{i} = \frac{1}{2} q_{i} , \quad \Theta_{i j} = \frac{1}{2} q_{i} q_{j} , \quad \Xi_{i j \ell} = \frac{1}{2} q_{i} q_{j} q_{\ell} .
+\end{equation*}
+
+}
+
+\draft{
+Writing $t \coloneqq {\left\Vert q \right\Vert}_{2} \le \frac{3}{4}$, the squared norm of $\left( \eta , \Theta , \Xi \right)$ is
+}
+
+\draft{
+
+\begin{equation*}
+\frac{1}{4} \left( t^{2} + t^{4} + t^{6} \right) \le \frac{4329}{16384} < 1 .
+\end{equation*}
+
+}
+
+\draft{
+Thus this point lies in $D$, so $K_{z} \left( x \right)$ is a singleton independent of $z$.
+The map $F_{x , z} : Y \to W$ is also onto: for any right-hand side, set $y_{0} = 0$
+and solve successively for $\eta$, $\Theta$, and $\Xi$.
+}
+
+\draft{
+Within the hyperplane $y_{0} = 1$, the equations have just one solution, and
+that solution lies in $D$. So there are no solutions outside $D$ to check
+in the non-tangency condition. We can also prove the distance inequality
+for points in the full kernel $L_{z} \left( x \right)$. Since $F_{x , z}$ is onto and the
+dimension of $Y$ is one more than that of $W$, this kernel is the line
+spanned by $y \left( x \right) = \left( 1 , g \left( q \right) \right)$, where $g \left( q \right) \coloneqq \left( \eta , \Theta , \Xi \right)$ is given by the
+equations above. If $p = \tau y \left( x \right) \in L_{z} \left( x \right)$ lies outside $D$, then
+}
+
+\draft{
+
+\begin{equation*}
+\operatorname{dist} \left( p , D \right) \ge \left| \tau - 1 \right| , \quad \operatorname{dist} \left( p , K_{z} \left( x \right) \right) = \left| \tau - 1 \right| \sqrt{1 + {\left\Vert g \left( q \right) \right\Vert}_{2}^{2}} .
+\end{equation*}
+
+}
+
+\draft{
+Thus the non-tangency inequality holds for all these points with
+}
+
+\draft{
+
+\begin{equation*}
+S \ge \frac{1}{\sqrt{1 + \frac{4329}{16384}}} = \frac{128}{\sqrt{20713}} > 0.88 .
+\end{equation*}
+
+}
+
+\draft{
+Evaluating the reward at the unique point in $K_{z} \left( x \right)$ gives
+}
+
+\draft{
+
+\begin{equation*}
+v_{z} \left( x \right) = \frac{1}{2 m} p_{G} \left( q \right) .
+\end{equation*}
+
+}
+
+\draft{
+Since $q$ ranges over the radius-$\frac{3}{4}$ ball, homogeneity and
+Lemma~\ref{lem:clique-cubic} imply, for every $z \in Z$,
+}
+
+\draft{
+
+\begin{equation*}
+V_{z} = \frac{27}{128 m} \operatorname*{max}_{{\left\Vert h \right\Vert}_{2} = 1} p_{G} \left( h \right) = \frac{27}{128 m} \sqrt{\frac{2}{27}} \sqrt{1 - \frac{1}{\omega \left( G \right)}} .
+\end{equation*}
+
+}
+
+\draft{
+For $j = 2 , \ldots , n$, let
+}
+
+\draft{
+
+\begin{equation*}
+U_{j} \coloneqq \frac{27}{128 m} \sqrt{\frac{2}{27}} \sqrt{1 - \frac{1}{j}} .
+\end{equation*}
+
+}
+
+\draft{
+If $\omega \left( G \right) \ge k$, then $V_{z} \ge U_{k}$; if $\omega \left( G \right) \le k - 1$, then
+$V_{z} \le U_{k - 1}$. The gap between these bounds satisfies
+}
+
+\draft{
+
+\begin{equation*}
+U_{k} - U_{k - 1} \ge \frac{27}{128 m} \sqrt{\frac{2}{27}} \frac{1}{2 k \left( k - 1 \right)} = \Omega \left( \frac{1}{m k^{2}} \right) .
+\end{equation*}
+
+}
+
+\draft{
+Since $\sqrt{\frac{2}{27}} > \frac{1}{4}$ and $m \le n^{2}$, the gap $\Delta_{k} \coloneqq U_{k} - U_{k - 1}$
+satisfies
+}
+
+\draft{
+
+\begin{equation*}
+\Delta_{k} > \frac{1}{40 m k \left( k - 1 \right)} \ge \frac{1}{40 m n^{2}} .
+\end{equation*}
+
+}
+
+\draft{
+Set $\varepsilon \coloneqq \frac{1}{500 m n^{2}}$. Using polynomially many bits, we can compute a
+rational $\tau_{k}$ such that
+}
+
+\draft{
+
+\begin{equation*}
+\left| \tau_{k} - \frac{1}{2} \left( U_{k} + U_{k - 1} \right) \right| \le \varepsilon .
+\end{equation*}
+
+}
+
+\draft{
+An estimate of $V_{z}$ with additive error at most $\varepsilon$ lies above
+$\tau_{k}$ when $\omega \left( G \right) \ge k$ and below it when $\omega \left( G \right) \le k - 1$, because
+$2 \varepsilon < \frac{\Delta_{k}}{2}$. It therefore decides whether $G$ contains a $k$-clique.
+The constructed instance has dimension $O \left( d^{3} \right)$, and all its defining
+coefficients are rational with polynomial encoding length. This proves the
+planning claim.
+}
+
+\draft{
+Given any rational arm, we can compute the unique point in $K_{z} \left( x \right)$
+exactly in polynomial time using the equations above; $x_{0} \ge \frac{2}{3}$ ensures
+that we can divide by $x_{0}$. We can therefore simulate nature by returning
+this point. Applying Lemma~\ref{lem:planning-from-learning} with the chosen $\varepsilon$
+gives an estimate of $V_{z}$ with additive error at most $\varepsilon$, with
+probability at least $\frac{2}{3}$. Comparing it with $\tau_{k}$ decides CLIQUE, so
+$\text{\normalfont NP} \subseteq \text{\normalfont BPP}$. For a deterministic learner, the estimate is
+deterministic and gives
+$\text{\normalfont P} = \text{\normalfont NP}$. $\blacksquare$
+}
+
+
+\draft{
+
+\subsection{Computing IUCB's first arm is NP-hard even for Euclidean balls}
+}
+
+\draft{
+Suppose we are given rational descriptions of $X$, $D$, $Z$, the affine
+reward $r$, and the maps defining $K_{z} \left( x \right)$. For each hypothesis $z$, let
+}
+
+\draft{
+
+\begin{equation*}
+v_{z} \left( x \right) \coloneqq \operatorname*{min}_{y \in K_{z} \left( x \right)} r \left( x , y \right) .
+\end{equation*}
+
+}
+
+\draft{
+On its first round, IUCB's confidence set is all of $Z$, so its optimistic
+value is
+}
+
+\draft{
+
+\begin{equation*}
+V_{\text{\normalfont IUCB}} \coloneqq \operatorname*{max}_{z \in Z , x \in X} v_{z} \left( x \right) .
+\end{equation*}
+
+}
+
+\draft{
+We will show that computing this value exactly is NP-hard. The same is
+true of finding an arm
+}
+
+\draft{
+
+\begin{equation*}
+x^{\star} \in \operatorname{argmax}_{x \in X} \operatorname*{max}_{z \in Z} v_{z} \left( x \right) .
+\end{equation*}
+
+}
+
+
+\begin{sourcetheorem}\label{thm:iucb-np-hardness}
+
+  \draft{
+  Computing $V_{\text{\normalfont IUCB}}$ exactly or finding a globally optimal first arm
+  of IUCB is NP-hard, even when $X$, $D$, and $Z$ are Euclidean balls and
+  planning for each fixed hypothesis takes polynomial time.
+  }
+
+\end{sourcetheorem}
+
+
+\draft{
+\textbf{Proof.} Given a rational order-three tensor
+$\mathcal{T} \in \mathbb{Q}^{m \times d \times d_{X}}$, we can view it as a bilinear map
+$\mathcal{T} : \mathbb{R}^{d} \times \mathbb{R}^{d_{X}} \to \mathbb{R}^{m}$. Its spectral norm is
+}
+
+\draft{
+
+\begin{equation*}
+{\left\Vert \mathcal{T} \right\Vert}_{\sigma} \coloneqq \operatorname*{max}_{{\left\Vert u \right\Vert}_{2} \le 1 , {\left\Vert x \right\Vert}_{2} \le 1} {\left\Vert \mathcal{T} \left( u , x \right) \right\Vert}_{2} .
+\end{equation*}
+
+}
+
+\draft{
+Computing this value exactly is NP-hard \citep{hillar2013most}. We construct an
+IUCB instance from $\mathcal{T}$ so that an optimal first arm lets us recover
+this norm. Let
+}
+
+\draft{
+
+\begin{equation*}
+H \coloneqq 1 + \sum_{i , j , k} \left| T_{i j k} \right| , \quad \alpha \coloneqq \frac{1}{2 H} , \quad X \coloneqq \left\{ x : {\left\Vert x \right\Vert}_{2} \le 1 \right\} .
+\end{equation*}
+
+}
+
+\draft{
+Write $z = \left( z_{0} , u \right)$ and $y = \left( w , s \right)$, and take
+}
+
+\draft{
+
+\begin{equation*}
+Z \coloneqq \left\{ \left( z_{0} , u \right) : {\left( z_{0} - \frac{5}{3} \right)}^{2} + {\left\Vert u \right\Vert}_{2}^{2} \le 1 \right\} , \quad D \coloneqq \left\{ \left( w , s \right) : {\left\Vert w \right\Vert}_{2}^{2} + s^{2} \le 1 \right\} .
+\end{equation*}
+
+}
+
+\draft{
+For $z = \left( z_{0} , u \right)$, define the constraint coefficients in
+Equation~\ref{eq:setting-compatible-set} and the reward by
+}
+
+\draft{
+
+\begin{equation*}
+B_{z} x \coloneqq - \alpha \mathcal{T} \left( u , x \right) , \quad C_{z} \left( w , s \right) \coloneqq z_{0} w , \quad d_{z} \coloneqq 0 , \quad r \left( x , \left( w , s \right) \right) \coloneqq \frac{1}{2} \left( 1 + s \right) .
+\end{equation*}
+
+}
+
+\draft{
+The feasible outcomes at arm $x$ are then
+}
+
+\draft{
+
+\begin{equation*}
+K_{z} \left( x \right) = \left\{ \left( w , s \right) \in D : w = \frac{\alpha}{z_{0}} \mathcal{T} \left( u , x \right) \right\} .
+\end{equation*}
+
+}
+
+\draft{
+The definition of $Z$ gives $z_{0} \ge \frac{2}{3}$ and
+}
+
+\draft{
+
+\begin{equation*}
+\frac{{\left\Vert u \right\Vert}_{2}}{z_{0}} \le \frac{3}{4} ,
+\end{equation*}
+
+}
+
+\draft{
+because
+$1 - {\left( z_{0} - \frac{5}{3} \right)}^{2} - 9 \frac{z_{0}^{2}}{16} = - \frac{{\left( 15 z_{0} - 16 \right)}^{2}}{144} \le 0$.
+Equality holds at $z_{0} = \frac{16}{15}$ and ${\left\Vert u \right\Vert}_{2} = \frac{4}{5}$ in every direction.
+Also, ${\left\Vert \mathcal{T} \left( u , x \right) \right\Vert}_{2} \le H {\left\Vert u \right\Vert}_{2} {\left\Vert x \right\Vert}_{2}$, so the constraint fixes
+$w$ to a vector of norm at most $3 \alpha \frac{H}{4} = \frac{3}{8}$. Thus every $K_{z} \left( x \right)$ is
+nonempty, and the uniform non-tangency condition holds with
+$S \ge \frac{\sqrt{55}}{8}$. To minimize the reward, nature chooses the smallest
+feasible $s$, namely $s = - \sqrt{1 - {\left\Vert w \right\Vert}_{2}^{2}}$. If we write
+$h \left( t \right) \coloneqq \frac{1}{2} \left( 1 - \sqrt{1 - t^{2}} \right)$, then
+}
+
+\draft{
+
+\begin{equation*}
+v_{z} \left( x \right) = h \left( \frac{\alpha}{z_{0}} {\left\Vert \mathcal{T} \left( u , x \right) \right\Vert}_{2} \right) .
+\end{equation*}
+
+}
+
+\draft{
+For fixed $z$, define the matrix $M_{u}$ by $M_{u} x \coloneqq \mathcal{T} \left( u , x \right)$. A top
+right singular vector of $M_{u}$ maximizes $v_{z} \left( x \right)$, so planning takes
+polynomial time when $z$ is known. But IUCB must optimize over both $z$
+and $x$. Since $h$ is strictly increasing and $\frac{{\left\Vert u \right\Vert}_{2}}{z_{0}}$ can equal
+$\frac{3}{4}$ in every direction,
+}
+
+\draft{
+
+\begin{equation*}
+V_{\text{\normalfont IUCB}} = h \left( 3 \frac{\alpha}{4} {\left\Vert \mathcal{T} \right\Vert}_{\sigma} \right) .
+\end{equation*}
+
+}
+
+\draft{
+We can therefore recover the tensor norm from the optimistic value:
+}
+
+\draft{
+
+\begin{equation*}
+{\left\Vert \mathcal{T} \right\Vert}_{\sigma} = \frac{4}{3 \alpha} \sqrt{1 - {\left( 1 - 2 V_{\text{\normalfont IUCB}} \right)}^{2}} .
+\end{equation*}
+
+}
+
+\draft{
+If we are given only a globally optimal arm $x^{\star}$, define the matrix
+$N_{x}$ by $N_{x} u \coloneqq \mathcal{T} \left( u , x^{\star} \right)$. Computing its largest singular value
+gives
+}
+
+\draft{
+
+\begin{equation*}
+\operatorname*{max}_{z \in Z} v_{z} \left( x^{\star} \right) = h \left( 3 \frac{\alpha}{4} \sigma_{\operatorname*{max}} \left( N_{x} \right) \right) = V_{\text{\normalfont IUCB}} .
+\end{equation*}
+
+}
+
+\draft{
+The same formula then recovers ${\left\Vert \mathcal{T} \right\Vert}_{\sigma}$, so finding a globally
+optimal first arm is NP-hard as well. $\blacksquare$
+}
+
+\draft{
+
+\subsection{Efficient planning does not imply efficient learning}
+}
+
+\draft{
+An efficient planner for every hypothesis does not always give an
+efficient learner, so the converse of Lemma~\ref{lem:planning-from-learning} fails.
+We show this with finite arm and hypothesis sets that have short
+descriptions. We also allow the reward to be linear in the arm and in the
+outcome separately, so it can contain products of arm and outcome
+coordinates.
+}
+
+
+\begin{sourcetheorem}\label{thm:easy-planning-hard-learning}
+
+  \draft{
+  There is a family of rational imprecise-bandit instances indexed by
+  integers $2 \le k \le n$, with descriptions of length polynomial in $n$.
+  Each instance has finite arm and hypothesis sets, an outcome set that is a
+  rational polytope, constraints $F = F_{0} + F_{1}$ with $F_{0} = 0$ and $F_{1}$ bilinear
+  in the outcome and hypothesis, and a reward
+  in $\left[ 0 , 1 \right]$ that is linear in the arm and in the outcome separately.
+  An exact planner takes $O \left( n^{2} \right)$ time when the hypothesis is known.
+  }
+
+  \draft{
+  Suppose that, for some fixed $\beta > 0$ and polynomial $P$, one uniform
+  randomized policy runs in time polynomial in the description length
+  $| \mathcal{M} |$ and horizon $N$ and has expected regret at most
+  }
+
+  \draft{
+  
+\begin{equation*}
+P \left( | \mathcal{M} | \right) N^{1 - \beta}
+\end{equation*}
+
+  }
+
+  \draft{
+  for every instance in this family, every true hypothesis, and every
+  compatible nature policy. Then $\text{\normalfont CLIQUE} \in \text{\normalfont RP}$ and hence
+  $\text{\normalfont NP} = \text{\normalfont RP}$. The same conclusion holds if the guarantee is required
+  only against stationary deterministic nature policies. A deterministic
+  learner with the same guarantee would imply $\text{\normalfont P} = \text{\normalfont NP}$.
+  }
+
+\end{sourcetheorem}
+
+
+\draft{
+\textbf{Proof.} Fix $2 \le k \le n$, and let
+}
+
+\draft{
+
+\begin{equation*}
+E_{n} \coloneqq \left\{ \left\{ i , j \right\} : 1 \le i < j \le n \right\} , \quad m \coloneqq \binom{n}{2} , \quad q \coloneqq \binom{k}{2} .
+\end{equation*}
+
+}
+
+\draft{
+For every $k$-element set $T \subseteq \left[ n \right]$, define $x^{T} \in \mathbb{R}^{m}$ by
+}
+
+\draft{
+
+\begin{equation*}
+x_{e}^{T} \coloneqq \begin{cases}
+\frac{1}{q} & \text{\normalfont if } e \subseteq T \\
+0 & \text{\normalfont otherwise}
+\end{cases} , \quad e \in E_{n} ,
+\end{equation*}
+
+}
+
+\draft{
+and take
+}
+
+\draft{
+
+\begin{equation*}
+X \coloneqq \left\{ x^{T} : T \subseteq \left[ n \right] , \left| T \right| = k \right\} .
+\end{equation*}
+
+}
+
+\draft{
+An arm is represented succinctly by the vertex set $T$. For every
+$k$-element set $U \subseteq \left[ n \right]$, define $z^{U} \in \mathbb{R}^{1 + m}$ by
+}
+
+\draft{
+
+\begin{equation*}
+z_{0}^{U} \coloneqq 1 , \quad z_{e}^{U} \coloneqq \begin{cases}
+1 & \text{\normalfont if } e \subseteq U \\
+0 & \text{\normalfont otherwise}
+\end{cases} ,
+\end{equation*}
+
+}
+
+\draft{
+and let $Z \coloneqq \left\{ z^{U} : U \subseteq \left[ n \right] , \left| U \right| = k \right\}$.
+}
+
+\draft{
+Write an outcome as $y = \left( y_{0} , g , s \right) \in \mathbb{R}^{1 + 2 m}$ and set
+}
+
+\draft{
+
+\begin{equation*}
+D \coloneqq \left\{ \left( 1 , g , s \right) : g \in {\left[ 0 , 1 \right]}^{m} , s \in {\left[ - 1 , 1 \right]}^{m} \right\} .
+\end{equation*}
+
+}
+
+\draft{
+With constraint space $W = \mathbb{R}^{m}$, let $F_{0} \left( x , z \right) \coloneqq 0$ and define
+}
+
+\draft{
+
+\begin{equation*}
+{\left( F_{1} \left( y , z \right) \right)}_{e} \coloneqq z_{e} \left( g_{e} - y_{0} - s_{e} \right) + z_{0} s_{e} , \quad e \in E_{n} .
+\end{equation*}
+
+}
+
+\draft{
+For $z \in Z$, set
+}
+
+\draft{
+
+\begin{equation*}
+K_{z} \left( x \right) \coloneqq \left\{ y \in D : F_{0} \left( x , z \right) + F_{1} \left( y , z \right) = 0 \right\} , \quad h_{z} \left( x \right) \coloneqq \left\{ Q \in \Delta D : \mathbb{E}_{y \sim Q} \left[ y \right] \in K_{z} \left( x \right) \right\} ,
+\end{equation*}
+
+}
+
+\draft{
+and let $H \coloneqq \left\{ h_{z} : z \in Z \right\}$.
+}
+
+\draft{
+The maps $F_{0}$ and $F_{1}$ are bilinear in their displayed arguments. Since
+$y_{0}$ is an outcome coordinate, we can write the constraint as $C_{z} y = 0$,
+with $B_{z} = 0$, $d_{z} = 0$, and $z \mapsto C_{z}$ linear. For $z = z^{U}$,
+}
+
+\draft{
+
+\begin{equation*}
+{\left( F_{1} \left( y , z^{U} \right) \right)}_{e} = \begin{cases}
+g_{e} - y_{0} & \text{\normalfont if } e \subseteq U \\
+s_{e} & \text{\normalfont otherwise} .
+\end{cases}
+\end{equation*}
+
+}
+
+\draft{
+Thus, inside $D$, the constraints force $g_{e} = 1$ for every
+$e \subseteq U$ and $s_{e} = 0$ for every $e \nsubseteq U$. The remaining
+$g_{e}$ coordinates are free to vary in $\left[ 0 , 1 \right]$. The feasible set is nonempty: take
+$g_{e} = 1$ on the edges of $U$, $g_{e} = 0$ elsewhere, and $s = 0$. Moreover,
+$y \mapsto F_{1} \left( y , z^{U} \right)$ is onto $W$: given $w \in W$, set $y_{0} = 0$, use
+$g_{e} = w_{e}$ and $s_{e} = 0$ on the edges of $U$, and use $g_{e} = 0$ and $s_{e} = w_{e}$
+elsewhere.
+}
+
+\draft{
+Define the reward
+}
+
+\draft{
+
+\begin{equation*}
+r \left( x , \left( y_{0} , g , s \right) \right) \coloneqq \sum_{e \in E_{n}} x_{e} g_{e} .
+\end{equation*}
+
+}
+
+\draft{
+The learner is given a succinct description of the entire instance
+$\mathcal{M} = \left( X , D , H , r \right)$, including $Z$, $F_{0}$, and $F_{1}$; only the true $U$ is hidden.
+The reward lies in $\left[ 0 , 1 \right]$ on $X \times D$. For an arm $x^{T}$, nature
+minimizes it by setting every graph coordinate not forced by $U$ to zero, so
+}
+
+\draft{
+
+\begin{equation*}
+v_{z^{U}} \left( x^{T} \right) = \frac{\binom{\left| U \cap T \right|}{2}}{q} .
+\end{equation*}
+
+}
+
+\draft{
+Thus $V_{z^{U}} = 1$, uniquely attained by $x^{U}$. Given $z^{U}$, an exact planner
+returns $x^{U}$ by setting $x_{e}^{U} = \frac{z_{e}^{U}}{q}$ for every $e \in E_{n}$, which takes
+$O \left( m \right) = O \left( n^{2} \right)$ time.
+}
+
+\draft{
+We now show that a learner with the stated regret bound would solve
+CLIQUE. Given a graph $G = \left( \left[ n \right] , E \left( G \right) \right)$ and target clique size $k$
+\citep{garey1979computers}, let
+}
+
+\draft{
+
+\begin{equation*}
+g_{e}^{G} \coloneqq \begin{cases}
+1 & \text{\normalfont if } e \in E \left( G \right) \\
+0 & \text{\normalfont otherwise}
+\end{cases} , \quad y^{G} \coloneqq \left( 1 , g^{G} , 0 \right) \in D .
+\end{equation*}
+
+}
+
+\draft{
+If $U$ is a $k$-clique of $G$, nature can return $y^{G}$ on every round
+under hypothesis $z^{U}$: every edge inside $U$ has $g_{e}^{G} = 1$, and all the
+$s_{e}$ coordinates are zero. For every candidate $T$,
+}
+
+\draft{
+
+\begin{equation*}
+r \left( x^{T} , y^{G} \right) = \frac{\left| E \left( G \left[ T \right] \right) \right|}{q} .
+\end{equation*}
+
+}
+
+\draft{
+This reward is $1$ exactly when $T$ is a $k$-clique, and is at most
+$1 - \frac{1}{q}$ otherwise.
+}
+
+\draft{
+Assume the policy in the theorem exists, and give it the outcome $y^{G}$
+on every round. If $G$ contains a $k$-clique $U$, these outcomes are
+compatible with $z^{U}$, whose optimal value is $1$. If the policy plays
+$x^{T_{1}} , \ldots , x^{T_{N}}$, the total reward it loses relative to this value is
+}
+
+\draft{
+
+\begin{equation*}
+{\mathcal{L}}_{N} \coloneqq N - \sum_{t = 1}^{N} r \left( x^{T_{t}} , y^{G} \right) .
+\end{equation*}
+
+}
+
+\draft{
+This quantity is nonnegative. Let $\mathcal{E}$ be the event that none of
+$T_{1} , \ldots , T_{N}$ is a clique. On this event, the learner loses at least
+$\frac{1}{q}$ on every round, so ${\mathcal{L}}_{N} \ge \frac{N}{q}$. Markov's inequality and the
+assumed regret bound give
+}
+
+\draft{
+
+\begin{equation*}
+\operatorname{Pr} \left( \mathcal{E} \right) \le q \frac{E \left[ {\mathcal{L}}_{N} \right]}{N} \le q P \left( | \mathcal{M} | \right) N^{- \beta} .
+\end{equation*}
+
+}
+
+\draft{
+Choose
+}
+
+\draft{
+
+\begin{equation*}
+N \coloneqq \left\lceil {\left( 4 q P \left( | \mathcal{M} | \right) \right)}^{\frac{1}{\beta}} \right\rceil .
+\end{equation*}
+
+}
+
+\draft{
+The instance description has length polynomial in $n$, so $N$ and the
+time needed to simulate the learner are polynomial in the CLIQUE input
+length. Check each $k$-set proposed by the learner and accept as soon as
+one is a clique in $G$. If $G$ has a $k$-clique, the preceding bound gives
+acceptance probability at least $\frac{3}{4}$. If $G$ has none, none of the
+proposed sets can pass this check. In that case, the outcomes may be
+incompatible with every hypothesis, but the learner must still terminate
+in polynomial time on every syntactically valid history. Thus the
+simulation also takes polynomial time when $G$ has no $k$-clique.
+}
+
+\draft{
+This is an RP algorithm for CLIQUE. Since CLIQUE is NP-complete, it implies
+$\text{\normalfont NP} = \text{\normalfont RP}$. If the policy is deterministic, the same verified search gives
+$\text{\normalfont P} = \text{\normalfont NP}$. $\blacksquare$
+}
+
+\draft{
+This example shows that efficient planning alone does not suffice for
+efficient learning. It uses exponentially large finite sets $X$ and $Z$
+represented by $k$-subsets, a polytope $D$, and the bilinear reward
+$r \left( x , y \right) = \sum_{e} x_{e} g_{e}$. It therefore falls outside our setting of Euclidean
+balls and jointly affine rewards.
+}
+
+
+\input{bibliography.tex}
+
+
+
+\clearpage
+
+
+\section*{\draft{Appendix}}
+
+
+\appendix
+\renewcommand{\presectionnum}{}
+\renewcommand{\thesubsection}{\thesection.\Alph{subsection}}
+
+
+
+\draft{
+
+\section{Quadratically constrained quadratic programming}\label{app:qcqp}
+}
+
+\draft{
+For symmetric matrices $Q_{i} \in \mathbb{R}^{d \times d}$, a \textbf{quadratically constrained
+quadratic program} (QCQP) in $z \in \mathbb{R}^{d}$ has the form
+}
+
+\draft{
+
+\begin{equation*}
+\operatorname*{min}_{z \in \mathbb{R}^{d}} g_{0} \left( z \right) \quad \text{\normalfont subject to} \quad g_{i} \left( z \right) \le 0 , \quad i = 1 , \ldots , m ,
+\end{equation*}
+
+}
+
+\draft{
+where $g_{i} \left( z \right) \coloneqq z^{T} Q_{i} z + 2 p_{i}^{T} z + r_{i}$; for complexity statements, all
+entries are rational. A quadratic equality $h \left( z \right) = 0$ is exactly the pair
+$h \left( z \right) \le 0$ and $- h \left( z \right) \le 0$ \citep{bienstock2016cdt}.
+}
+
+\draft{
+QCQP describes algebraic form, whereas convex programming describes geometry.
+The displayed minimization problem is a convex program when every $Q_{i}$,
+$i = 0 , \ldots , m$, is positive semidefinite and all equalities are affine
+\citep{boyd2004convex}. Without those restrictions it can be nonconvex: general QCQP
+is NP-hard even when only the objective is quadratic and its Hessian has one
+negative eigenvalue \citep{pardalos1991negative}.
+}
+
+\draft{
+The polynomial-time conclusion for our nonconvex instance has two steps.
+}
+
+
+\begin{enumerate}
+\item \draft{
+  First, fix the number $m$ of constraints. Bienstock's theorem states that,
+  for rational quadratics $g_{0} , \ldots , g_{m}$, if at least one constraint
+  $g_{i} \left( z \right) \le 0$ has a positive-definite quadratic part, then for every
+  $\varepsilon \in \left( 0 , 1 \right)$ an algorithm runs in time
+  $\operatorname{poly} \left( L , \operatorname{log} \left( \frac{1}{\varepsilon} \right) \right)$, where $L$ is the input bit length, and either
+  proves infeasibility or returns $\hat{z}$ such that
+  }
+
+  \draft{
+  
+\begin{equation*}
+g_{i} \left( \hat{z} \right) \le \varepsilon , \quad i = 1 , \ldots , m ,
+\end{equation*}
+
+  }
+
+  \draft{
+  and $g_{0} \left( \hat{z} \right) \le g_{0} \left( z \right) + \varepsilon$ for every feasible $z$
+  \citep{bienstock2016cdt}. The underlying weak-feasibility step reduces to a fixed
+  number of homogeneous quadratic equations on a sphere, handled by
+  Barvinok's method; binary search then gives the objective guarantee
+  \citep{bienstock2016cdt}, \citep{barvinok1993feasibility}.
+  }
+
+\item \draft{
+  Second, the planning reduction in Section~\ref{sec:soft-square-root} has six
+  quadratic inequalities. The redundant ellipsoid constraint on
+  $\left( x , z , s \right)$ has a positive-definite quadratic part, so the QCQP
+  satisfies Bienstock's hypotheses. Applying the theorem to the negative
+  objective computes the planning maximum to weak additive accuracy
+  $\varepsilon$ in time $\operatorname{poly} \left( L , \operatorname{log} \left( \frac{1}{\varepsilon} \right) \right)$. The same section explains
+  how to repair the solver's output to obtain a feasible arm. If either
+  radius is zero, the problem first reduces to a lower-dimensional instance.
+  }
+
+\end{enumerate}
+\draft{
+
+\section{MAX-CUT}\label{app:max-cut}
+}
+
+\draft{
+Let $G = \left( V , E \right)$ be a finite undirected simple graph. For $S \subseteq V$, the
+edge boundary of $S$ is
+}
+
+\draft{
+
+\begin{equation*}
+\delta_{G} \left( S \right) \coloneqq \left\{ \left\{ u , v \right\} \in E : \left| \left\{ u , v \right\} \cap S \right| = 1 \right\} .
+\end{equation*}
+
+}
+
+\draft{
+The decision problem MAX-CUT takes as input $G$ and an integer
+$k \in \left\{ 0 , \ldots , \left| E \right| \right\}$, and asks whether
+}
+
+\draft{
+
+\begin{equation*}
+\exists S \subseteq V \quad \text{\normalfont such that} \quad \left| \delta_{G} \left( S \right) \right| \ge k .
+\end{equation*}
+
+}
+
+\draft{
+A set $S$ satisfying this inequality is a polynomial-size certificate, so
+MAX-CUT belongs to NP. Karp proved that weighted MAX-CUT is NP-complete
+\citep{karp1972reducibility}. Garey, Johnson, and Stockmeyer subsequently proved
+that the unweighted problem defined above remains NP-complete even when $G$
+is cubic \citep{garey1976simplified}.
+}
+
+\draft{
+The associated optimization problem computes
+}
+
+\draft{
+
+\begin{equation*}
+M_{G} \coloneqq \operatorname*{max}_{S \subseteq V} \left| \delta_{G} \left( S \right) \right| .
+\end{equation*}
+
+}
+
+\draft{
+Since the decision problem asks whether $M_{G} \ge k$, computing $M_{G}$ is NP-hard.
+}
+
+\draft{
+
+\section{Regret analysis of the $T^{\frac{2}{3}}$ learner}\label{app:hard-ellipsoid-analysis}
+
+We give the precise statement and proof of Theorem~\ref{thm:hard-ellipsoid-warmup}.
+We use the coordinates and notation from Section~\ref{sec:hard-ellipsoid-warmup},
+and assume that the planning steps in Algorithm~\ref{alg:hard-ellipsoid-warmup} are
+solved exactly. A full block is \emph{informative} if it causes an update,
+and \emph{uninformative} otherwise.
+
+
+For the analysis, fix $\delta \in \left( 0 , 1 \right)$ and define
+
+
+\begin{equation*}
+\begin{aligned}
+J_{\text{\normalfont max}} & \coloneqq \left\lceil q \operatorname{log}_{2} \left( 1 + 3 \frac{T}{q} \right) \right\rceil , \\
+ h_{T}^{2} & \coloneqq 8 d_{D} \operatorname{log} \left( \frac{2 d_{D} T^{2}}{\delta} \right) , \\
+ B_{T}^{2} & \coloneqq 1 + J_{\text{\normalfont max}} h_{T}^{2} , \\
+ G & \coloneqq \sqrt{3} \left( 1 + S^{- 1} \right) {\left\Vert b \right\Vert}_{2} , \\
+ C_{r} & \coloneqq \operatorname*{max}_{X \times D} r - \operatorname*{min}_{X \times D} r .
+\end{aligned}
+\end{equation*}
+
+
+
+We write $J$ for the number of updates actually made. We will show
+that $J \le J_{\text{\normalfont max}}$.
+
+If $w \left( x , y \right)$ is close to $\mathcal{L}$, then $r \left( x , y \right)$ cannot be much smaller
+than the worst feasible reward $v^{\star} \left( x \right)$. We first prove this.
+
+
+\begin{sourcelemma}\label{lem:subspace-reward-bound}
+
+  For every $x \in X$ and $y \in D$,
+
+  
+\begin{equation*}
+v^{\star} \left( x \right) \le r \left( x , y \right) + G \operatorname{dist} \left( w \left( x , y \right) , \mathcal{L} \right) .
+\end{equation*}
+
+
+\end{sourcelemma}
+
+
+\textbf{Proof.} Let $N \coloneqq \operatorname{ker} C_{z^{\star}}$ and let $Q$ be the orthogonal projector
+onto $N^{\perp}$. Every arm has a feasible outcome, so we can write the
+minimum-norm solution of the affine constraints as
+$f \left( x \right) = A x + e \in N^{\perp}$. Thus
+
+
+\begin{equation*}
+K^{\star} \left( x \right) = \left( A x + e + N \right) \cap D .
+\end{equation*}
+
+
+Since there is a feasible outcome in the unit ball for every arm,
+${\left\Vert A x + e \right\Vert}_{2} \le 1$ on $X$. Taking $x = 0$ gives ${\left\Vert e \right\Vert}_{2} \le 1$, and
+comparing opposite unit vectors gives ${\left\Vert A \right\Vert}_{\text{\normalfont op}} \le 1$. Now define
+
+
+\begin{equation*}
+\Phi \left( s , x , y \right) \coloneqq Q y - A x - s e .
+\end{equation*}
+
+
+This map has operator norm at most $\sqrt{3}$ and kernel $\mathcal{L}$: the
+original constraints are equivalent to $Q y = A x + e$, and homogenizing
+either equation gives the same subspace. Therefore
+
+
+\begin{equation*}
+\operatorname{dist} \left( y , A x + e + N \right) = {\left\Vert \Phi \left( 1 , x , y \right) \right\Vert}_{2} \le \sqrt{3} \operatorname{dist} \left( w \left( x , y \right) , \mathcal{L} \right) .
+\end{equation*}
+
+
+Let $p$ be the point in $A x + e + N$ closest to $y$. Since $y \in D$,
+the non-tangency condition gives
+
+
+\begin{equation*}
+\operatorname{dist} \left( p , K^{\star} \left( x \right) \right) \le S^{- 1} \operatorname{dist} \left( p , D \right) \le S^{- 1} {\left\Vert p - y \right\Vert}_{2} ,
+\end{equation*}
+
+
+where the first inequality is immediate if $p \in D$, since then
+$p \in K^{\star} \left( x \right)$. The triangle inequality now gives
+
+
+\begin{equation*}
+\operatorname{dist} \left( y , K^{\star} \left( x \right) \right) \le \left( 1 + S^{- 1} \right) \operatorname{dist} \left( y , A x + e + N \right) .
+\end{equation*}
+
+
+Moving $y$ to the nearest point in $K^{\star} \left( x \right)$ changes the reward by
+at most ${\left\Vert b \right\Vert}_{2}$ times this distance, which proves the claim. $\blacksquare$
+
+We also need to know how close a block average is to the average of the
+true conditional means.
+
+
+\begin{sourcelemma}\label{lem:interval-noise}
+
+  Let $m_{t}$ be the conditional mean of $y_{t}$ given the history and the
+  chosen arm on round $t$. For each interval in the first $T$ rounds,
+  write $n$ for its length and $\overline{y}$ and $\overline{m}$ for the
+  averages of $y_{t}$ and $m_{t}$ over that interval. With probability at
+  least $1 - \delta$, the bound
+
+  
+  
+\begin{equation}
+n {\left\Vert \overline{y} - \overline{m} \right\Vert}_{2}^{2} \le h_{T}^{2}\label{eq:soft-interval-noise}
+\end{equation}
+
+  
+
+  holds simultaneously on all these intervals.
+
+\end{sourcelemma}
+
+
+\textbf{Proof.} Each coordinate of $y_{t} - m_{t}$ is a martingale difference
+bounded in absolute value by two. For any fixed interval of length
+$n$ and coordinate $i$, Azuma--Hoeffding gives
+
+
+\begin{equation*}
+\operatorname{Pr} \left( \left| {\overline{y}}_{i} - {\overline{m}}_{i} \right| > \frac{h_{T}}{\sqrt{n d_{D}}} \right) \le 2 \operatorname{exp} \left( - \frac{h_{T}^{2}}{8 d_{D}} \right) = \frac{\delta}{d_{D} T^{2}} .
+\end{equation*}
+
+
+There are $d_{D}$ coordinates and at most $T^{2}$ intervals. A union bound
+and summing the squared coordinate bounds give the claim. $\blacksquare$
+
+We need to know how far a point in $E_{V}$ can be from $\mathcal{L}$.
+The next lemma bounds this distance using the noise bound we just
+proved. We can then apply Lemma~\ref{lem:subspace-reward-bound} to the outcomes
+the learner treats as feasible.
+
+
+\begin{sourcelemma}\label{lem:subspace-distance-bound}
+
+  With probability at least $1 - \delta$, after any number $J$ of updates
+  in Algorithm~\ref{alg:hard-ellipsoid-warmup}, the matrix $V$ satisfies, for every
+  $w \in \mathbb{R}^{q}$,
+
+  
+\begin{equation*}
+\operatorname{dist} \left( w , \mathcal{L} \right) \le \sqrt{\frac{1 + J h_{T}^{2}}{n}} {\left\Vert w \right\Vert}_{V^{- 1}} .
+\end{equation*}
+
+
+\end{sourcelemma}
+
+
+\textbf{Proof.} Number the informative blocks $j = 1 , \ldots , J$. Write $x_{j}$ for
+the arm played in block $j$, and ${\overline{y}}_{j}$ and ${\overline{m}}_{j}$
+for its average observation and average conditional mean. With
+${\overline{w}}_{j} \coloneqq w \left( x_{j} , {\overline{y}}_{j} \right)$, the update rule gives
+
+
+\begin{equation*}
+V = n^{- 1} I_{q} + \sum_{j = 1}^{J} {\overline{w}}_{j} {\overline{w}}_{j}^{T} .
+\end{equation*}
+
+
+Fix $u \in {\mathcal{L}}^{\perp}$ with ${\left\Vert u \right\Vert}_{2} \le 1$. Since the arm is held
+fixed within each block, $w \left( x_{j} , {\overline{m}}_{j} \right) \in \mathcal{L}$. Each
+informative block has length $n$. By Lemma~\ref{lem:interval-noise}, with
+probability at least $1 - \delta$, the bound
+
+
+\begin{equation*}
+{\left( u^{T} {\overline{w}}_{j} \right)}^{2} = {\left( u^{T} \left( 0 , 0 , {\overline{y}}_{j} - {\overline{m}}_{j} \right) \right)}^{2} \le \frac{h_{T}^{2}}{n}
+\end{equation*}
+
+
+holds simultaneously for all informative blocks and all such $u$.
+On this event, $u^{T} V u \le \frac{1 + J h_{T}^{2}}{n}$. For any $w$,
+Cauchy--Schwarz gives $u^{T} w \le \sqrt{u^{T} V u} {\left\Vert w \right\Vert}_{V^{- 1}}$.
+Taking the supremum over the unit ball of ${\mathcal{L}}^{\perp}$ proves the
+claim. $\blacksquare$
+
+
+\begin{sourcetheorem}\label{thm:hard-ellipsoid-regret}
+
+  Suppose nature follows any compatible adaptive policy. Then
+  Algorithm~\ref{alg:hard-ellipsoid-warmup} satisfies, with probability at least $1 - \delta$,
+
+  
+\begin{equation*}
+T V^{\star} - \sum_{t = 1}^{T} r \left( x_{t} , y_{t} \right) \le C_{r} n \left( J_{\text{\normalfont max}} + 1 \right) + \frac{G B_{T} T}{\sqrt{n}} .
+\end{equation*}
+
+
+  Its expected regret is at most the same expression plus
+  $C_{r} T \delta$. Taking $n = \left\lceil T^{\frac{2}{3}} \right\rceil$ and
+  $\delta = {\left( T + 1 \right)}^{- 2}$ give $R_{T} \le \tilde{O} \left( T^{\frac{2}{3}} \right)$ for fixed problem
+  parameters.
+
+\end{sourcetheorem}
+
+
+\textbf{Proof.} First, there cannot be very many informative blocks. Each one
+more than doubles the determinant:
+
+
+\begin{equation*}
+\operatorname{det} \left( V + \overline{w} {\overline{w}}^{T} \right) = \operatorname{det} \left( V \right) \left( 1 + p_{V} \left( x , \overline{y} \right) \right) > 2 \operatorname{det} \left( V \right) .
+\end{equation*}
+
+
+If there are $J$ updates, then $J \le \frac{T}{n}$. Each update adds at most three
+to the trace, so $\operatorname{tr} V \le \frac{q}{n} + 3 J \le \frac{q + 3 T}{n}$. The initial determinant
+is $n^{- q}$. Using the arithmetic--geometric mean inequality on the
+eigenvalues, we get
+
+
+\begin{equation*}
+2^{J} \le \frac{\operatorname{det} V}{\operatorname{det} \left( n^{- 1} I_{q} \right)} \le {\left( 1 + 3 \frac{T}{q} \right)}^{q} , \quad J \le J_{\text{\normalfont max}} .
+\end{equation*}
+
+
+Since $J \le J_{\text{\normalfont max}}$, Lemma~\ref{lem:subspace-distance-bound} gives, with probability
+at least $1 - \delta$, simultaneously for every matrix $V$ that the
+learner maintains and every $\left( x , y \right) \in X \times D$,
+
+
+
+\begin{equation}
+\operatorname{dist} \left( w \left( x , y \right) , \mathcal{L} \right) \le \left( \frac{B_{T}}{\sqrt{n}} \right) \sqrt{p_{V} \left( x , y \right)} .\label{eq:hard-subspace-certificate}
+\end{equation}
+
+
+
+On this event, if $y \in {\hat{K}}_{V} \left( x \right)$, then $p_{V} \left( x , y \right) \le 1$, so
+Lemma~\ref{lem:subspace-reward-bound} gives
+$r \left( x , y \right) \ge v^{\star} \left( x \right) - G \frac{B_{T}}{\sqrt{n}}$. Taking the minimum over
+${\hat{K}}_{V} \left( x \right)$, whenever this set is nonempty, gives
+
+
+
+\begin{equation}
+H_{V} \left( x \right) \ge v^{\star} \left( x \right) - G \frac{B_{T}}{\sqrt{n}} .\label{eq:hard-optimism}
+\end{equation}
+
+
+
+Consider a full block in which we do not update the ellipsoid. Its
+empirical mean belongs to ${\hat{K}}_{V} \left( x \right)$. Such a block could not have
+used the empty-set rule, since that would force the mean outside the
+ellipsoid. Thus all the sets ${\hat{K}}_{V} \left( x^{\prime} \right)$ were nonempty, and we
+chose $x$ by maximizing $H_{V}$. It follows that
+
+
+\begin{equation*}
+r \left( x , \overline{y} \right) \ge H_{V} \left( x \right) = \operatorname*{max}_{x^{\prime} \in X} H_{V} \left( x^{\prime} \right) \ge V^{\star} - G \frac{B_{T}}{\sqrt{n}} .
+\end{equation*}
+
+
+Since the reward is affine, $r \left( x , \overline{y} \right)$ is the average reward
+in the block. The block's regret is therefore at most $G B_{T} \sqrt{n}$.
+There are at most $\frac{T}{n}$ such blocks, for a total of $G B_{T} \frac{T}{\sqrt{n}}$.
+An informative block may cost as much as $C_{r} n$, but there are at most
+$J_{\text{\normalfont max}}$ of them. A final incomplete block also costs at most $C_{r} n$.
+Adding these bounds proves the high-probability claim. Outside this
+event, regret is still at most $C_{r} T$, so taking expectations
+adds at most $C_{r} T \delta$. $\blacksquare$
+
+
+\subsection{Finite-precision implementation}\label{app:hard-computation}
+
+We justify the implementation in Section~\ref{sec:hard-computation}. The matrix
+always satisfies
+
+
+\begin{equation*}
+n^{- 1} I_{q} \preceq V \preceq \left( n^{- 1} + 3 T \right) I_{q} ,
+\end{equation*}
+
+
+since each update adds a positive semidefinite matrix of operator norm
+at most three. In particular, $E_{V}$ contains the Euclidean ball of
+radius $\frac{1}{\sqrt{n}}$.
+
+The distance formula follows by writing distance to $2 E_{V}$ as
+
+
+\begin{equation*}
+\operatorname{dist} \left( w , 2 E_{V} \right) = \operatorname*{max}_{{\left\Vert z \right\Vert}_{2} \le 1} \left[ z^{T} w - 2 \sqrt{z^{T} V z} \right] .
+\end{equation*}
+
+
+Minimizing over $w = \left( 1 , x , y \right)$ with $y \in D$ and exchanging the minimum
+and maximum gives the claimed expression for $d_{V} \left( x \right)$. The exchange
+is valid because the domains are compact and convex, and the
+objective is affine in $y$ and concave in $z$.
+
+Suppose the empty-set test has not returned an arm. Its additive
+guarantee gives $d_{V} \left( x \right) \le 2 \eta$ for every $x$. Thus, for every arm,
+there is a $y_{0} \in D$ such that $w_{0} \coloneqq w \left( x , y_{0} \right)$ satisfies
+
+
+\begin{equation*}
+{\left\Vert w_{0} \right\Vert}_{V^{- 1}} \le 2 + 2 \eta \sqrt{n} \le \frac{11}{5} .
+\end{equation*}
+
+
+This point lies strictly inside $3 E_{V}$. We may therefore apply convex
+duality to the constraint $w \left( x , y \right) \in 3 E_{V}$, whose indicator has the
+representation
+
+
+\begin{equation*}
+\iota_{3 E_{V}} \left( w \right) = \operatorname*{sup}_{z} \left[ z^{T} w - 3 \sqrt{z^{T} V z} \right] ,
+\end{equation*}
+
+
+where the indicator is zero on the set and $+ \infty$ outside it.
+Strong duality holds because $y_{0} \in D$ and $w_{0}$ is in the interior
+of $3 E_{V}$ \citep{boyd2004convex}. Minimizing the resulting affine expression
+over the unit ball $D$ gives the formula for $H_{V}^{\text{\normalfont out}}$, initially
+with a supremum over all $z$.
+
+To bound $z$, write the expression inside that supremum as $F_{x} \left( z \right)$.
+Using ${\left\Vert y_{0} \right\Vert}_{2} \le 1$ and Cauchy--Schwarz in the $V$ norm gives
+
+
+\begin{equation*}
+\begin{aligned}
+F_{x} \left( z \right) & \le b^{T} y_{0} + z^{T} w_{0} - 3 \sqrt{z^{T} V z} \\
+ & \le {\left\Vert b \right\Vert}_{2} - \frac{4}{5} \sqrt{z^{T} V z} \\
+ & \le {\left\Vert b \right\Vert}_{2} - \frac{4}{5 \sqrt{n}} {\left\Vert z \right\Vert}_{2} .
+\end{aligned}
+\end{equation*}
+
+
+Since $F_{x} \left( 0 \right) = - {\left\Vert b \right\Vert}_{2}$, the supremum is attained at a point with
+${\left\Vert z \right\Vert}_{2} \le \left( \frac{5}{2} \right) \sqrt{n} {\left\Vert b \right\Vert}_{2}$. This is smaller than the bound
+$M$ used in the implementation.
+
+We next give the quadratic programs explicitly. For the distance
+problem take $\left( \alpha , g , R \right) = \left( 2 , 0 , 1 \right)$, and for the planning problem take
+$\left( \alpha , g , R \right) = \left( 3 , b , M \right)$. Replace
+$\alpha \sqrt{z^{T} V z} + {\left\Vert g + z_{D} \right\Vert}_{2}$ by $\alpha t + s$ and impose
+
+
+\begin{equation*}
+{\left\Vert x \right\Vert}_{2}^{2} \le 1 , \quad {\left\Vert z \right\Vert}_{2}^{2} \le R^{2} , \quad z^{T} V z \le t^{2} , \quad {\left\Vert g + z_{D} \right\Vert}_{2}^{2} \le s^{2} ,
+\end{equation*}
+
+
+
+\begin{equation*}
+0 \le t \le 1 + \left( 1 + 3 T \right) R , \quad 0 \le s \le 1 + {\left\Vert g \right\Vert}_{1} + R .
+\end{equation*}
+
+
+The remaining objective is $z_{0} + z_{X}^{T} x - \alpha t - s$, with the additional
+term $a^{T} x + c$ for planning. The upper bounds leave room beyond the
+largest possible values of the two norms. Adding a redundant ball
+containing all these bounded variables gives nine quadratic
+inequalities, one with a positive-definite quadratic part.
+The result in Appendix~\ref{app:qcqp} therefore applies.
+
+A weak solution may slightly violate these constraints. Project its
+$x$ and $z$ components onto their balls and round inward to rational
+grids. Replace $t$ and $s$ by rational upper approximations to the
+corresponding norms. The resulting objective is a valid lower bound
+on $d_{V} \left( x \right)$ or $H_{V}^{\text{\normalfont out}} \left( x \right)$ at the returned arm. If the weak
+constraint error is $\tau$, projection moves each vector by at most
+$\sqrt{\tau}$; the changes in the two norms and the quadratic objective
+are bounded by a polynomial in the numerical data and $T$ times
+$\sqrt{\tau}$. Thus both the required objective accuracy and a certified
+lower bound can be obtained with polynomially many precision bits.
+For the distance test, include all these errors in its additive
+budget $\eta$: a returned lower bound above $\eta$ then certifies
+emptiness, and a lower bound at most $\eta$ implies
+$\operatorname*{max}_{x \in X} d_{V} \left( x \right) \le 2 \eta$.
+
+Finally, round each observed outcome inward to a common rational grid,
+with Euclidean error at most
+$\tau_{y} \coloneqq \frac{{\left( T + 1 \right)}^{- 4}}{1 + {\left\Vert b \right\Vert}_{1}}$. Use these rounded observations in
+the block averages and updates. The interval bound in
+Lemma~\ref{lem:interval-noise} remains valid with $h_{T}^{2}$ replaced by
+$2 h_{T}^{2} + 2 T \tau_{y}^{2}$. The matrix-distance proof and the determinant
+argument therefore still apply. An uninformative rounded mean belongs
+to $E_{V}$, and hence to both the inner and outer sets. Consequently
+such a block must have used the planning rule. Applying
+Lemma~\ref{lem:subspace-reward-bound} and the matrix-distance bound on $3 E_{V}$
+gives the same regret estimate with the geometric term multiplied
+by three, an additional $T \varepsilon$ for planning error, and at most
+${\left\Vert b \right\Vert}_{2} T \tau_{y}$ for replacing the actual rewards by rounded ones.
+
+The common grids keep all stored matrices rational with polynomial
+bit length. Matrix inversion and the comparison $p_{V} > 1$ can then be
+performed exactly in polynomial time. There are at most
+$\left\lceil \frac{T}{n} \right\rceil$ planning calls, each taking time polynomial in the input
+bit length, $T$, and $\operatorname{log} \left( \frac{1}{\varepsilon} \right)$. This proves the claimed
+implementation and regret bound. $\blacksquare$
+}

@@ -1,0 +1,1596 @@
+When are Imprecise Bandits Computationally 
+Tractable?
+1. Setting
+An instance of the imprecise bandits problem is a tuple ℳ︀= (𝑋, 𝐷, 𝐻, 𝑟), where 𝑋 is a set of arms, 𝐷 is 
+a set of possible outcomes, 𝐻 is a set of mappings of type 𝑋→
+𝐷 where 𝐷 denotes the set of credal 
+sets over 𝐷, and 𝑟: 𝑋× 𝐷→ℝ is a reward function.
+The imprecise bandits game is played between a learner and an adversary for 𝑇 rounds (both adversary 
+and learner know 𝑇). At the beginning of the game, the adversary picks some ℎ⋆∈𝐻. The learner knows 
+𝑋, 𝐷, 𝐻, 𝑟, and 𝑇, but does not have knowledge of ℎ⋆. Then, at each round 𝑡:
+1. Learner picks an arm 𝑥𝑡∈𝑋.
+2. Adversary picks a distribution 𝑃𝑡∈ℎ⋆(𝑥𝑡).
+3. An outcome 𝑦𝑡∼𝑃𝑡 is drawn and shown to the learner as feedback.
+4. Learner gets reward 𝑟(𝑥𝑡, 𝑦𝑡).
+Given a hypothesis ℎ∈𝐻, we define the value functions:
+𝑣ℎ(𝑥) ≔min
+𝑃∈ℎ(𝑥) 𝔼𝑦∼𝑃[𝑟(𝑥, 𝑦)],
+𝑉ℎ≔max
+𝑥∈𝑋𝑣ℎ(𝑥).
+We use the shorthand 𝑣∗(𝑥) and 𝑉⋆ to denote the value functions corresponding to the true hypothesis ℎ⋆.
+The regret over horizon 𝑇 is
+𝑅𝑇≔𝑇𝑉⋆−𝔼[∑
+𝑇
+𝑡=1
+𝑟(𝑥𝑡, 𝑦𝑡)].
+Here the expectation in the second term is taken wrt the randomness in the learner’s and the adversary’s 
+strategies as well as the randomness arising from sampling 𝑦𝑡∼𝑃𝑡.
+We are interested in learner strategies that can achieve a sublinear (in 𝑇) regret for all true hypotheses 
+ℎ⋆∈𝐻. We say that an imprecise bandits instance ℳ︀= (𝑋, 𝐷, 𝐻, 𝑟) has a statistically efficient learner 
+if such a learner strategy exists.
+Computational tractability. In this paper, we are interested in studying the computational 
+complexity of the learner. A learner policy 𝜋 is a randomized algorithm that takes as input a history 
+ℎ𝑡= ((𝑥𝑖, 𝑦𝑖))𝑡
+𝑖=1 and the description of the problem instance ℳ︀ and returns a next arm 𝑥𝑡+1. The 
+computational complexity of the problem depends crucially on the exact nature of access the policy is 
+given to ℳ︀. For example, on one extreme, one can consider a non-uniform access such that a policy 𝜋ℳ︀ 
+is merely indexed by the instance ℳ︀ as opposed to ℳ︀ being an input to a computational procedure. 
+However, this makes several instances rather trivial. In this paper we mostly consider specific encodings 
+of ℳ︀. We also occasionally assume 𝜋 to have oracle access to ℳ︀ with certain specific oracles. We will 
+make these assumptions clear in the respective sections.
+We will say that a learner is computationally efficient if it runs in time polynomial in the size of its 
+input and achieves a regret 𝑅𝑇≤poly(|ℳ︀|)𝑇1−𝛼 for some 𝛼> 0.
+1.1. Linear Imprecise Bandits
+For most of this work, we study the following linear specialization of the instance ℳ︀= (𝑋, 𝐷, 𝐻, 𝑟) 
+defined above. Let 𝑋⊆ℝ𝑑𝑋 be the arm set, and let 𝐷⊆ℝ𝑑𝐷 be the outcome set. We assume that 𝑋 
+and 𝐷 are Euclidean balls of radii 𝑅𝑋 and 𝑅𝐷 (not necessarily centred at the origin). The reward is 
+affine in the arm and outcome:
+𝑟(𝑥, 𝑦) ≔𝑎𝑇𝑥+ 𝑏𝑇𝑦+ 𝑐.
+Let the hypothesis class 𝐻 be parametrized by 𝑍⊆ℝ𝑑𝑍. For every 𝑧∈𝑍, we define the hypothesis 
+ℎ𝑧 by first defining the possible expected values of the distributions that ℎ𝑧 is allowed to choose. In 
+particular, let
+𝐾𝑧(𝑥) ≔{𝑦∈𝐷: 𝐶𝑧𝑦+ 𝐵𝑧𝑥+ 𝑑𝑧= 0}.
+(1)
+Here 𝐵𝑧, 𝐶𝑧, and 𝑑𝑧 are matrices and vectors of appropriate dimensions that depend affinely on 𝑧. Now, 
+hypothesis ℎ𝑧: 𝑋→
+𝐷 is given by
+ℎ𝑧(𝑥) ≔{𝑃∈Δ𝐷: 𝔼𝑦∼𝑃[𝑦] ∈𝐾𝑧(𝑥)}.
+Let 𝑧⋆∈𝑍 represent the true hypothesis, so that ℎ⋆= ℎ𝑧⋆. The true feasible mean set is 𝐾⋆(𝑥) ≔𝐾𝑧⋆(𝑥).
+We also assume a uniform non-tangency condition: there is a constant 𝑆∈(0, 1] such that, for every 
+𝑥∈𝑋 and every 𝑝∈ℝ𝑑𝐷 satisfying 𝐶𝑧⋆𝑝+ 𝐵𝑧⋆𝑥+ 𝑑𝑧⋆= 0 with 𝑝∉𝐷,
+dist(𝑝, 𝐷) ≥𝑆dist(𝑝, 𝐾⋆(𝑥)).
+For a Euclidean ball, this says that the affine solution spaces defined by the true constraints remain 
+uniformly bounded away from tangency to 𝐷. This is the transversality condition used in [1].
+Because 𝑟 is affine in its outcome argument, the value functions defined above satisfy
+𝑣∗(𝑥) =
+min
+𝑃∈ℎ⋆(𝑥) 𝔼𝑦∼𝑃[𝑟(𝑥, 𝑦)] =
+min
+𝑦∈𝐾⋆(𝑥) 𝑟(𝑥, 𝑦),
+𝑉⋆≔max
+𝑥∈𝑋𝑣∗(𝑥).
+The regret over horizon 𝑇 is
+𝑅𝑇≔𝑇𝑉⋆−𝔼[∑
+𝑇
+𝑡=1
+𝑟(𝑥𝑡, 𝑦𝑡)].
+To define the computational problem, we fix a finite representation scheme for the data defining ℳ︀, 
+and let |ℳ︀| denote the length of its description. We represent 𝑋 and 𝐷 by their centres and radii, 𝑟 by 
+its coefficients, and 𝐻 by a description of 𝑍 together with the affine map 𝑧↦(𝐵𝑧, 𝐶𝑧, 𝑑𝑧). We restrict 
+attention to succinctly represented instances, for which |ℳ︀| ≤poly(𝑑𝑋, 𝑑𝐷, 𝑑𝑍).
+Now we state our main result.
+Theorem 1 (efficient 
+√
+𝑇 learning). There exists a policy for linear imprecise bandits as defined above 
+that, for every time horizon 𝑇 and every true hypothesis ℎ⋆∈𝐻, runs in time polynomial in |ℳ︀| and 𝑇 
+and achieves regret
+𝑅𝑇≤𝑂̃(
+√
+𝑇).
+The hidden factor depends polynomially on the dimensions, 𝑆−1, and the reward range. The precise 
+dependence is given in Theorem 3.
+This dependence on 𝑇 is tight up to logarithmic factors: we can reuse the Ω(
+√
+𝑇) worst-case lower bound 
+for stochastic bandits [2, Theorem 5.1]. To see this, take 𝑋= [−1, 1], 𝐷= [0, 1], 𝑟(𝑥, 𝑦) = 𝑦, and, for 
+unknown 𝜇= (𝜇1, 𝜇2) ∈[0, 1]2, set
+𝐾𝜇(𝑥) = {(1 −𝑥)
+2
+𝜇1 + 1 + 𝑥
+2
+𝜇2}.
+These are affine constraints of the required form, with 𝑆= 1. Given a two-armed Bernoulli bandit with 
+means 𝜇1 and 𝜇2, we can simulate a play of 𝑥 by pulling its first arm with probability 1−𝑥
+2 and its second 
+arm otherwise, and returning the observed reward as 𝑦. This gives a compatible outcome distribution 
+at 𝑥 and preserves expected regret, since 𝑉⋆= max(𝜇1, 𝜇2). Thus a better worst-case regret bound here 
+would give a better bound for two-armed stochastic bandits.
+2. Warmup: A 𝑇
+2
+3 Learner
+For an arm 𝑥 and outcome 𝑦, consider the vector 𝑤(𝑥, 𝑦) = (1, 𝑥, 𝑦). This vector lies in ℝ1+𝑑𝑋+𝑑𝐷, and 
+the constraints defining the feasible set of outcomes, 𝐶𝑧⋆𝑦+ 𝐵𝑧⋆𝑥+ 𝑑𝑧⋆= 0, determine a linear subspace 
+of this vector space. Define ℒ︀≔ker(𝑑𝑧⋆
+𝐵𝑧⋆
+𝐶𝑧⋆). A conditional mean 𝑚 is feasible at 𝑥 precisely when 
+𝑚∈𝐷 and 𝑤(𝑥, 𝑚) ∈ℒ︀. The learner’s task is to learn enough about ℒ︀ to get low regret. Of course, we 
+may never learn all of ℒ︀. For example, if nature keeps choosing conditional means in a strictly smaller 
+subspace, then we cannot distinguish that subspace from the true ℒ︀. But this is fine, since we do not 
+need to learn directions that nature never uses.
+The fact that we never get to observe the true conditional mean, but only a noisy observation of it, 
+adds an extra complication. In a noiseless world, a new observation tells us a new direction of ℒ︀. Thus 
+we can simply maintain a linear subspace of ℝ1+𝑑𝑍+𝑑𝐷, and incrementally grow it every time we get new 
+information. However, in the presence of noise, no observation can be used to add an entire direction 
+with certainty. Instead, we encode our knowledge of ℒ︀ with an ellipsoid, and incrementally grow it as we 
+get new information. The details are written below.
+We first translate and rescale the balls so that 𝑋= {𝑥: ‖𝑥‖2 ≤1} and 𝐷= {𝑦: ‖𝑦‖2 ≤1}. We continue 
+to write the reward as 𝑟(𝑥, 𝑦) = 𝑎𝑇𝑥+ 𝑏𝑇𝑦+ 𝑐 and the true subspace as ℒ︀ in these coordinates. The 
+new ‖𝑏‖2 equals 𝑅𝐷‖𝑏‖2 in the original coordinates, and the non-tangency constant 𝑆 stays the same. 
+Write 𝑞≔1 + 𝑑𝑋+ 𝑑𝐷 for the number of coordinates of 𝑤(𝑥, 𝑦). For a positive-definite matrix 𝑉, write 
+‖𝑤‖𝑉−1 ≔
+√
+𝑤𝑇𝑉−1𝑤.
+Define 𝑝𝑉(𝑥, 𝑦) ≔‖𝑤(𝑥, 𝑦)‖2
+𝑉−1, and 𝐸𝑉≔{𝑤∈ℝ𝑞: ‖𝑤‖2
+𝑉−1 ≤1}.
+Here 𝐸𝑉 is the ellipsoid we described above, which we incrementally expand as we get new information 
+about ℒ︀. The algorithm works in blocks of length 𝑛 (we will choose 𝑛 later to get a small regret). At the 
+beginning of each block, we choose an arm 𝑥 and play the same arm throughout the block. The ellipsoid 
+𝐸𝑉 stays fixed during these rounds.
+To choose an arm, we use our current guess for the feasible conditional means. For each 𝑥, this consists 
+of the 𝑚∈𝐷 with (1, 𝑥, 𝑚) ∈𝐸𝑉. If some arm has no such 𝑚, we choose it to learn more about it. 
+Otherwise, we choose the arm with the largest worst-case reward over its guessed feasible means.
+At the end of a full block, we average its 𝑛 observations to get 𝑦. We then check whether (1, 𝑥, 𝑦) lies 
+in 𝐸𝑉. If it does not, we enlarge the ellipsoid to include it. Otherwise, we leave the ellipsoid unchanged.
+For the time being, we assume that we can carry out the rule for choosing an arm exactly. We will 
+consider the computational aspects of the algorithm later.
+Algorithm 1.
+Fix a block length 𝑛∈{1, …, 𝑇} and initialize 𝑉≔𝑛−1𝐼𝑞. At the start of each block:
+1. For each arm, let
+𝐾̂𝑉(𝑥) ≔{𝑦∈𝐷: 𝑝𝑉(𝑥, 𝑦) ≤1}.
+If any of these sets is empty, choose an arm 𝑥 with 𝐾̂𝑉(𝑥) = ∅. Otherwise, define
+𝐻𝑉(𝑥) ≔
+min
+𝑦∈𝐾̂𝑉(𝑥)
+𝑟(𝑥, 𝑦),
+and choose
+𝑥∈argmax𝑥′∈𝑋𝐻𝑉(𝑥′).
+2. Play 𝑥 for 𝑛 rounds, or until the horizon if fewer rounds remain. Let 𝑦 be the empirical mean of 
+observed outcomes and 𝑤≔𝑤(𝑥, 𝑦).
+3. If the block has length 𝑛 and 𝑝𝑉(𝑥, 𝑦) > 1, update 𝑉←𝑉+ 𝑤𝑤𝑇. Otherwise leave 𝑉 unchanged.
+Theorem 2 (Informal). For fixed problem parameters, Algorithm 1 with exact planning has expected 
+regret
+𝑅𝑇≤𝑂̃(𝑛+ 𝑇
+√𝑛).
+In particular, choosing 𝑛= ⌈𝑇
+2
+3⌉ gives 𝑅𝑇≤𝑂̃(𝑇
+2
+3).
+Proof sketch. We will show that, with high probability, throughout the 𝑇 time steps, every point in 
+𝐸𝑉 is at most about 1
+√𝑛 away from the true ℒ︀ (Lemma 9). We ignore constants depending on the fixed 
+problem parameters and logarithmic factors in this sketch.
+Now consider an uninformative block, meaning a full block in which we do not update 𝑉. The arm 𝑥 
+that we play during this block is picked by maximizing 𝐻𝑉. Since the block is uninformative, its empirical 
+mean outcome satisfies 𝑤(𝑥, 𝑦) ∈𝐸𝑉. These two facts, together with the distance bound and Lemma 7, 
+imply that the average reward is at least 𝑉⋆ minus about 1
+√𝑛. Thus the block’s regret (the best arm’s 
+guaranteed reward 𝑛𝑉⋆ minus the reward we actually achieved) is at most about 𝑛
+√𝑛= √𝑛.
+On the other hand, for an informative block, the empirical mean can lie outside the ellipsoid, so we 
+only have the trivial regret bound of 𝑂(𝑛).
+Finally, the update rule for 𝑉 ensures that there are at most 𝑂(log 𝑇) informative blocks: each update 
+more than doubles the determinant, whose total growth is bounded by a polynomial in 𝑇 (see the proof 
+of Theorem 9). There are at most 𝑇
+𝑛 uninformative blocks, so the total regret is about 𝑛log 𝑇+ √𝑛𝑇
+𝑛.
+Ignoring logarithmic factors, this bound is minimized by choosing 𝑛= ⌈𝑇
+2
+3⌉, giving an upper bound 
+of 𝑂̃(𝑇
+2
+3) on the regret. ∎
+The precise statement and proof are in Appendix C.
+2.1. Computational tractability
+The matrix updates and the test 𝑝𝑉(𝑥, 𝑦) > 1 can be computed in polynomial time. The main issue is 
+choosing an arm: we need to find an empty guessed feasible set, or maximize the worst-case reward if all 
+these sets are nonempty. We now show how to carry out these steps to finite precision while retaining 
+the 𝑂̃(𝑇
+2
+3) regret bound.
+Exact emptiness tests can be unstable when the two constraints just touch. To allow some numerical 
+slack, the implementation uses
+𝐾̂in
+𝑉(𝑥) ≔{𝑦∈𝐷: 𝑝𝑉(𝑥, 𝑦) ≤4},
+𝐾̂out
+𝑉(𝑥) ≔{𝑦∈𝐷: 𝑝𝑉(𝑥, 𝑦) ≤9}.
+It looks for an arm whose inner set is empty, and otherwise plans against the outer sets. The update 
+rule still uses 𝑝𝑉> 1. Thus we only change the arm-selection rule by constant factors in the ellipsoid’s 
+radius.
+To find an empty inner set, let 𝑑𝑉(𝑥) be the Euclidean distance between 2𝐸𝑉 and {(1, 𝑥, 𝑦) : 𝑦∈𝐷}. 
+Writing 𝑧= (𝑧0, 𝑧𝑋, 𝑧𝐷), the support functions of the ellipsoid and the unit ball give
+𝑑𝑉(𝑥) = max
+‖𝑧‖2≤1[𝑧0 + 𝑧𝑇
+𝑋𝑥−2
+√
+𝑧𝑇𝑉𝑧−‖𝑧𝐷‖2].
+In particular, 𝑑𝑉(𝑥) > 0 certifies that the inner set is empty. Maximize this expression jointly over 𝑥∈
+𝑋 and 𝑧, to additive accuracy 𝜂≔
+1
+10𝑛. If the returned lower bound exceeds 𝜂, play the corresponding 
+arm. Otherwise 𝑑𝑉(𝑥) ≤2𝜂 for every arm. The gap between 2𝐸𝑉 and 3𝐸𝑉 then guarantees that every 
+outer set is nonempty, with enough room to carry out the remaining optimization.
+Define the value used for planning by
+𝐻out
+𝑉(𝑥) ≔
+min
+𝑦∈𝐾̂out
+𝑉(𝑥)
+𝑟(𝑥, 𝑦).
+Convex duality gives
+𝐻out
+𝑉(𝑥) = 𝑎𝑇𝑥+ 𝑐+ max
+‖𝑧‖2≤𝑀[𝑧0 + 𝑧𝑇
+𝑋𝑥−3
+√
+𝑧𝑇𝑉𝑧−‖𝑏+ 𝑧𝐷‖2],
+where 𝑀≔4𝑛(1 + ‖𝑏‖1) suffices. The strict margin obtained above is what lets us bound the dual variable 
+uniformly over all arms.
+Both maximizations reduce to a quadratic program with a fixed number of quadratic constraints. For 
+example, replace the two norms in the last display by nonnegative variables 𝑡, 𝑠 satisfying 𝑧𝑇𝑉𝑧≤𝑡2 
+and ‖𝑏+ 𝑧𝐷‖2
+2 ≤𝑠2. The objective becomes quadratic in (𝑥, 𝑧, 𝑡, 𝑠). All variables have explicit bounds, so 
+we can also add a redundant enclosing ball. Bienstock’s theorem [3], stated in Appendix A, solves these 
+problems to weak additive accuracy in polynomial time. The dual formulas, the bound on 𝑀, and the 
+conversion of a weak solution into a valid arm and a certified lower bound are justified in Appendix C.A.
+The regret argument still works. An empty inner set forces an update, whereas an uninformative 
+block has its empirical mean in the outer set. Points in 3𝐸𝑉 are at most three times as far from ℒ︀ as the 
+earlier bound for 𝐸𝑉. Thus the two types of blocks still cost 𝑂̃(𝑛) and 𝑂̃(√𝑛), respectively. Maximizing 
+𝐻out
+𝑉 to additive accuracy 𝜀 adds at most 𝑇𝜀 to the regret. Taking 𝜀= (𝑇+ 1)−2, and rounding the 
+observations to the precision specified in the appendix, gives a polynomial-time implementation with the 
+same 𝑂̃(𝑇
+2
+3) rate.
+3. A 
+√
+𝑇 learner
+In the previous section, our bound on the regret incurred during a block depended on two things: (a) the 
+set of outcomes considered in 𝐻𝑉 to pick the arm for that block, and (b) where the empirical mean of the 
+actual outcomes lay relative to that set. The learner closes its eyes during the block, and only looks at 
+the end to see whether 𝑤(𝑥, 𝑦) lies inside or outside the ellipsoid 𝐸𝑉. Ideally, if the observations collected 
+so far have an empirical mean 𝑦 with 𝑤(𝑥, 𝑦) already far outside 𝐸𝑉, that should suggest that the 𝑉 
+picked for the block was not appropriate and we need to update it soon. In this section, we construct a 
+learner that monitors an observable quantity that lets us bound the regret accumulated throughout the 
+block, and updates 𝑉 as soon as this quantity becomes large. This is the main insight that leads to a 
+√
+𝑇 regret.
+To do this, we need an arm-selection rule that gives us a bound we can evaluate throughout the block, 
+even when 𝑤(𝑥, 𝑦) lies outside 𝐸𝑉. We obtain this by replacing the hard constraint 𝑝𝑉(𝑥, 𝑦) ≤1 in 𝐻𝑉 
+with a penalty. For a parameter 𝜆> 0, which we will choose later to get a small regret, define
+𝑈𝑉(𝑥) ≔min
+𝑦∈𝐷[𝑟(𝑥, 𝑦) + 𝜆𝑝𝑉(𝑥, 𝑦)].
+We pick the arm 𝑥 by maximizing 𝑈𝑉. By definition, every outcome 𝑦∈𝐷 satisfies 𝑈𝑉(𝑥) −𝑟(𝑥, 𝑦) ≤
+𝜆𝑝𝑉(𝑥, 𝑦). This is what the penalty buys us: even if an outcome is outside our guessed feasible set, we 
+still have a bound on how far its reward can fall below the score. We will show that the chosen arm’s 
+score is at least 𝑉⋆ up to a small error, so controlling this shortfall will also let us control regret.
+To use this bound during a block, we keep 𝑉 fixed and play the same arm 𝑥 repeatedly, but recompute 
+the empirical mean after every observation. Let 𝑦𝑛 be the mean of the first 𝑛 outcomes in the block. 
+Since the reward is affine, the reward accumulated so far is 𝑛𝑟(𝑥, 𝑦𝑛). Applying the inequality above to 
+this mean gives
+𝑛𝑈𝑉(𝑥) −∑
+𝑛
+𝑖=1
+𝑟(𝑥, 𝑦𝑖) ≤𝜆𝑛𝑝𝑉(𝑥, 𝑦𝑛).
+The right-hand side is the observable quantity described in the first paragraph. We can compute it after 
+every observation, and it bounds how far our accumulated reward falls below 𝑛𝑈𝑉(𝑥). We end the block 
+and update 𝑉 the first time this bound reaches 𝜆, or equivalently, when 𝑛𝑝𝑉(𝑥, 𝑦𝑛) ≥1. Before this 
+happens, the accumulated reward falls short of 𝑛𝑈𝑉(𝑥) by less than 𝜆.
+A large empirical penalty can therefore make us update after only a few observations. A small one 
+lets us keep playing the arm for longer. The factor 𝑛 accounts for how long we have been playing: we 
+may need to update even while the empirical mean satisfies the ellipsoid constraint, because its penalty 
+has been multiplied by a large block length. Thus we choose when to update 𝑉 by monitoring this bound 
+throughout the block, rather than waiting for a fixed number of rounds.
+We use the same coordinates and notation as in the previous section, and set 𝜆≔⌈
+√
+𝑇⌉.
+Algorithm 2.
+Initialize 𝑉≔𝐼𝑞. At the start of each block:
+1. Define
+𝑈𝑉(𝑥) ≔min
+𝑦∈𝐷[𝑟(𝑥, 𝑦) + 𝜆𝑝𝑉(𝑥, 𝑦)],
+and choose an arm 𝑥∈𝑋 with 𝑈𝑉(𝑥) ≥max𝑥′∈𝑋𝑈𝑉(𝑥′) −𝜀.
+2. Play 𝑥 repeatedly. After 𝑛 observations in the block, let
+𝑦𝑛≔1
+𝑛∑
+𝑛
+𝑖=1
+𝑦𝑖,
+𝑤𝑛≔𝑤(𝑥, 𝑦𝑛).
+End the block the first time
+𝑛𝑝𝑉(𝑥, 𝑦𝑛) ≥1.
+3. Update 𝑉←𝑉+ 𝑛𝑤𝑛𝑤𝑇
+𝑛 and start a new block. At the horizon, stop even if the current block has 
+not ended.
+We give a block mean weight 𝑛 because averages from longer blocks are more accurate. This is consistent 
+with the earlier update: multiplying the warmup matrix by 𝑛 gives 𝐼𝑞+ ∑𝑗𝑛𝑤𝑗𝑤𝑇
+𝑗. We now allow the 
+block length to vary and use the quadratic form as a penalty.
+For the analysis, fix 𝛿∈(0, 1) and use the quantities 𝐽max, ℎ𝑇, 𝐵𝑇, 𝐺, 𝐶𝑟 defined in Appendix C. We 
+use the concentration bound from Lemma 8 and adapt the proof of Lemma 9 to the new matrix update.
+Theorem 3. Suppose nature follows any compatible adaptive policy. Then Algorithm 2, run in exact 
+arithmetic, satisfies with probability at least 1 −𝛿,
+𝑇𝑉⋆−∑
+𝑇
+𝑡=1
+𝑟(𝑥𝑡, 𝑦𝑡) ≤4𝜆(𝐽max + 1) + 𝐺2𝐵2
+𝑇𝑇
+4𝜆
++ 𝑇𝜀,
+where each planning call maximizes 𝑈𝑉 to within 𝜀. We can implement the algorithm in time polynomial 
+in |ℳ︀| and 𝑇 under the weak finite-precision model. Taking 𝜀= 𝛿= (𝑇+ 1)−2 gives expected regret
+𝑅𝑇≤𝑂̃([𝑞+ (1 + 𝑆−1)
+2‖𝑏‖2
+2𝑞𝑑𝐷]
+√
+𝑇) + 𝑂(𝐶𝑟
+𝑇).
+The learner does not need to know 𝑆 or the analysis quantities 𝐽max, ℎ𝑇, 𝐵𝑇, 𝐺.
+Proof. As before, each completed block at least doubles the determinant. The stopping rule gives
+det(𝑉+ 𝑛𝑤𝑤𝑇) = det(𝑉)(1 + 𝑛𝑝𝑉(𝑥, 𝑦)) ≥2 det(𝑉).
+Since ‖𝑤‖2
+2 ≤3, the final trace is at most 𝑞+ 3𝑇. Thus, if we complete 𝐽 blocks, 2𝐽≤det 𝑉≤(1 + 3𝑇
+𝑞)
+𝑞, 
+so 𝐽≤𝐽max.
+We also need to bound how far 𝑛𝑝𝑉(𝑥, 𝑦𝑛) can jump above one on the last observation. For 𝑛≥2, 
+convexity gives
+𝑛𝑝𝑉(𝑥, 𝑦𝑛) ≤(𝑛−1)𝑝𝑉(𝑥, 𝑦𝑛−1) + 𝑝𝑉(𝑥, 𝑦𝑛) < 1 + 3 = 4.
+The first term is less than one because we did not stop at 𝑛−1. The second is at most three because 
+𝑉⪰𝐼𝑞 and 𝑝𝑉(𝑥, 𝑦𝑛) ≤‖𝑤(𝑥, 𝑦𝑛)‖2
+2 ≤3. If we stop at 𝑛= 1, the bound is at most three. If the horizon 
+ends before the test succeeds, it is less than one. Thus every block satisfies
+𝑛𝑝𝑉(𝑥, 𝑦) ≤4.
+(2)
+We now adapt the proof of Lemma 9. Number the completed blocks 𝑗= 1, …, 𝐽, and let 𝑛𝑗 be the length 
+of block 𝑗. Write 𝑥𝑗 for its arm, 𝑦𝑗 and 𝑚𝑗 for its average observation and conditional mean, and 𝑤𝑗≔
+𝑤(𝑥𝑗, 𝑦𝑗). The matrix now has the form
+𝑉= 𝐼𝑞+ ∑
+𝐽
+𝑗=1
+𝑛𝑗𝑤𝑗𝑤𝑇
+𝑗.
+By Lemma 8, with probability at least 1 −𝛿, the bound (𝑢𝑇𝑤𝑗)
+2 ≤ℎ2
+𝑇
+𝑛𝑗 holds simultaneously for all 
+completed blocks and all 𝑢∈ℒ︀⟂ with ‖𝑢‖2 ≤1. On this event,
+𝑢𝑇𝑉𝑢≤1 + ∑
+𝐽
+𝑗=1
+𝑛𝑗(ℎ2
+𝑇
+𝑛𝑗
+) = 1 + 𝐽ℎ2
+𝑇≤𝐵2
+𝑇.
+This is where the weight 𝑛𝑗 matters: it cancels the 1
+𝑛𝑗 in the squared noise bound. Each block contributes 
+at most ℎ2
+𝑇, however long it is. Applying Cauchy–Schwarz and taking the supremum over these 𝑢 gives
+dist(𝑤, ℒ︀) ≤𝐵𝑇‖𝑤‖𝑉−1.
+(3)
+Next, we compare the score with the true value of an arm. Lemma 7 gives, for every 𝑥∈𝑋 and 𝑦∈𝐷,
+𝑣⋆(𝑥) ≤𝑟(𝑥, 𝑦) + 𝐺𝐵𝑇√𝑝𝑉(𝑥, 𝑦).
+The error bound grows with √𝑝𝑉(𝑥, 𝑦), while the penalty grows with 𝑝𝑉(𝑥, 𝑦). Writing 𝑢≔√𝑝𝑉(𝑥, 𝑦) 
+and completing the square,
+𝑟(𝑥, 𝑦) + 𝜆𝑝𝑉(𝑥, 𝑦) ≥𝑣⋆(𝑥) + 𝜆𝑢2 −𝐺𝐵𝑇𝑢≥𝑣⋆(𝑥) −𝐺2𝐵2
+𝑇
+4𝜆
+.
+Taking the minimum over 𝑦∈𝐷, we see that the score underestimates the true value by at most 𝜁𝑇:
+𝑈𝑉(𝑥) ≥𝑣⋆(𝑥) −𝜁𝑇,
+𝜁𝑇≔𝐺2𝐵2
+𝑇
+4𝜆
+.
+(4)
+We choose an arm whose score is within 𝜀 of the highest score, so 𝑈𝑉(𝑥) ≥𝑉⋆−𝜁𝑇−𝜀. The block’s 
+empirical mean is in 𝐷, and the reward is affine. Its regret is therefore at most
+𝑛(𝑉⋆−𝑟(𝑥, 𝑦)) ≤𝜆𝑛𝑝𝑉(𝑥, 𝑦) + 𝑛(𝜁𝑇+ 𝜀) ≤4𝜆+ 𝑛(𝜁𝑇+ 𝜀).
+Adding this over at most 𝐽max + 1 blocks proves the high-probability bound. If the noise bound fails, 
+regret is still at most 𝐶𝑟𝑇, so taking expectations adds at most 𝐶𝑟𝑇𝛿.
+The difference from the warmup is that we now pay at most 4𝜆 in penalty per block, no matter how 
+long the block lasts. We also pay for the score underestimating the true value, but this costs only 𝜁𝑇 per 
+round, which decreases as 1
+𝜆. The two terms to balance are therefore 𝜆𝐽max and 𝑇
+𝜆, giving the square-
+root rate.
+We still need to implement the planning step. First, rewrite the penalty as
+𝜆𝑤𝑇𝑉−1𝑤= max
+𝑧[𝑧𝑇𝑤−𝑧𝑇𝑉𝑧
+4𝜆].
+The maximizer is 𝑧= 2𝜆𝑉−1𝑤. Since 𝑉⪰𝐼𝑞 and ‖𝑤‖2 ≤
+√
+3, we can restrict the maximum to the ball 
+‖𝑧‖2 ≤4𝜆 for every 𝑥∈𝑋 and 𝑦∈𝐷. For fixed 𝑥, the expression is affine in 𝑦 and concave in 𝑧, and both 
+domains are compact and convex. We can therefore exchange the minimum and maximum. Writing 𝑧=
+(𝑧0, 𝑧𝑋, 𝑧𝐷) gives
+𝑈𝑉(𝑥) = 𝑎𝑇𝑥+ 𝑐+ max
+‖𝑧‖2≤4𝜆[𝑧0 + 𝑧𝑇
+𝑋𝑥−‖𝑏+ 𝑧𝐷‖2 −𝑧𝑇𝑉𝑧
+4𝜆].
+(5)
+We can now maximize 𝑈𝑉 by solving the QCQP
+max
+𝑥,𝑧,𝑠
+𝑎𝑇𝑥+ 𝑐+ 𝑧0 + 𝑧𝑇
+𝑋𝑥−𝑠−𝑧𝑇𝑉𝑧
+4𝜆
+subject to
+‖𝑥‖2
+2 ≤1,
+‖𝑧‖2
+2 ≤16𝜆2,
+‖𝑏+ 𝑧𝐷‖2
+2 ≤𝑠2,
+0 ≤𝑠≤𝐻,
+where 𝐻≔1 + ‖𝑏‖1 + 4𝜆 is rational. We also add the redundant constraint
+‖𝑥‖2
+2 + ‖𝑧‖2
+2
+16𝜆2 + 𝑠2
+𝐻2 ≤3.
+This gives six quadratic inequalities. The last has a positive-definite quadratic part in all variables, so 
+we can apply Bienstock’s weak-optimization theorem [3] as described in Section A.
+The solver may return a point that slightly violates the constraints. We can make its output (𝑥̂, 𝑧̂, 𝑠̂) 
+feasible by projecting 𝑥̂ and 𝑧̂ onto their respective balls. Call the resulting points 𝑥′ and 𝑧′, and put 
+𝑠′ ≔‖𝑏+ 𝑧′
+𝐷‖2. If each constraint violation is at most 𝜏≤1, then
+‖𝑥′ −𝑥̂‖2 ≤√𝜏,
+‖𝑧′ −𝑧̂‖2 ≤√𝜏,
+𝑠′ −𝑠̂ ≤4√𝜏.
+The last bound only controls an increase, but this is all we need: the objective has coefficient −1 on 
+𝑠. Since ‖𝑉‖op ≤1 + 3𝑇, the repair decreases the objective by at most 𝐾𝑇
+√𝜏, where we can take the 
+rational bound
+𝐾𝑇≔20(1 + ‖𝑎‖1 + 𝜆+ 𝑇).
+Choose 𝜏≤min(1
+4, (
+𝜀
+4(𝐾𝑇+1))
+2). Including the solver’s objective error, the objective at the repaired point 
+is then within 𝜀
+2 of the optimum. By Equation 5, the same lower bound holds for 𝑈𝑉(𝑥′). The number of 
+precision bits we need is polynomial in |ℳ︀|, log(𝑇+ 1), and log(1
+𝜀), even when the reward coefficients 
+are large.
+Finally, we round the played arms and observed outcomes to common rational grids inside their unit 
+balls. Truncating each coordinate toward zero keeps these points in the balls. The function 𝑈𝑉 is Lipschitz 
+in 𝑥 with constant at most ‖𝑎‖2 + 2
+√
+3𝜆, so we choose the arm grid finely enough that rounding costs at 
+most 𝜀
+2. For outcomes, keep the Euclidean error at most 𝜏𝑦≔(𝑇+ 1)−4 and use the rounded observations 
+in the block averages and updates. Their interval averages still satisfy Equation 6 after replacing ℎ2
+𝑇 by 
+2ℎ2
+𝑇+ 2𝑇𝜏2
+𝑦. The bounds on the determinant and the penalty per block stay the same. Replacing actual 
+rewards by rewards at the rounded observations changes the cumulative reward by at most ‖𝑏‖2𝑇𝜏𝑦. We 
+therefore obtain the same expected-regret rate, with universal changes to the displayed high-probability 
+constants.
+The stored matrices are rational, with eigenvalues between 1 and 1 + 3𝑇. The common grids keep 
+bit lengths polynomial when we form block averages, update and invert the matrices, and compare the 
+stopping quantity with its threshold exactly. There are at most 𝐽max + 1 planning calls, and the QCQP 
+reduction above makes each call run in polynomial time. This proves the computational claim. ∎
+4. NP-hardness
+In this section we show that several natural variations of the linear imprecise bandits problem are NP-
+hard. Thus in some sense, the problem is the hardest problem that’s still tractable.
+We first show that efficient planning can be reduced to efficient learning. Most proofs below show that 
+planning is already NP-hard. Due to the reduction from planning to learning, this shows that learning 
+is also NP-hard.
+Lemma 1. Fix a linear imprecise bandit instance ℳ︀. Suppose that, for every hypothesis 𝑧∈𝑍, every 
+arm 𝑥, and every 𝜂∈(0, 1), one can compute an outcome 𝑦𝑧,𝜂(𝑥) satisfying
+𝑦𝑧,𝜂(𝑥) ∈𝐾𝑧(𝑥) and 0 ≤𝑟(𝑥, 𝑦𝑧,𝜂(𝑥)) −𝑣𝑧(𝑥) ≤𝜂 in time polynomial in |ℳ︀| and 1
+𝜂. Suppose also that, 
+for some fixed 𝛽> 0 and polynomial 𝑃, a polynomial-time learner guarantees 𝑅𝑇≤𝑃(|ℳ︀|)𝑇1−𝛽
+Then, for every 𝑧∈𝑍 and every 𝜀∈(0, 1), one can compute in time poly(|ℳ︀|, 1
+𝜀) an arm 𝑥̂ such that 
+with probability at least 2/3, |𝑉𝑧−𝑣𝑧(𝑥̂)| ≤𝜀.
+Proof. Fix 𝑧∈𝑍 and 𝜀∈(0, 1), set 𝜂≔𝜀
+6, and simulate the learner on ℳ︀ for
+𝑇≔
+⌈
+max
+(
+1, (6𝑃(|ℳ︀|)
+𝜀
+)
+1
+𝛽
+)⌉
+rounds. Whenever the learner plays 𝑥𝑡, let nature use the point mass at 𝑦𝑧,𝜂(𝑥𝑡). This is allowed because 
+𝑦𝑧,𝜂(𝑥𝑡) ∈𝐾𝑧(𝑥𝑡). Record the rewards and choose the round with the largest reward:
+𝑣̃𝑡≔𝑟(𝑥𝑡, 𝑦𝑧,𝜂(𝑥𝑡)),
+𝑡̂ ∈argmax𝑡=1,…,𝑇𝑣̃𝑡,
+and return 𝑥̂ ≔𝑥𝑡̂.
+The approximation guarantee gives 𝑣𝑧(𝑥̂) ≥𝑣̃𝑡̂ −𝜂. Our choice of 𝑡̂ therefore gives
+0 ≤𝑉𝑧−𝑣𝑧(𝑥̂) ≤𝑉𝑧−𝑣̃𝑡̂ + 𝜂≤𝑉𝑧−1
+𝑇∑
+𝑇
+𝑡=1
+𝑣̃𝑡+ 𝜂.
+Taking expectations and using the definition of 𝑅𝑇 for this nature policy,
+𝔼[𝑉𝑧−𝑣𝑧(𝑥̂)] ≤𝑅𝑇
+𝑇+ 𝜂≤𝑃(|ℳ︀|)𝑇−𝛽+ 𝜂≤𝜀
+3.
+The gap 𝑉𝑧−𝑣𝑧(𝑥̂) is nonnegative, so Markov’s inequality shows that it exceeds 𝜀 with probability at 
+most 1
+3. The horizon and the simulation time are polynomial in |ℳ︀| and 1
+𝜀 because 𝛽 is fixed. ∎
+Below we show that the “smoothness” of 𝑋 and 𝐷 are crucial for efficiency. It is easy to land in the 
+NP-hard territory if we make either 𝑋 or 𝐷 a convex shape with edges and corners.
+4.1. D = simplex, X = ball
+First we show that if, instead of a Euclidean ball, we allow 𝐷 to be a simplex, then even known hypothesis 
+planning becomes NP-hard. Then, using the planning to learning reduction (Lemma 1), we conclude that 
+learning is NP-hard.
+Theorem 4. Consider a variation of the linear imprecise bandits problem where 𝐷 is allowed to be a 
+simplex. If, for some fixed 𝛽> 0, a randomized polynomial-time learner guarantees 𝐸[𝑅𝑇] ≤𝑃(|ℳ︀|)𝑇1−𝛽 
+for every instance ℳ︀, then NP ⊆BPP. If a deterministic learner achieves the same regret guarantee, 
+then P = NP.
+Proof. We reduce from MAX-CUT, as defined in Appendix B. Let (𝐺, 𝑘) be an instance, where 𝐺=
+(𝑉, 𝐸) has 𝑛 vertices and 𝑚≥1 edges and 𝑘∈{1, …, 𝑚}. Orient the edges arbitrarily and let 𝐵𝐺∈ℝ𝑚×𝑛 
+be the resulting edge-vertex incidence matrix, i.e., if 𝑒= {𝑖, 𝑗} is oriented from 𝑗 to 𝑖, then row 𝑒 has 1 
+in column 𝑖, −1 in column 𝑗, and zeros elsewhere. Put
+𝑋≔{𝑥∈ℝ𝑚: ‖𝑥‖2 ≤1},
+𝑍≔[1, 2].
+Write an outcome as 𝑦= (𝑝, 𝑞, 𝑠) ∈ℝ𝑛× ℝ𝑛× ℝ and take
+𝐷≔{(𝑝, 𝑞, 𝑠) : 𝑝𝑖≥0, 𝑞𝑖≥0 for 𝑖= 1, …, 𝑛, 𝑠≥0, ∑
+𝑛
+𝑖=1
+(𝑝𝑖+ 𝑞𝑖) + 𝑠= 1}.
+Let 𝛾> 0 be a constant to be chosen later. For every 𝑧∈𝑍, let
+𝐾𝑧(𝑥) ≔{(𝑝, 𝑞, 𝑠) ∈𝐷: 𝑝−𝑞= 𝛾𝐵𝑇
+𝐺𝑥}.
+This is of the form in Equation 1, where
+𝐶𝑧(𝑝, 𝑞, 𝑠) ≔𝑝−𝑞,
+𝐵𝑧𝑥≔−𝛾𝐵𝑇
+𝐺𝑥,
+𝑑𝑧≔0.
+Let the reward be
+𝑟(𝑥, (𝑝, 𝑞, 𝑠)) ≔∑
+𝑛
+𝑖=1
+(𝑝𝑖+ 𝑞𝑖).
+The maps 𝑧↦𝐵𝑧, 𝑧↦𝐶𝑧, and 𝑧↦𝑑𝑧 are constant, hence affine, as required, and the reward lies in 
+[0, 1] on 𝐷.
+In particular, 𝐾𝑧(𝑥) is independent of 𝑧.
+Next we show that, for every 𝑧∈𝑍, (𝐺, 𝑘) is a yes-instance of MAX-CUT if and only if the constructed 
+imprecise bandit instance has an arm 𝑥∈𝑋 satisfying
+𝑣𝑧(𝑥) ≥2𝛾
+√
+𝑘.
+A vector 𝜎∈{−1, 1}𝑛 represents a partition of the vertices of 𝐺 into the two sides {𝑖: 𝜎𝑖= 1} and {𝑖:
+𝜎𝑖= −1}. Let 𝑐𝐺(𝜎) denote the number of edges between these sides.
+Lemma 2. For every 𝜎∈{−1, 1}𝑛,
+‖𝐵𝐺𝜎‖2 = 2√𝑐𝐺(𝜎).
+Proof. Fix 𝜎∈{−1, 1}𝑛. For every edge 𝑒= {𝑖, 𝑗},
+(𝐵𝐺𝜎)2
+𝑒= (𝜎𝑖−𝜎𝑗)
+2 = {4 if 𝜎𝑖≠𝜎𝑗
+0 otherwise .
+Summing over 𝑒∈𝐸 and taking the square root proves the identity. ∎
+For the forward implication, suppose (𝐺, 𝑘) is a yes-instance. Choose 𝜎 such that 𝑐𝐺(𝜎) ≥𝑘, and 
+define the arm
+𝑥𝜎≔𝐵𝐺
+𝜎
+‖𝐵𝐺𝜎‖2
+.
+Since 𝑐𝐺(𝜎) ≥𝑘≥1, Lemma 2 shows that 𝑥𝜎 is well-defined. Moreover, we get the following inequality.
+Lemma 3. For every 𝜎∈{−1, 1}𝑛 such that 𝐵𝐺𝜎≠0, we have ‖𝐵𝑇
+𝐺𝑥𝜎‖1 ≥‖𝐵𝐺𝜎‖2. Moreover, equality 
+holds when 𝜎 maximizes ‖𝐵𝐺𝜎‖2 over {−1, 1}𝑛; in particular, equality holds for at least one 𝜎.
+Proof. Choosing the sign of each coordinate gives
+‖𝐵𝑇
+𝐺𝑥𝜎‖1 =
+max
+𝜏∈{−1,1}𝑛𝜏𝑇𝐵𝑇
+𝐺𝑥𝜎=
+max
+𝜏∈{−1,1}𝑛𝑥𝑇
+𝜎𝐵𝐺𝜏.
+Taking 𝜏= 𝜎 yields ‖𝐵𝑇
+𝐺𝑥𝜎‖1 ≥𝑥𝑇
+𝜎𝐵𝐺𝜎= ‖𝐵𝐺𝜎‖2. Now let 𝜎⋆ maximize ‖𝐵𝐺𝜎‖2. Since 𝑚≥1, this 
+maximum is positive, so 𝑥𝜎⋆ is well-defined. For every 𝜏∈{−1, 1}𝑛, Cauchy–Schwarz gives
+𝑥𝑇
+𝜎⋆𝐵𝐺𝜏≤‖𝑥𝜎⋆‖2‖𝐵𝐺𝜏‖2 ≤‖𝐵𝐺𝜎⋆‖2.
+Taking the maximum over 𝜏 gives the reverse inequality, proving equality. ∎
+The lemma above gives us a way to link properties of cuts with properties of arms. The missing 
+ingredient is to show that the value of an arm has something to do with ‖𝐵𝑇
+𝐺𝑥‖1. We show this in the 
+next two lemmas.
+By construction, 𝑥𝜎∈𝑋. Since 𝐾𝑧(𝑥) is independent of 𝑧, write 𝐾(𝑥) ≔𝐾𝑧(𝑥) = {(𝑝, 𝑞, 𝑠) ∈𝐷: 𝑝−
+𝑞= 𝛾𝐵𝑇
+𝐺𝑥}.
+Lemma 4. For every 𝑥∈𝑋, the vector 𝑡≔𝛾𝐵𝑇
+𝐺𝑥 satisfies ‖𝑡‖1 ≤𝛾
+√
+2𝑚𝑛. Therefore, if 𝛾≤
+1
+√
+2𝑚𝑛, then 
+‖𝑡‖1 ≤1.
+Proof. Each edge coordinate 𝑥𝑒 contributes 𝑥𝑒 and −𝑥𝑒 to two coordinates of 𝐵𝑇
+𝐺𝑥 before contributions 
+from different edges are added. The triangle inequality therefore gives
+‖𝑡‖1 = 𝛾‖𝐵𝑇
+𝐺𝑥‖1 ≤2𝛾‖𝑥‖1 ≤2𝛾√𝑚‖𝑥‖2 ≤2𝛾√𝑚≤𝛾
+√
+2𝑚𝑛,
+where the second inequality is Cauchy–Schwarz, the third uses ‖𝑥‖2 ≤1, and the last uses 𝑛≥2, which 
+follows from 𝑚≥1. ∎
+Lemma 5. Suppose 𝛾≤
+1
+√
+2𝑚𝑛. For each arm 𝑥∈𝑋, set 𝑡≔𝛾𝐵𝑇
+𝐺𝑥. Then 𝐾(𝑥) is nonempty, and for 
+all 𝑧, 𝑣𝑧(𝑥) = min𝑦∈𝐾(𝑥) 𝑟(𝑥, 𝑦) = ‖𝑡‖1 = 𝛾‖𝐵𝑇
+𝐺𝑥‖1. Moreover, the minimum is attained at the outcome 
+𝑦= (𝑝, 𝑞, 𝑠) given by 𝑝𝑖≔max(𝑡𝑖, 0), 𝑞𝑖≔max(−𝑡𝑖, 0), and 𝑠≔1 −‖𝑡‖1.
+Proof. Fix 𝑥∈𝑋 and set 𝑡≔𝛾𝐵𝑇
+𝐺𝑥. The preceding lemma gives ‖𝑡‖1 ≤1. For the outcome in the 
+statement, 𝑝, 𝑞, 𝑠 are nonnegative, 𝑝−𝑞= 𝑡, and
+∑
+𝑛
+𝑖=1
+(𝑝𝑖+ 𝑞𝑖) + 𝑠= ‖𝑡‖1 + 1 −‖𝑡‖1 = 1.
+Thus this outcome belongs to 𝐾(𝑥). For any (𝑝, 𝑞, 𝑠) ∈𝐾(𝑥), nonnegativity gives 𝑝𝑖+ 𝑞𝑖≥|𝑝𝑖−𝑞𝑖| =
+|𝑡𝑖| for every 𝑖, and hence 𝑟(𝑥, (𝑝, 𝑞, 𝑠)) ≥‖𝑡‖1. The outcome in the statement attains equality in every 
+coordinate, so its reward is the minimum. ∎
+Note that this also shows that given an arm 𝑥, we can compute 𝑣𝑧(𝑥) efficiently, which is one of the 
+prerequisites for the application of Lemma 1.
+For the final step, apply Lemma 5, Lemma 3, and Lemma 2 to obtain
+𝑣𝑧(𝑥𝜎) = 𝛾‖𝐵𝑇
+𝐺𝑥𝜎‖1 ≥𝛾‖𝐵𝐺𝜎‖2 = 2𝛾√𝑐𝐺(𝜎) ≥2𝛾
+√
+𝑘.
+For the reverse implication, suppose there is an arm 𝑥∈𝑋 satisfying 𝑣𝑧(𝑥) ≥2𝛾
+√
+𝑘. By ℓ1–ℓ∞ duality, 
+choose 𝜎∈{−1, 1}𝑛 such that
+‖𝐵𝑇
+𝐺𝑥‖1 = 𝜎𝑇𝐵𝑇
+𝐺𝑥.
+Using Lemma 5 and Lemma 2,
+2𝛾
+√
+𝑘≤𝑣𝑧(𝑥) = 𝛾‖𝐵𝑇
+𝐺𝑥‖1 = 𝛾𝑥𝑇𝐵𝐺𝜎≤𝛾‖𝑥‖2‖𝐵𝐺𝜎‖2 ≤2𝛾√𝑐𝐺(𝜎).
+Since 𝛾> 0, this implies 𝑐𝐺(𝜎) ≥𝑘, so (𝐺, 𝑘) is a yes-instance. This proves the claimed equivalence.
+To apply Lemma 1, we need to show that approximate planning is hard. Although the lemma returns 
+only an approximate optimizer, this is sufficient because the maximum cut size 𝑀𝐺 is an integer between 
+0 and 𝑚, and the corresponding planning values are 𝑉𝑧= 2𝛾√𝑀𝐺. Taking 𝛾≔
+1
+2𝑚𝑛 ensures that every 
+𝐾𝑧(𝑥) is nonempty and that consecutive planning values are separated by at least 
+1
+2𝑚2𝑛. Thus an additive 
+approximation with error 𝜀≔
+1
+6𝑚2𝑛 distinguishes 𝑀𝐺≥𝑘 from 𝑀𝐺≤𝑘−1.
+By Lemma 5, we can compute both the value of the returned arm and a minimizing outcome in 
+polynomial time. We can therefore decide MAX-CUT by comparing the returned arm’s value with the 
+midpoint between 2𝛾
+√
+𝑘−1 and 2𝛾
+√
+𝑘, computed to sufficient precision. Hence Lemma 1 implies that a 
+randomized polynomial-time learner would place MAX-CUT in BPP, and therefore that NP ⊆BPP. A 
+deterministic learner would instead imply P = NP. ∎
+4.2. A Euclidean outcome ball and a polytope of arms
+We now keep the Euclidean outcome ball and the additive bilinear constraint, but allow the arm set to 
+be a polytope given by rational inequalities. Planning is NP-hard even when the hypothesis is known 
+and the arm set is the cube. The cube has only 2𝑛 defining inequalities, but 2𝑛 vertices.
+Theorem 5. Suppose we allow 𝑋 to be a polytope in the linear imprecise bandits problem. If, for some 
+fixed 𝛽> 0 and polynomial 𝑃, a randomized polynomial-time learner guarantees 𝑅𝑇≤𝑃(|ℳ︀|)𝑇1−𝛽 for 
+every instance ℳ︀, then NP ⊆BPP. If a deterministic learner achieves the same regret guarantee, then 
+P = NP.
+Proof. We again reduce from MAX-CUT. Let 𝐺= (𝑉, 𝐸) have 𝑛 vertices and 𝑚≥1 edges. Orient the 
+edges arbitrarily and let 𝐵𝐺∈ℝ𝑚×𝑛 be the edge-vertex incidence matrix, so that
+(𝐵𝐺𝑥)𝑒= 𝑥𝑖−𝑥𝑗
+for an edge 𝑒= {𝑖, 𝑗}. Put
+𝜀≔
+1
+4𝑚,
+𝑋≔[−1, 1]𝑛,
+𝑍≔[1, 2].
+Write outcomes as 𝑦= (𝑢, 𝑠) ∈ℝ𝑚× ℝ and take
+𝐷≔{(𝑢, 𝑠) : ‖𝑢‖2
+2 + 𝑠2 ≤1}.
+With 𝑊= ℝ𝑚, define
+𝐹0(𝑥, 𝑧) ≔−𝜀𝑧𝐵𝐺𝑥,
+𝐹1((𝑢, 𝑠), 𝑧) ≔𝑧𝑢,
+The constraint is 𝐹0(𝑥, 𝑧) + 𝐹1((𝑢, 𝑠), 𝑧) = 0, and the reward is 𝑟(𝑥, (𝑢, 𝑠)) ≔𝑠. Both constraint maps are 
+bilinear and the reward is linear. Since 𝑧≠0, the constraint is equivalent to
+𝑢= 𝜀𝐵𝐺𝑥,
+so the feasible outcomes do not depend on 𝑧. Every 𝑥∈𝑋 satisfies
+‖𝐵𝐺𝑥‖2
+2 =
+∑
+{𝑖,𝑗}∈𝐸
+(𝑥𝑖−𝑥𝑗)
+2 ≤4𝑚,
+so
+‖𝜀𝐵𝐺𝑥‖2
+2 ≤
+1
+4𝑚≤1
+4.
+Thus the feasible outcome set 𝐾𝑧(𝑥) is nonempty for every 𝑥∈𝑋 and 𝑧∈𝑍. Minimizing 𝑠 over this 
+set gives
+𝑣𝑧(𝑥) = −√1 −𝜀2‖𝐵𝐺𝑥‖2
+2.
+Set 𝑞(𝑥) ≔‖𝐵𝐺𝑥‖2
+2. With every coordinate except 𝑥𝑖 fixed, 𝑞(𝑥) is a convex quadratic in 𝑥𝑖, so replacing 
+𝑥𝑖 by one of the endpoints of [−1, 1] does not decrease 𝑞. Applying this replacement one coordinate at a 
+time produces a sign vector 𝜎∈{−1, 1}𝑛 with 𝑞(𝜎) ≥𝑞(𝑥). At a sign vector,
+𝑞(𝜎) =
+∑
+{𝑖,𝑗}∈𝐸
+(𝜎𝑖−𝜎𝑗)
+2 = 4 |cut (𝜎)|.
+Consequently,
+max
+𝑥∈[−1,1]𝑛𝑞(𝑥) = 4 MaxCut (𝐺).
+Since 𝑣𝑧(𝑥) is strictly increasing in 𝑞(𝑥), if the maximum cut has size 𝑘, the optimal robust value is
+𝑉𝑘= −√1 −
+𝑘
+4𝑚2 .
+For 𝑘= 1, …, 𝑚, consecutive possible values satisfy
+𝑉𝑘−𝑉𝑘−1 =
+1
+4𝑚2
+√1 −𝑘−1
+4𝑚2 + √1 −
+𝑘
+4𝑚2
+≥
+1
+8𝑚2 .
+Hence an estimate of 𝑉𝑧 within
+Δ ≔
+1
+32𝑚2
+identifies 𝑘 after we compute the 𝑚+ 1 candidate values to polynomially many bits. Thus approximating 
+the optimal robust value is NP-hard.
+We now show how to use the learner to find a maximum cut. To simulate the learner, we need rational 
+outcomes in 𝐾𝑧(𝑥). The outcome attaining 𝑣𝑧(𝑥) need not be rational, so we compute a rational feasible 
+approximation. Suppose the learner in the theorem exists and set
+𝜂≔Δ
+6 ,
+𝑇≔
+⌈
+(6𝑃(|ℳ︀|)
+Δ
+)
+1
+𝛽
+⌉
+.
+In the weak bit model the learner outputs rationally encoded arms. For each played arm 𝑥𝑡, we can use 
+binary search to compute a rational 𝑎𝑡 in polynomial time such that
+0 ≤√1 −𝜀2𝑞(𝑥𝑡) −𝑎𝑡≤𝜂,
+𝑎2
+𝑡≤1 −𝜀2𝑞(𝑥𝑡).
+Let nature return the point
+𝑦𝑡≔(𝜀𝐵𝐺𝑥𝑡, −𝑎𝑡).
+This is a rational point of 𝐾𝑧(𝑥𝑡), and its reward satisfies
+0 ≤𝑟(𝑥𝑡, 𝑦𝑡) −𝑣𝑧(𝑥𝑡) ≤𝜂.
+Writing 𝑉𝑧= 𝑉𝑘 and
+𝑆𝑇≔∑
+𝑇
+𝑡=1
+(𝑉𝑧−𝑣𝑧(𝑥𝑡)),
+the definition of expected regret gives
+𝐸[𝑆𝑇] ≤𝑅𝑇+ 𝑇𝜂.
+Applying the learner’s regret guarantee,
+𝐸[𝑆𝑇] ≤𝑃(|ℳ︀|)𝑇1−𝛽+ 𝑇𝜂.
+If the learner never plays a Δ-optimal arm, then 𝑆𝑇> Δ𝑇. Markov’s inequality and the choices of 𝑇 and 
+𝜂 imply
+Pr(no Δ -optimal arm is played) ≤𝑃(|ℳ︀|)
+Δ𝑇𝛽
++ 𝜂
+Δ ≤1
+3.
+Select a played arm maximizing the rational quantity 𝑞(𝑥𝑡) and round its coordinates to endpoints 
+without decreasing 𝑞. With probability at least 2
+3, the resulting sign vector has robust value at least 𝑉𝑘−
+Δ. A cut of size at most 𝑘−1 would instead have robust value at most 𝑉𝑘−1 ≤𝑉𝑘−
+1
+8𝑚2 < 𝑉𝑘−Δ. The 
+rounded sign vector therefore encodes a maximum cut. The horizon, the square-root approximations, 
+and the rounding all have polynomial bit complexity, proving NP ⊆BPP. If the learner is deterministic, 
+the same argument succeeds with certainty and gives P = NP.
+It remains to verify non-tangency. For a fixed 𝑥, put
+𝑎≔‖𝜀𝐵𝐺𝑥‖2,
+𝜌≔
+√
+1 −𝑎2 ≥
+√
+3
+2 .
+The outcomes satisfying the affine constraint form the line 𝐿𝑧(𝑥), whose intersection with 𝐷 is 𝐾𝑧(𝑥):
+𝐿𝑧(𝑥) = {(𝜀𝐵𝐺𝑥, 𝑠) : 𝑠∈ℝ},
+𝐾𝑧(𝑥) = {(𝜀𝐵𝐺𝑥, 𝑠) : |𝑠| ≤𝜌}.
+If 𝑝= (𝜀𝐵𝐺𝑥, 𝑠) ∈𝐿𝑧(𝑥) lies outside 𝐷 and 𝑡≔|𝑠| > 𝜌, then
+dist(𝑝, 𝐾𝑧(𝑥)) = 𝑡−𝜌,
+dist(𝑝, 𝐷) = √𝑎2 + 𝑡2 −1.
+Factoring the second expression gives
+dist(𝑝, 𝐷)
+dist(𝑝, 𝐾𝑧(𝑥)) =
+𝑡+ 𝜌
+√
+𝑎2 + 𝑡2 + 1
+≥𝜌≥
+√
+3
+2 .
+To check the first inequality, multiply by the positive denominator, subtract 𝜌 from both sides, and square. 
+This gives the equivalent inequality (1 −𝜌2)(𝑡2 −𝜌2) ≥0. Thus the uniform non-tangency condition 
+holds with 𝑆=
+√
+3
+2 . ∎
+4.3. Trilinear constraints with Euclidean arm and outcome balls
+We keep the Euclidean arm and outcome balls, but allow the coefficients in the equations for 𝑦 to depend 
+on 𝑥. We add an outcome coordinate that is fixed to one, so that the constraints are linear in the full 
+outcome vector with no constant term. Let 𝑌 be the ambient outcome space, let 𝑊 be the constraint 
+space, and let
+𝐹: ℝ𝑑𝑋× ℝ𝑑𝑍× 𝑌→𝑊
+be linear in each argument separately. For each 𝑥 and 𝑧, write 𝐹𝑥,𝑧(𝑦) ≔𝐹(𝑥, 𝑧, 𝑦) and define
+𝐿𝑧(𝑥) ≔ker 𝐹𝑥,𝑧,
+𝐾𝑧(𝑥) ≔𝐿𝑧(𝑥) ∩𝐷,
+𝑣𝑧(𝑥) ≔
+min
+𝑦∈𝐾𝑧(𝑥) 𝑟(𝑥, 𝑦),
+𝑉𝑧≔max
+𝑥∈𝑋𝑣𝑧(𝑥).
+Here 𝐷 is a Euclidean ball in the hyperplane where the added coordinate equals one. We will show that 
+planning is now NP-hard even when 𝑧 is known.
+Let 𝐺= (𝑉, 𝐸) be an undirected graph with 𝑉= {1, …, 𝑛} and 𝐸= {𝑒1, …, 𝑒𝑚}, where 𝑚≥1 and 
+𝑒ℓ= {𝑖ℓ, 𝑗ℓ}. Put 𝑑≔𝑛+ 𝑚. For 𝑞= (𝑢, 𝑤) ∈ℝ𝑛× ℝ𝑚, define the homogeneous cubic
+𝑝𝐺(𝑞) ≔∑
+𝑚
+ℓ=1
+𝑢𝑖ℓ𝑢𝑗ℓ𝑤ℓ.
+Lemma 6. If 𝜔(𝐺) is the clique number of 𝐺, then
+max
+‖𝑞‖2=1 𝑝𝐺(𝑞)2 = 2
+27(1 −
+1
+𝜔(𝐺)).
+Proof. Write 𝜌≔‖𝑢‖2 and 𝜎≔‖𝑤‖2. For fixed 𝑢 and 𝜎, Cauchy–Schwarz gives
+max
+‖𝑤‖2=𝜎𝑝𝐺(𝑢, 𝑤) = 𝜎√∑
+𝑚
+ℓ=1
+𝑢2
+𝑖ℓ𝑢2
+𝑗ℓ.
+Write 𝑢= 𝜌𝑠 with ‖𝑠‖2 = 1 and set 𝜋𝑖≔𝑠2
+𝑖. The Motzkin–Straus theorem [4] gives
+max
+‖𝑠‖2=1 ∑
+{𝑖,𝑗}∈𝐸
+𝑠2
+𝑖𝑠2
+𝑗=
+max
+𝜋𝑖≥0, ∑𝑖𝜋𝑖=1 ∑
+{𝑖,𝑗}∈𝐸
+𝜋𝑖𝜋𝑗= 1
+2(1 −
+1
+𝜔(𝐺)).
+Finally,
+max
+𝜌2+𝜎2=1,𝜌≥0,𝜎≥0 𝜌2𝜎=
+2
+3
+√
+3
+.
+Substituting these bounds into the first display and squaring proves the claim. Since 𝑝𝐺 is odd, its 
+maximum equals its maximum absolute value. ∎
+Theorem 6. There is a polynomial-time reduction from CLIQUE to imprecise-bandit instances with 
+rational coefficients for which 𝑋 is a full-dimensional Euclidean ball, 𝐷 is a Euclidean ball in its affine 
+hull, 𝑍= [1, 2] is a one-dimensional Euclidean ball, the reward is linear, and 𝐹 is trilinear. Every set 
+𝐾𝑧(𝑥) is a singleton independent of 𝑧. The non-tangency inequality holds uniformly for every point in 
+𝐿𝑧(𝑥) outside 𝐷, with a constant 𝑆> 0.88.
+For these instances, approximating 𝑉𝑧 to inverse-polynomial additive accuracy is NP-hard even when 𝑧 
+is known. Thus, if, for some fixed 𝛽> 0, a randomized polynomial-time learner guaranteed
+𝑅𝑇≤𝑃(|ℳ︀|)𝑇1−𝛽
+on every such instance for a polynomial 𝑃, then NP ⊆BPP. For a deterministic learner, the same 
+conclusion would be P = NP.
+Proof. We may restrict CLIQUE to instances with 𝑚≥1 and 3 ≤𝑘≤𝑛, since we can decide the other 
+cases in polynomial time. Given (𝐺, 𝑘), use the cubic 𝑝𝐺 above and write an arm as 𝑥= (𝑥0, 𝜉) ∈ℝ×
+ℝ𝑑. Take
+𝑋≔{(𝑥0, 𝜉) : (𝑥0 −5
+3)
+2
++ ‖𝜉‖2
+2 ≤1}.
+This is a full-dimensional Euclidean ball and 𝑥0 ≥2
+3 throughout 𝑋. The ratio 𝑞≔
+𝜉
+𝑥0 ranges over exactly 
+the ball ‖𝑞‖2 ≤3
+4. Indeed,
+1 −(𝑥0 −5
+3)
+2
+−9
+16𝑥2
+0 = −(15𝑥0 −16)2
+144
+≤0,
+so every ratio has norm at most 3
+4. Conversely, for any such 𝑞, the choice 𝑥0 = 16
+15 and 𝜉= 𝑥0𝑞 belongs 
+to 𝑋.
+Let 𝑍≔[1, 2], and take the outcome and constraint spaces to be
+𝑌≔ℝ× ℝ𝑑× ℝ𝑑×𝑑× ℝ𝑑×𝑑×𝑑,
+𝑊≔ℝ𝑑× ℝ𝑑×𝑑× ℝ𝑑×𝑑×𝑑,
+and write 𝑦= (𝑦0, 𝜂, Θ, Ξ) ∈𝑌. We fix 𝑦0 = 1 and take the remaining coordinates to lie in the Euclidean 
+unit ball:
+𝐷≔{(1, 𝜂, Θ, Ξ) : ‖𝜂‖2
+2 + ‖Θ‖2
+𝐹+ ‖Ξ‖2
+𝐹≤1}.
+For 𝑥= (𝑥0, 𝜉), 𝑧∈ℝ, and 𝑦∈𝑌, define 𝐹(𝑥, 𝑧, 𝑦) coordinatewise by
+𝐹𝑖(𝑥, 𝑧, 𝑦) ≔𝑧(𝑥0𝜂𝑖−1
+2𝜉𝑖𝑦0),
+𝐹𝑖𝑗(𝑥, 𝑧, 𝑦) ≔𝑧(𝑥0Θ𝑖𝑗−𝜉𝑖𝜂𝑗),
+𝐹𝑖𝑗ℓ(𝑥, 𝑧, 𝑦) ≔𝑧(𝑥0Ξ𝑖𝑗ℓ−𝜉𝑖Θ𝑗ℓ).
+Each term contains one coordinate from each of 𝑥, 𝑧, and 𝑦, so 𝐹 is trilinear. Define the reward by
+𝑟(𝑥, 𝑦) ≔1
+𝑚∑
+𝑚
+ℓ=1
+Ξ𝑖ℓ,𝑗ℓ,𝑛+ℓ.
+It is linear and independent of 𝑥; its coefficient vector has Euclidean norm 1
+√𝑚≤1.
+Fix 𝑥∈𝑋 and 𝑧∈𝑍. Since 𝑧𝑥0 ≠0 and 𝑦0 = 1 on 𝐷, we can solve 𝐹(𝑥, 𝑧, 𝑦) = 0 first for 𝜂, then for 
+Θ, and then for Ξ. This gives
+𝜂𝑖= 1
+2𝑞𝑖,
+Θ𝑖𝑗= 1
+2𝑞𝑖𝑞𝑗,
+Ξ𝑖𝑗ℓ= 1
+2𝑞𝑖𝑞𝑗𝑞ℓ.
+Writing 𝑡≔‖𝑞‖2 ≤3
+4, the squared norm of (𝜂, Θ, Ξ) is
+1
+4(𝑡2 + 𝑡4 + 𝑡6) ≤4329
+16384 < 1.
+Thus this point lies in 𝐷, so 𝐾𝑧(𝑥) is a singleton independent of 𝑧. The map 𝐹𝑥,𝑧: 𝑌→𝑊 is also onto: 
+for any right-hand side, set 𝑦0 = 0 and solve successively for 𝜂, Θ, and Ξ.
+Within the hyperplane 𝑦0 = 1, the equations have just one solution, and that solution lies in 𝐷. So 
+there are no solutions outside 𝐷 to check in the non-tangency condition. We can also prove the distance 
+inequality for points in the full kernel 𝐿𝑧(𝑥). Since 𝐹𝑥,𝑧 is onto and the dimension of 𝑌 is one more 
+than that of 𝑊, this kernel is the line spanned by 𝑦(𝑥) = (1, 𝑔(𝑞)), where 𝑔(𝑞) ≔(𝜂, Θ, Ξ) is given by the 
+equations above. If 𝑝= 𝜏𝑦(𝑥) ∈𝐿𝑧(𝑥) lies outside 𝐷, then
+dist(𝑝, 𝐷) ≥|𝜏−1|,
+dist(𝑝, 𝐾𝑧(𝑥)) = |𝜏−1|√1 + ‖𝑔(𝑞)‖2
+2.
+Thus the non-tangency inequality holds for all these points with
+𝑆≥
+1
+√1 + 4329
+16384
+=
+128
+√
+20713
+> 0.88.
+Evaluating the reward at the unique point in 𝐾𝑧(𝑥) gives
+𝑣𝑧(𝑥) =
+1
+2𝑚𝑝𝐺(𝑞).
+Since 𝑞 ranges over the radius-3
+4 ball, homogeneity and Lemma 6 imply, for every 𝑧∈𝑍,
+𝑉𝑧=
+27
+128𝑚max
+‖ℎ‖2=1 𝑝𝐺(ℎ) =
+27
+128𝑚
+√2
+27√1 −
+1
+𝜔(𝐺).
+For 𝑗= 2, …, 𝑛, let
+𝑈𝑗≔
+27
+128𝑚
+√2
+27√1 −1
+𝑗.
+If 𝜔(𝐺) ≥𝑘, then 𝑉𝑧≥𝑈𝑘; if 𝜔(𝐺) ≤𝑘−1, then 𝑉𝑧≤𝑈𝑘−1. The gap between these bounds satisfies
+𝑈𝑘−𝑈𝑘−1 ≥
+27
+128𝑚
+√2
+27
+1
+2𝑘(𝑘−1) = Ω( 1
+𝑚𝑘2 ).
+Since √2
+27 > 1
+4 and 𝑚≤𝑛2, the gap Δ𝑘≔𝑈𝑘−𝑈𝑘−1 satisfies
+Δ𝑘>
+1
+40𝑚𝑘(𝑘−1) ≥
+1
+40𝑚𝑛2 .
+Set 𝜀≔
+1
+500𝑚𝑛2. Using polynomially many bits, we can compute a rational 𝜏𝑘 such that
+|𝜏𝑘−1
+2(𝑈𝑘+ 𝑈𝑘−1)| ≤𝜀.
+An estimate of 𝑉𝑧 with additive error at most 𝜀 lies above 𝜏𝑘 when 𝜔(𝐺) ≥𝑘 and below it when 𝜔(𝐺) ≤
+𝑘−1, because 2𝜀< Δ𝑘
+2 . It therefore decides whether 𝐺 contains a 𝑘-clique. The constructed instance 
+has dimension 𝑂(𝑑3), and all its defining coefficients are rational with polynomial encoding length. This 
+proves the planning claim.
+Given any rational arm, we can compute the unique point in 𝐾𝑧(𝑥) exactly in polynomial time using 
+the equations above; 𝑥0 ≥2
+3 ensures that we can divide by 𝑥0. We can therefore simulate nature by 
+returning this point. Applying Lemma 1 with the chosen 𝜀 gives an estimate of 𝑉𝑧 with additive error 
+at most 𝜀, with probability at least 2
+3. Comparing it with 𝜏𝑘 decides CLIQUE, so NP ⊆BPP. For a 
+deterministic learner, the estimate is deterministic and gives P = NP. ∎
+4.4. Computing IUCB’s first arm is NP-hard even for Euclidean balls
+Suppose we are given rational descriptions of 𝑋, 𝐷, 𝑍, the affine reward 𝑟, and the maps defining 𝐾𝑧(𝑥). 
+For each hypothesis 𝑧, let
+𝑣𝑧(𝑥) ≔
+min
+𝑦∈𝐾𝑧(𝑥) 𝑟(𝑥, 𝑦).
+On its first round, IUCB’s confidence set is all of 𝑍, so its optimistic value is
+𝑉IUCB ≔
+max
+𝑧∈𝑍,𝑥∈𝑋𝑣𝑧(𝑥).
+We will show that computing this value exactly is NP-hard. The same is true of finding an arm
+𝑥⋆∈argmax𝑥∈𝑋max
+𝑧∈𝑍𝑣𝑧(𝑥).
+Theorem 7. Computing 𝑉IUCB exactly or finding a globally optimal first arm of IUCB is NP-hard, even 
+when 𝑋, 𝐷, and 𝑍 are Euclidean balls and planning for each fixed hypothesis takes polynomial time.
+Proof. Given a rational order-three tensor 𝒯︀∈ℚ𝑚×𝑑×𝑑𝑋, we can view it as a bilinear map 𝒯︀: ℝ𝑑×
+ℝ𝑑𝑋→ℝ𝑚. Its spectral norm is
+‖𝒯︀‖𝜎≔
+max
+‖𝑢‖2≤1,‖𝑥‖2≤1 ‖𝒯︀(𝑢, 𝑥)‖2.
+Computing this value exactly is NP-hard [5]. We construct an IUCB instance from 𝒯︀ so that an optimal 
+first arm lets us recover this norm. Let
+𝐻≔1 + ∑
+𝑖,𝑗,𝑘
+|𝑇𝑖𝑗𝑘|,
+𝛼≔
+1
+2𝐻,
+𝑋≔{𝑥: ‖𝑥‖2 ≤1}.
+Write 𝑧= (𝑧0, 𝑢) and 𝑦= (𝑤, 𝑠), and take
+𝑍≔{(𝑧0, 𝑢) : (𝑧0 −5
+3)
+2
++ ‖𝑢‖2
+2 ≤1},
+𝐷≔{(𝑤, 𝑠) : ‖𝑤‖2
+2 + 𝑠2 ≤1}.
+For 𝑧= (𝑧0, 𝑢), define the constraint coefficients in Equation 1 and the reward by
+𝐵𝑧𝑥≔−𝛼𝒯︀(𝑢, 𝑥),
+𝐶𝑧(𝑤, 𝑠) ≔𝑧0𝑤,
+𝑑𝑧≔0,
+𝑟(𝑥, (𝑤, 𝑠)) ≔1
+2(1 + 𝑠).
+The feasible outcomes at arm 𝑥 are then
+𝐾𝑧(𝑥) = {(𝑤, 𝑠) ∈𝐷: 𝑤= 𝛼
+𝑧0
+𝒯︀(𝑢, 𝑥)}.
+The definition of 𝑍 gives 𝑧0 ≥2
+3 and
+‖𝑢‖2
+𝑧0
+≤3
+4,
+because 1 −(𝑧0 −5
+3)
+2 −9 𝑧2
+0
+16 = −(15𝑧0−16)2
+144
+≤0. Equality holds at 𝑧0 = 16
+15 and ‖𝑢‖2 = 4
+5 in every direction. 
+Also, ‖𝒯︀(𝑢, 𝑥)‖2 ≤𝐻‖𝑢‖2‖𝑥‖2, so the constraint fixes 𝑤 to a vector of norm at most 3𝛼𝐻
+4 = 3
+8. Thus 
+every 𝐾𝑧(𝑥) is nonempty, and the uniform non-tangency condition holds with 𝑆≥
+√
+55
+8 . To minimize 
+the reward, nature chooses the smallest feasible 𝑠, namely 𝑠= −√1 −‖𝑤‖2
+2. If we write ℎ(𝑡) ≔1
+2(1 −
+√
+1 −𝑡2), then
+𝑣𝑧(𝑥) = ℎ( 𝛼
+𝑧0
+‖𝒯︀(𝑢, 𝑥)‖2).
+For fixed 𝑧, define the matrix 𝑀𝑢 by 𝑀𝑢𝑥≔𝒯︀(𝑢, 𝑥). A top right singular vector of 𝑀𝑢 maximizes 𝑣𝑧(𝑥), 
+so planning takes polynomial time when 𝑧 is known. But IUCB must optimize over both 𝑧 and 𝑥. Since 
+ℎ is strictly increasing and ‖𝑢‖2
+𝑧0 can equal 3
+4 in every direction,
+𝑉IUCB = ℎ(3𝛼
+4 ‖𝒯︀‖𝜎).
+We can therefore recover the tensor norm from the optimistic value:
+‖𝒯︀‖𝜎= 4
+3𝛼
+√1 −(1 −2𝑉IUCB)2.
+If we are given only a globally optimal arm 𝑥⋆, define the matrix 𝑁𝑥 by 𝑁𝑥𝑢≔𝒯︀(𝑢, 𝑥⋆). Computing its 
+largest singular value gives
+max
+𝑧∈𝑍𝑣𝑧(𝑥⋆) = ℎ(3𝛼
+4 𝜎max(𝑁𝑥)) = 𝑉IUCB.
+The same formula then recovers ‖𝒯︀‖𝜎, so finding a globally optimal first arm is NP-hard as well. ∎
+4.5. Efficient planning does not imply efficient learning
+An efficient planner for every hypothesis does not always give an efficient learner, so the converse of 
+Lemma 1 fails. We show this with finite arm and hypothesis sets that have short descriptions. We also 
+allow the reward to be linear in the arm and in the outcome separately, so it can contain products of 
+arm and outcome coordinates.
+Theorem 8. There is a family of rational imprecise-bandit instances indexed by integers 2 ≤𝑘≤𝑛, with 
+descriptions of length polynomial in 𝑛. Each instance has finite arm and hypothesis sets, an outcome 
+set that is a rational polytope, constraints 𝐹= 𝐹0 + 𝐹1 with 𝐹0 = 0 and 𝐹1 bilinear in the outcome and 
+hypothesis, and a reward in [0, 1] that is linear in the arm and in the outcome separately. An exact planner 
+takes 𝑂(𝑛2) time when the hypothesis is known.
+Suppose that, for some fixed 𝛽> 0 and polynomial 𝑃, one uniform randomized policy runs in time 
+polynomial in the description length |ℳ︀| and horizon 𝑁 and has expected regret at most
+𝑃(|ℳ︀|)𝑁1−𝛽
+for every instance in this family, every true hypothesis, and every compatible nature policy. Then 
+CLIQUE ∈RP and hence NP = RP. The same conclusion holds if the guarantee is required only against 
+stationary deterministic nature policies. A deterministic learner with the same guarantee would imply 
+P = NP.
+Proof. Fix 2 ≤𝑘≤𝑛, and let
+𝐸𝑛≔{{𝑖, 𝑗} : 1 ≤𝑖< 𝑗≤𝑛},
+𝑚≔(𝑛
+2 ),
+𝑞≔(𝑘
+2).
+For every 𝑘-element set 𝑇⊆[𝑛], define 𝑥𝑇∈ℝ𝑚 by
+𝑥𝑇
+𝑒≔{
+1
+𝑞if 𝑒⊆𝑇
+0 otherwise,
+𝑒∈𝐸𝑛,
+and take
+𝑋≔{𝑥𝑇: 𝑇⊆[𝑛], |𝑇| = 𝑘}.
+An arm is represented succinctly by the vertex set 𝑇. For every 𝑘-element set 𝑈⊆[𝑛], define 𝑧𝑈∈
+ℝ1+𝑚 by
+𝑧𝑈
+0 ≔1,
+𝑧𝑈
+𝑒≔{1 if 𝑒⊆𝑈
+0 otherwise,
+and let 𝑍≔{𝑧𝑈: 𝑈⊆[𝑛], |𝑈| = 𝑘}.
+Write an outcome as 𝑦= (𝑦0, 𝑔, 𝑠) ∈ℝ1+2𝑚 and set
+𝐷≔{(1, 𝑔, 𝑠) : 𝑔∈[0, 1]𝑚, 𝑠∈[−1, 1]𝑚}.
+With constraint space 𝑊= ℝ𝑚, let 𝐹0(𝑥, 𝑧) ≔0 and define
+(𝐹1(𝑦, 𝑧))𝑒≔𝑧𝑒(𝑔𝑒−𝑦0 −𝑠𝑒) + 𝑧0𝑠𝑒,
+𝑒∈𝐸𝑛.
+For 𝑧∈𝑍, set
+𝐾𝑧(𝑥) ≔{𝑦∈𝐷: 𝐹0(𝑥, 𝑧) + 𝐹1(𝑦, 𝑧) = 0},
+ℎ𝑧(𝑥) ≔{𝑄∈Δ𝐷: 𝔼𝑦∼𝑄[𝑦] ∈𝐾𝑧(𝑥)},
+and let 𝐻≔{ℎ𝑧: 𝑧∈𝑍}.
+The maps 𝐹0 and 𝐹1 are bilinear in their displayed arguments. Since 𝑦0 is an outcome coordinate, we 
+can write the constraint as 𝐶𝑧𝑦= 0, with 𝐵𝑧= 0, 𝑑𝑧= 0, and 𝑧↦𝐶𝑧 linear. For 𝑧= 𝑧𝑈,
+(𝐹1(𝑦, 𝑧𝑈))𝑒= {𝑔𝑒−𝑦0 if 𝑒⊆𝑈
+𝑠𝑒
+otherwise.
+Thus, inside 𝐷, the constraints force 𝑔𝑒= 1 for every 𝑒⊆𝑈 and 𝑠𝑒= 0 for every 𝑒⊈𝑈. The remaining 
+𝑔𝑒 coordinates are free to vary in [0, 1]. The feasible set is nonempty: take 𝑔𝑒= 1 on the edges of 𝑈, 𝑔𝑒=
+0 elsewhere, and 𝑠= 0. Moreover, 𝑦↦𝐹1(𝑦, 𝑧𝑈) is onto 𝑊: given 𝑤∈𝑊, set 𝑦0 = 0, use 𝑔𝑒= 𝑤𝑒 and 
+𝑠𝑒= 0 on the edges of 𝑈, and use 𝑔𝑒= 0 and 𝑠𝑒= 𝑤𝑒 elsewhere.
+Define the reward
+𝑟(𝑥, (𝑦0, 𝑔, 𝑠)) ≔∑
+𝑒∈𝐸𝑛
+𝑥𝑒𝑔𝑒.
+The learner is given a succinct description of the entire instance ℳ︀= (𝑋, 𝐷, 𝐻, 𝑟), including 𝑍, 𝐹0, and 
+𝐹1; only the true 𝑈 is hidden. The reward lies in [0, 1] on 𝑋× 𝐷. For an arm 𝑥𝑇, nature minimizes it by 
+setting every graph coordinate not forced by 𝑈 to zero, so
+𝑣𝑧𝑈(𝑥𝑇) =
+(|𝑈∩𝑇|
+2
+)
+𝑞
+.
+Thus 𝑉𝑧𝑈= 1, uniquely attained by 𝑥𝑈. Given 𝑧𝑈, an exact planner returns 𝑥𝑈 by setting 𝑥𝑈
+𝑒= 𝑧𝑈
+𝑒
+𝑞 for 
+every 𝑒∈𝐸𝑛, which takes 𝑂(𝑚) = 𝑂(𝑛2) time.
+We now show that a learner with the stated regret bound would solve CLIQUE. Given a graph 𝐺=
+([𝑛], 𝐸(𝐺)) and target clique size 𝑘 [6], let
+𝑔𝐺
+𝑒≔{1 if 𝑒∈𝐸(𝐺)
+0 otherwise
+,
+𝑦𝐺≔(1, 𝑔𝐺, 0) ∈𝐷.
+If 𝑈 is a 𝑘-clique of 𝐺, nature can return 𝑦𝐺 on every round under hypothesis 𝑧𝑈: every edge inside 𝑈 
+has 𝑔𝐺
+𝑒= 1, and all the 𝑠𝑒 coordinates are zero. For every candidate 𝑇,
+𝑟(𝑥𝑇, 𝑦𝐺) = |𝐸(𝐺[𝑇])|
+𝑞
+.
+This reward is 1 exactly when 𝑇 is a 𝑘-clique, and is at most 1 −1
+𝑞 otherwise.
+Assume the policy in the theorem exists, and give it the outcome 𝑦𝐺 on every round. If 𝐺 contains a 𝑘-
+clique 𝑈, these outcomes are compatible with 𝑧𝑈, whose optimal value is 1. If the policy plays 𝑥𝑇1, …, 𝑥𝑇𝑁, 
+the total reward it loses relative to this value is
+ℒ︀𝑁≔𝑁−∑
+𝑁
+𝑡=1
+𝑟(𝑥𝑇𝑡, 𝑦𝐺).
+This quantity is nonnegative. Let ℰ︀ be the event that none of 𝑇1, …, 𝑇𝑁 is a clique. On this event, 
+the learner loses at least 1
+𝑞 on every round, so ℒ︀𝑁≥𝑁
+𝑞. Markov’s inequality and the assumed regret 
+bound give
+Pr(ℰ︀) ≤𝑞𝐸[ℒ︀𝑁]
+𝑁
+≤𝑞𝑃(|ℳ︀|)𝑁−𝛽.
+Choose
+𝑁≔⌈(4𝑞𝑃(|ℳ︀|))
+1
+𝛽⌉.
+The instance description has length polynomial in 𝑛, so 𝑁 and the time needed to simulate the learner 
+are polynomial in the CLIQUE input length. Check each 𝑘-set proposed by the learner and accept as 
+soon as one is a clique in 𝐺. If 𝐺 has a 𝑘-clique, the preceding bound gives acceptance probability at 
+least 3
+4. If 𝐺 has none, none of the proposed sets can pass this check. In that case, the outcomes may 
+be incompatible with every hypothesis, but the learner must still terminate in polynomial time on every 
+syntactically valid history. Thus the simulation also takes polynomial time when 𝐺 has no 𝑘-clique.
+This is an RP algorithm for CLIQUE. Since CLIQUE is NP-complete, it implies NP = RP. If the 
+policy is deterministic, the same verified search gives P = NP. ∎
+This example shows that efficient planning alone does not suffice for efficient learning. It uses 
+exponentially large finite sets 𝑋 and 𝑍 represented by 𝑘-subsets, a polytope 𝐷, and the bilinear reward 
+𝑟(𝑥, 𝑦) = ∑𝑒𝑥𝑒𝑔𝑒. It therefore falls outside our setting of Euclidean balls and jointly affine rewards.
+References
+[1]
+V. Kosoy, “Imprecise Multi-Armed Bandits: Representing Irreducible Uncertainty as a Zero-Sum 
+Game,” Journal of Machine Learning Research, vol. 26, no. 184, pp. 1–75, 2025, [Online].  Available: 
+https://www.jmlr.org/papers/v26/24-2001.html
+[2]
+P. Auer, N. Cesa-Bianchi, Y. Freund, and R. E. Schapire, “The Nonstochastic Multiarmed 
+Bandit Problem,” SIAM Journal on Computing, vol. 32, no. 1, pp. 48–77, 2002, doi: 10.1137/
+S0097539701398375.
+[3]
+D. Bienstock, “A Note on Polynomial Solvability of the CDT Problem,” SIAM Journal on Opti­
+mization, vol. 26, no. 1, pp. 488–498, 2016, doi: 10.1137/15M1009871.
+[4]
+T. S. Motzkin and E. G. Straus, “Maxima for Graphs and a New Proof of a Theorem of Turán,” 
+Canadian Journal of Mathematics, vol. 17, pp. 533–540, 1965, doi: 10.4153/CJM-1965-053-6.
+[5]
+C. J. Hillar and L.-H. Lim, “Most Tensor Problems Are NP-Hard,” Journal of the ACM, vol. 60, 
+no. 6, p. 45:1–45:39, 2013, doi: 10.1145/2512329.
+[6]
+M. R. Garey and D. S. Johnson, Computers and Intractability: A Guide to the Theory of NP-
+Completeness. W. H. Freeman, 1979.
+[7]
+S. Boyd and L. Vandenberghe, Convex Optimization. Cambridge University Press, 2004. doi: 
+10.1017/CBO9780511804441.
+[8]
+P. M. Pardalos and S. A. Vavasis, “Quadratic Programming with One Negative Eigenvalue Is NP-
+Hard,” Journal of Global Optimization, vol. 1, no. 1, pp. 15–22, 1991, doi: 10.1007/BF00120662.
+[9]
+A. I. Barvinok, “Feasibility Testing for Systems of Real Quadratic Equations,” Discrete & Compu­
+tational Geometry, vol. 10, pp. 1–13, 1993, doi: 10.1007/BF02573959.
+[10] R. M. Karp, “Reducibility Among Combinatorial Problems,” in Complexity of Computer Compu­
+tations, R. E. Miller, J. W. Thatcher, and J. D. Bohlinger, Eds., New York: Plenum Press, 1972, 
+pp. 85–103. doi: 10.1007/978-1-4684-2001-2_9.
+[11] M. R. Garey, D. S. Johnson, and L. Stockmeyer, “Some Simplified NP-Complete Graph Problems,” 
+Theoretical Computer Science, vol. 1, no. 3, pp. 237–267, 1976, doi: 10.1016/0304-3975(76)90059-1.
+Appendix
+A. Quadratically constrained quadratic programming
+For symmetric matrices 𝑄𝑖∈ℝ𝑑×𝑑, a quadratically constrained quadratic program (QCQP) in 
+𝑧∈ℝ𝑑 has the form
+min
+𝑧∈ℝ𝑑𝑔0(𝑧)
+subject to
+𝑔𝑖(𝑧) ≤0,
+𝑖= 1, …, 𝑚,
+where 𝑔𝑖(𝑧) ≔𝑧𝑇𝑄𝑖𝑧+ 2𝑝𝑇
+𝑖𝑧+ 𝑟𝑖; for complexity statements, all entries are rational. A quadratic equality 
+ℎ(𝑧) = 0 is exactly the pair ℎ(𝑧) ≤0 and −ℎ(𝑧) ≤0 [3].
+QCQP describes algebraic form, whereas convex programming describes geometry. The displayed 
+minimization problem is a convex program when every 𝑄𝑖, 𝑖= 0, …, 𝑚, is positive semidefinite and all 
+equalities are affine [7]. Without those restrictions it can be nonconvex: general QCQP is NP-hard even 
+when only the objective is quadratic and its Hessian has one negative eigenvalue [8].
+The polynomial-time conclusion for our nonconvex instance has two steps.
+1. First, fix the number 𝑚 of constraints. Bienstock’s theorem states that, for rational quadratics 
+𝑔0, …, 𝑔𝑚, if at least one constraint 𝑔𝑖(𝑧) ≤0 has a positive-definite quadratic part, then for every 
+𝜀∈(0, 1) an algorithm runs in time poly(𝐿, log(1
+𝜀)), where 𝐿 is the input bit length, and either 
+proves infeasibility or returns 𝑧̂ such that
+𝑔𝑖(𝑧̂) ≤𝜀,
+𝑖= 1, …, 𝑚,
+and 𝑔0(𝑧̂) ≤𝑔0(𝑧) + 𝜀 for every feasible 𝑧 [3]. The underlying weak-feasibility step reduces to a 
+fixed number of homogeneous quadratic equations on a sphere, handled by Barvinok’s method; 
+binary search then gives the objective guarantee [3], [9].
+2. Second, the planning reduction in Section 3 has six quadratic inequalities. The redundant ellipsoid 
+constraint on (𝑥, 𝑧, 𝑠) has a positive-definite quadratic part, so the QCQP satisfies Bienstock’s 
+hypotheses. Applying the theorem to the negative objective computes the planning maximum to 
+weak additive accuracy 𝜀 in time poly(𝐿, log(1
+𝜀)). The same section explains how to repair the 
+solver’s output to obtain a feasible arm. If either radius is zero, the problem first reduces to a 
+lower-dimensional instance.
+B. MAX-CUT
+Let 𝐺= (𝑉, 𝐸) be a finite undirected simple graph. For 𝑆⊆𝑉, the edge boundary of 𝑆 is
+𝛿𝐺(𝑆) ≔{{𝑢, 𝑣} ∈𝐸: |{𝑢, 𝑣} ∩𝑆| = 1}.
+The decision problem MAX-CUT takes as input 𝐺 and an integer 𝑘∈{0, …, |𝐸|}, and asks whether
+∃𝑆⊆𝑉
+such that
+|𝛿𝐺(𝑆)| ≥𝑘.
+A set 𝑆 satisfying this inequality is a polynomial-size certificate, so MAX-CUT belongs to NP. Karp 
+proved that weighted MAX-CUT is NP-complete [10]. Garey, Johnson, and Stockmeyer subsequently 
+proved that the unweighted problem defined above remains NP-complete even when 𝐺 is cubic [11].
+The associated optimization problem computes
+𝑀𝐺≔max
+𝑆⊆𝑉|𝛿𝐺(𝑆)|.
+Since the decision problem asks whether 𝑀𝐺≥𝑘, computing 𝑀𝐺 is NP-hard.
+C. Regret analysis of the 𝑇
+2
+3 learner
+We give the precise statement and proof of Theorem  2. We use the coordinates and notation from 
+Section 2, and assume that the planning steps in Algorithm 1 are solved exactly. A full block is informative 
+if it causes an update, and uninformative otherwise.
+For the analysis, fix 𝛿∈(0, 1) and define
+𝐽max ≔⌈𝑞log2(1 + 3𝑇
+𝑞)⌉,
+ℎ2
+𝑇≔8𝑑𝐷log(2𝑑𝐷𝑇2
+𝛿
+),
+𝐵2
+𝑇≔1 + 𝐽maxℎ2
+𝑇,
+𝐺≔
+√
+3(1 + 𝑆−1)‖𝑏‖2,
+𝐶𝑟≔max
+𝑋×𝐷𝑟−min
+𝑋×𝐷𝑟.
+We write 𝐽 for the number of updates actually made. We will show that 𝐽≤𝐽max.
+If 𝑤(𝑥, 𝑦) is close to ℒ︀, then 𝑟(𝑥, 𝑦) cannot be much smaller than the worst feasible reward 𝑣⋆(𝑥). We 
+first prove this.
+Lemma 7. For every 𝑥∈𝑋 and 𝑦∈𝐷,
+𝑣⋆(𝑥) ≤𝑟(𝑥, 𝑦) + 𝐺dist(𝑤(𝑥, 𝑦), ℒ︀).
+Proof. Let 𝑁≔ker 𝐶𝑧⋆ and let 𝑄 be the orthogonal projector onto 𝑁⟂. Every arm has a feasible outcome, 
+so we can write the minimum-norm solution of the affine constraints as 𝑓(𝑥) = 𝐴𝑥+ 𝑒∈𝑁⟂. Thus
+𝐾⋆(𝑥) = (𝐴𝑥+ 𝑒+ 𝑁) ∩𝐷.
+Since there is a feasible outcome in the unit ball for every arm, ‖𝐴𝑥+ 𝑒‖2 ≤1 on 𝑋. Taking 𝑥= 0 gives 
+‖𝑒‖2 ≤1, and comparing opposite unit vectors gives ‖𝐴‖op ≤1. Now define
+Φ(𝑠, 𝑥, 𝑦) ≔𝑄𝑦−𝐴𝑥−𝑠𝑒.
+This map has operator norm at most 
+√
+3 and kernel ℒ︀: the original constraints are equivalent to 𝑄𝑦=
+𝐴𝑥+ 𝑒, and homogenizing either equation gives the same subspace. Therefore
+dist(𝑦, 𝐴𝑥+ 𝑒+ 𝑁) = ‖Φ(1, 𝑥, 𝑦)‖2 ≤
+√
+3 dist(𝑤(𝑥, 𝑦), ℒ︀).
+Let 𝑝 be the point in 𝐴𝑥+ 𝑒+ 𝑁 closest to 𝑦. Since 𝑦∈𝐷, the non-tangency condition gives
+dist(𝑝, 𝐾⋆(𝑥)) ≤𝑆−1 dist(𝑝, 𝐷) ≤𝑆−1‖𝑝−𝑦‖2,
+where the first inequality is immediate if 𝑝∈𝐷, since then 𝑝∈𝐾⋆(𝑥). The triangle inequality now gives
+dist(𝑦, 𝐾⋆(𝑥)) ≤(1 + 𝑆−1) dist(𝑦, 𝐴𝑥+ 𝑒+ 𝑁).
+Moving 𝑦 to the nearest point in 𝐾⋆(𝑥) changes the reward by at most ‖𝑏‖2 times this distance, which 
+proves the claim. ∎
+We also need to know how close a block average is to the average of the true conditional means.
+Lemma 8. Let 𝑚𝑡 be the conditional mean of 𝑦𝑡 given the history and the chosen arm on round 𝑡. For 
+each interval in the first 𝑇 rounds, write 𝑛 for its length and 𝑦 and 𝑚 for the averages of 𝑦𝑡 and 𝑚𝑡 over 
+that interval. With probability at least 1 −𝛿, the bound
+𝑛‖𝑦−𝑚‖2
+2 ≤ℎ2
+𝑇
+(6)
+holds simultaneously on all these intervals.
+Proof. Each coordinate of 𝑦𝑡−𝑚𝑡 is a martingale difference bounded in absolute value by two. For any 
+fixed interval of length 𝑛 and coordinate 𝑖, Azuma–Hoeffding gives
+Pr(|𝑦𝑖−𝑚𝑖| >
+ℎ𝑇
+√𝑛𝑑𝐷
+) ≤2 exp(−ℎ2
+𝑇
+8𝑑𝐷
+) =
+𝛿
+𝑑𝐷𝑇2 .
+There are 𝑑𝐷 coordinates and at most 𝑇2 intervals. A union bound and summing the squared coordinate 
+bounds give the claim. ∎
+We need to know how far a point in 𝐸𝑉 can be from ℒ︀. The next lemma bounds this distance using 
+the noise bound we just proved. We can then apply Lemma 7 to the outcomes the learner treats as 
+feasible.
+Lemma 9. With probability at least 1 −𝛿, after any number 𝐽 of updates in Algorithm 1, the matrix 𝑉 
+satisfies, for every 𝑤∈ℝ𝑞,
+dist(𝑤, ℒ︀) ≤√1 + 𝐽ℎ2
+𝑇
+𝑛
+‖𝑤‖𝑉−1.
+Proof. Number the informative blocks 𝑗= 1, …, 𝐽. Write 𝑥𝑗 for the arm played in block 𝑗, and 𝑦𝑗 and 
+𝑚𝑗 for its average observation and average conditional mean. With 𝑤𝑗≔𝑤(𝑥𝑗, 𝑦𝑗), the update rule gives
+𝑉= 𝑛−1𝐼𝑞+ ∑
+𝐽
+𝑗=1
+𝑤𝑗𝑤𝑇
+𝑗.
+Fix 𝑢∈ℒ︀⟂ with ‖𝑢‖2 ≤1. Since the arm is held fixed within each block, 𝑤(𝑥𝑗, 𝑚𝑗) ∈ℒ︀. Each informative 
+block has length 𝑛. By Lemma 8, with probability at least 1 −𝛿, the bound
+(𝑢𝑇𝑤𝑗)
+2 = (𝑢𝑇(0, 0, 𝑦𝑗−𝑚𝑗))
+2 ≤ℎ2
+𝑇
+𝑛
+holds simultaneously for all informative blocks and all such 𝑢. On this event, 𝑢𝑇𝑉𝑢≤1+𝐽ℎ2
+𝑇
+𝑛
+. For any 𝑤, 
+Cauchy–Schwarz gives 𝑢𝑇𝑤≤
+√
+𝑢𝑇𝑉𝑢‖𝑤‖𝑉−1. Taking the supremum over the unit ball of ℒ︀⟂ proves the 
+claim. ∎
+Theorem 9. Suppose nature follows any compatible adaptive policy. Then Algorithm 1 satisfies, with 
+probability at least 1 −𝛿,
+𝑇𝑉⋆−∑
+𝑇
+𝑡=1
+𝑟(𝑥𝑡, 𝑦𝑡) ≤𝐶𝑟𝑛(𝐽max + 1) + 𝐺𝐵𝑇𝑇
+√𝑛
+.
+Its expected regret is at most the same expression plus 𝐶𝑟𝑇𝛿. Taking 𝑛= ⌈𝑇
+2
+3⌉ and 𝛿= (𝑇+ 1)−2 give 
+𝑅𝑇≤𝑂̃(𝑇
+2
+3) for fixed problem parameters.
+Proof. First, there cannot be very many informative blocks. Each one more than doubles the determinant:
+det(𝑉+ 𝑤𝑤𝑇) = det(𝑉)(1 + 𝑝𝑉(𝑥, 𝑦)) > 2 det(𝑉).
+If there are 𝐽 updates, then 𝐽≤𝑇
+𝑛. Each update adds at most three to the trace, so tr 𝑉≤𝑞
+𝑛+ 3𝐽≤
+𝑞+3𝑇
+𝑛. The initial determinant is 𝑛−𝑞. Using the arithmetic–geometric mean inequality on the eigenvalues, 
+we get
+2𝐽≤
+det 𝑉
+det(𝑛−1𝐼𝑞) ≤(1 + 3𝑇
+𝑞)
+𝑞
+,
+𝐽≤𝐽max.
+Since 𝐽≤𝐽max, Lemma 9 gives, with probability at least 1 −𝛿, simultaneously for every matrix 𝑉 that 
+the learner maintains and every (𝑥, 𝑦) ∈𝑋× 𝐷,
+dist(𝑤(𝑥, 𝑦), ℒ︀) ≤(𝐵𝑇
+√𝑛)√𝑝𝑉(𝑥, 𝑦).
+(7)
+On this event, if 𝑦∈𝐾̂𝑉(𝑥), then 𝑝𝑉(𝑥, 𝑦) ≤1, so Lemma 7 gives 𝑟(𝑥, 𝑦) ≥𝑣⋆(𝑥) −𝐺𝐵𝑇
+√𝑛. Taking the 
+minimum over 𝐾̂𝑉(𝑥), whenever this set is nonempty, gives
+𝐻𝑉(𝑥) ≥𝑣⋆(𝑥) −𝐺𝐵𝑇
+√𝑛.
+(8)
+Consider a full block in which we do not update the ellipsoid. Its empirical mean belongs to 𝐾̂𝑉(𝑥). Such 
+a block could not have used the empty-set rule, since that would force the mean outside the ellipsoid. 
+Thus all the sets 𝐾̂𝑉(𝑥′) were nonempty, and we chose 𝑥 by maximizing 𝐻𝑉. It follows that
+𝑟(𝑥, 𝑦) ≥𝐻𝑉(𝑥) = max
+𝑥′∈𝑋𝐻𝑉(𝑥′) ≥𝑉⋆−𝐺𝐵𝑇
+√𝑛.
+Since the reward is affine, 𝑟(𝑥, 𝑦) is the average reward in the block. The block’s regret is therefore at 
+most 𝐺𝐵𝑇
+√𝑛. There are at most 𝑇
+𝑛 such blocks, for a total of 𝐺𝐵𝑇
+𝑇
+√𝑛. An informative block may cost 
+as much as 𝐶𝑟𝑛, but there are at most 𝐽max of them. A final incomplete block also costs at most 𝐶𝑟𝑛. 
+Adding these bounds proves the high-probability claim. Outside this event, regret is still at most 𝐶𝑟𝑇, 
+so taking expectations adds at most 𝐶𝑟𝑇𝛿. ∎
+C.A. Finite-precision implementation
+We justify the implementation in Section 2.1. The matrix always satisfies
+𝑛−1𝐼𝑞⪯𝑉⪯(𝑛−1 + 3𝑇)𝐼𝑞,
+since each update adds a positive semidefinite matrix of operator norm at most three. In particular, 𝐸𝑉 
+contains the Euclidean ball of radius 1
+√𝑛.
+The distance formula follows by writing distance to 2𝐸𝑉 as
+dist(𝑤, 2𝐸𝑉) = max
+‖𝑧‖2≤1[𝑧𝑇𝑤−2
+√
+𝑧𝑇𝑉𝑧].
+Minimizing over 𝑤= (1, 𝑥, 𝑦) with 𝑦∈𝐷 and exchanging the minimum and maximum gives the claimed 
+expression for 𝑑𝑉(𝑥). The exchange is valid because the domains are compact and convex, and the 
+objective is affine in 𝑦 and concave in 𝑧.
+Suppose the empty-set test has not returned an arm. Its additive guarantee gives 𝑑𝑉(𝑥) ≤2𝜂 for 
+every 𝑥. Thus, for every arm, there is a 𝑦0 ∈𝐷 such that 𝑤0 ≔𝑤(𝑥, 𝑦0) satisfies
+‖𝑤0‖𝑉−1 ≤2 + 2𝜂√𝑛≤11
+5 .
+This point lies strictly inside 3𝐸𝑉. We may therefore apply convex duality to the constraint 𝑤(𝑥, 𝑦) ∈
+3𝐸𝑉, whose indicator has the representation
+𝜄3𝐸𝑉(𝑤) = sup
+𝑧[𝑧𝑇𝑤−3
+√
+𝑧𝑇𝑉𝑧],
+where the indicator is zero on the set and +∞ outside it. Strong duality holds because 𝑦0 ∈𝐷 and 𝑤0 
+is in the interior of 3𝐸𝑉 [7]. Minimizing the resulting affine expression over the unit ball 𝐷 gives the 
+formula for 𝐻out
+𝑉, initially with a supremum over all 𝑧.
+To bound 𝑧, write the expression inside that supremum as 𝐹𝑥(𝑧). Using ‖𝑦0‖2 ≤1 and Cauchy–Schwarz 
+in the 𝑉 norm gives
+𝐹𝑥(𝑧) ≤𝑏𝑇𝑦0 + 𝑧𝑇𝑤0 −3
+√
+𝑧𝑇𝑉𝑧
+≤‖𝑏‖2 −4
+5
+√
+𝑧𝑇𝑉𝑧
+≤‖𝑏‖2 −
+4
+5√𝑛‖𝑧‖2.
+Since 𝐹𝑥(0) = −‖𝑏‖2, the supremum is attained at a point with ‖𝑧‖2 ≤(5
+2)√𝑛‖𝑏‖2. This is smaller than 
+the bound 𝑀 used in the implementation.
+We next give the quadratic programs explicitly. For the distance problem take (𝛼, 𝑔, 𝑅) = (2, 0, 1), and 
+for the planning problem take (𝛼, 𝑔, 𝑅) = (3, 𝑏, 𝑀). Replace 𝛼
+√
+𝑧𝑇𝑉𝑧+ ‖𝑔+ 𝑧𝐷‖2 by 𝛼𝑡+ 𝑠 and impose
+‖𝑥‖2
+2 ≤1,
+‖𝑧‖2
+2 ≤𝑅2,
+𝑧𝑇𝑉𝑧≤𝑡2,
+‖𝑔+ 𝑧𝐷‖2
+2 ≤𝑠2,
+0 ≤𝑡≤1 + (1 + 3𝑇)𝑅,
+0 ≤𝑠≤1 + ‖𝑔‖1 + 𝑅.
+The remaining objective is 𝑧0 + 𝑧𝑇
+𝑋𝑥−𝛼𝑡−𝑠, with the additional term 𝑎𝑇𝑥+ 𝑐 for planning. The 
+upper bounds leave room beyond the largest possible values of the two norms. Adding a redundant 
+ball containing all these bounded variables gives nine quadratic inequalities, one with a positive-definite 
+quadratic part. The result in Appendix A therefore applies.
+A weak solution may slightly violate these constraints. Project its 𝑥 and 𝑧 components onto their 
+balls and round inward to rational grids. Replace 𝑡 and 𝑠 by rational upper approximations to the 
+corresponding norms. The resulting objective is a valid lower bound on 𝑑𝑉(𝑥) or 𝐻out
+𝑉(𝑥) at the returned 
+arm. If the weak constraint error is 𝜏, projection moves each vector by at most √𝜏; the changes in the two 
+norms and the quadratic objective are bounded by a polynomial in the numerical data and 𝑇 times √𝜏. 
+Thus both the required objective accuracy and a certified lower bound can be obtained with polynomially 
+many precision bits. For the distance test, include all these errors in its additive budget 𝜂: a returned 
+lower bound above 𝜂 then certifies emptiness, and a lower bound at most 𝜂 implies max𝑥∈𝑋𝑑𝑉(𝑥) ≤2𝜂.
+Finally, round each observed outcome inward to a common rational grid, with Euclidean error at most 
+𝜏𝑦≔(𝑇+1)−4
+1+‖𝑏‖1 . Use these rounded observations in the block averages and updates. The interval bound in 
+Lemma 8 remains valid with ℎ2
+𝑇 replaced by 2ℎ2
+𝑇+ 2𝑇𝜏2
+𝑦. The matrix-distance proof and the determinant 
+argument therefore still apply. An uninformative rounded mean belongs to 𝐸𝑉, and hence to both the 
+inner and outer sets. Consequently such a block must have used the planning rule. Applying Lemma 7 
+and the matrix-distance bound on 3𝐸𝑉 gives the same regret estimate with the geometric term multiplied 
+by three, an additional 𝑇𝜀 for planning error, and at most ‖𝑏‖2𝑇𝜏𝑦 for replacing the actual rewards by 
+rounded ones.
+The common grids keep all stored matrices rational with polynomial bit length. Matrix inversion 
+and the comparison 𝑝𝑉> 1 can then be performed exactly in polynomial time. There are at most ⌈𝑇
+𝑛⌉ 
+planning calls, each taking time polynomial in the input bit length, 𝑇, and log(1
+𝜀). This proves the 
+claimed implementation and regret bound. ∎

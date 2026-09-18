@@ -1,0 +1,40 @@
+\documentclass[anon]{alt2027}
+% Official ALT 2027 template; manuscript content is preserved from Typst.
+\usepackage[T1]{fontenc}
+\usepackage{times}
+\usepackage{mathtools}
+\usepackage{enumitem}
+\usepackage{microtype}
+\setlength{\emergencystretch}{1em}
+\definecolor{draftblue}{HTML}{0057D9}
+% Like #draft[...] in Typst, this accepts paragraphs and displayed math.
+% To accept a passage, remove only "draft": \draft{...} becomes {...}.
+\long\def\draft#1{{\color{draftblue}#1}}
+\newcommand{\credal}{%
+  \mathord{\vcenter{\hbox{%
+    \setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.055em}%
+    \fbox{\rule{0pt}{0.57em}\rule{0.57em}{0pt}}%
+  }}}\hspace{0.04em}%
+}
+% The source has independent theorem and lemma counters.
+\theorempostheader{.}
+\newtheorem{sourcetheorem}{Theorem}
+\newtheorem{sourcelemma}{Lemma}
+\newtheorem{sourceproblem}{Problem}
+\newcounter{sourcealgorithm}
+\newenvironment{sourcealgorithm}{%
+  \par\addvspace{1ex}\refstepcounter{sourcealgorithm}%
+  \hrule\nobreak\vspace{0.5em}\noindent
+  \textbf{Algorithm \thesourcealgorithm.}\par\nobreak\vspace{0.35em}%
+}{\par\nobreak\vspace{0.5em}\hrule\addvspace{1ex}}
+\setlist[enumerate]{label=\arabic*.,leftmargin=2em}
+\setcitestyle{numbers,square}
+% Cross-references inherit the draft colour of their surrounding text.
+\hypersetup{hidelinks,pdftitle={When are Imprecise Bandits Computationally Tractable?},pdfauthor={}}
+\title[When are Imprecise Bandits Computationally Tractable?]{When are Imprecise Bandits Computationally Tractable?}
+\altauthor{}
+
+\begin{document}
+\maketitle
+\input{manuscript.tex}
+\end{document}
