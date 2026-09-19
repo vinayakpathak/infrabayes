@@ -1,0 +1,77 @@
+{
+  "original_manuscript_sha256": "cca84e90f2872e38bab7eec57c4ad95ac751a329bd2cc161e4039875bc40cfe0",
+  "reorganized_manuscript_sha256": "e7470842f111ab02b8545ebecda1d76bb9145682ef3f6053b15095af57560753",
+  "main_hardness_theorems": 5,
+  "main_hardness_lemmas": 0,
+  "main_hardness_proofs": 0,
+  "appendix_hardness_lemmas": 6,
+  "appendix_hardness_proofs": 11,
+  "all_original_hardness_content_preserved": true,
+  "all_original_draft_wrappers_preserved": true,
+  "theorems": [
+    {
+      "theorem": "thm:additive-simplex-np-hardness",
+      "appendix_label": "app:hardness-simplex",
+      "statement_original_sha256": "36d620004e8cb9170c6e4a4fa271f2150f4deae061b60c2a6d6b463d9bb17a9f",
+      "statement_original_preserved": true,
+      "setup_sha256": "d51c6a4b1ed36ac5e36a2a8b5ab902f44eba53e9c7709cccf946642a0449d955",
+      "proof_sha256": "7a11ca47b5fa79a0b18f4f8b0227ff72377cb80de4c02eebd7b960111095714d",
+      "definitions_added_to_statement": false
+    },
+    {
+      "theorem": "thm:additive-polytope-np-hardness",
+      "appendix_label": "app:hardness-polytope",
+      "statement_original_sha256": "1bf2f5936d763267d479b6fa22a76e7f0294c18598ce068aada58cf5adf1f039",
+      "statement_original_preserved": true,
+      "setup_sha256": "68aa1a79a2b7974daccef9bc3a06af86d6661f3eaeb3edd04037f06d9048edae",
+      "proof_sha256": "e30417059ffd5cc132fd6f7a49669826ab03e3eb198d06976664039ae0161546",
+      "definitions_added_to_statement": false
+    },
+    {
+      "theorem": "thm:trilinear-balls-np-hardness",
+      "appendix_label": "app:hardness-trilinear",
+      "statement_original_sha256": "d092d2ac5fbe8eb383fb9d3dddbccb3f79d222c5f165b19bd64b194ec22b300b",
+      "statement_original_preserved": true,
+      "setup_sha256": "d6cc1a2b41d19420b3d8c3e50114458dc600a63e3be941d6f0e9c5a987f1a16a",
+      "proof_sha256": "ac9a5e6ef8541501ff384f5b6314fdbd6ed4f088a01d9f0bf876ff884907a636",
+      "definitions_added_to_statement": true
+    },
+    {
+      "theorem": "thm:iucb-np-hardness",
+      "appendix_label": "app:hardness-iucb",
+      "statement_original_sha256": "697cc2401100ff64ba9f5771ae0493ee2f273a288346436158b041c93742463a",
+      "statement_original_preserved": true,
+      "setup_sha256": "4613a8bb7ad64f99dcbf2beff9815937d49d415dedd4bcb7f04f8af78963c51f",
+      "proof_sha256": "5da0f9906699a090695446a7a03cb756c141c4c7994593eb85af0c75b541eba9",
+      "definitions_added_to_statement": true
+    },
+    {
+      "theorem": "thm:easy-planning-hard-learning",
+      "appendix_label": "app:hardness-easy-planning",
+      "statement_original_sha256": "b98b452f29f1ab9e4236d452f1adc1a8d489dac81299ab3e48c1ce3dec7b0b52",
+      "statement_original_preserved": true,
+      "setup_sha256": "71ac3a8ab21ac9ddf7e5662603a68eb923ad5ee1ef6222c6e80cdc5c33796243",
+      "proof_sha256": "eaefaef591807ec4c58e64e12e05ee9b140399c315276aedbd0b1697e5991600",
+      "definitions_added_to_statement": false
+    }
+  ],
+  "outside_hardness_body_unchanged": true,
+  "all_original_noncomment_nonblank_lines_preserved_after_proof_heading_normalization": true,
+  "all_original_math_expressions_preserved": true,
+  "original_math_occurrences": 1072,
+  "added_definition_math_occurrences": 10,
+  "source_typst_unchanged": true,
+  "pages": 33,
+  "main_hardness_pages": [
+    11,
+    12
+  ],
+  "appendix_hardness_pages": [
+    20,
+    33
+  ],
+  "valid_internal_links": 0,
+  "all_references_resolve": true,
+  "duplicate_labels": 0,
+  "proof_navigation_change": "Expanded the trilinear theorem proof heading to Proof of Theorem 6; original proof text is otherwise unchanged."
+}

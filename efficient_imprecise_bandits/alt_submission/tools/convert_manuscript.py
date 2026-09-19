@@ -48,6 +48,7 @@ class Converter:
         self.numbered = False
         self.math_count = 0
         self.draft_count = 0
+        self.draft_depth = 0
         self.labels = []
         self.citations = []
 
@@ -118,7 +119,13 @@ class Converter:
                 body, j = balanced(s, i+(6 if draft else 1))
                 if draft:
                     self.draft_count += 1
-                out.append(('\\draft{' if draft else '{') + self.convert(body) + '}')
+                    self.draft_depth += 1
+                try:
+                    converted = self.convert(body)
+                finally:
+                    if draft:
+                        self.draft_depth -= 1
+                out.append(('\\draft{' if draft else '{') + converted + '}')
                 i = j
                 continue
             figure = re.match(r'#(theorem|lemma|algorithm|problem)', s[i:])
@@ -131,15 +138,29 @@ class Converter:
                     title_match = re.fullmatch(r'title:\s*\[(.*)\]', args, re.S)
                     if not title_match:
                         raise ValueError(args)
-                    title = '[' + self.convert(title_match[1]) + ']'
+                    title = self.convert(title_match[1])
                 body, j = balanced(s, j)
                 label = re.match(r'\s*<([^>]+)>', s[j:])
                 label_tex = ''
                 if label:
                     label_tex = self.label(label[1])
                     j += label.end()
-                env = 'source' + kind
-                out.append('\n\\begin{' + env + '}' + title + label_tex + '\n' + self.convert(body) + '\n\\end{' + env + '}\n')
+                converted = self.convert(body)
+                if kind == 'algorithm':
+                    # Floats reset the surrounding colour, so repeat a draft
+                    # scope inside the float when it inherits blue from Typst.
+                    contents = ('\\floatconts{' + (label[1] if label else '')
+                                + '}{\\caption{' + title + '}}{\n'
+                                + converted + '\n}\n')
+                    if self.draft_depth:
+                        contents = '\\draft{\n' + contents + '}\n'
+                    out.append('\n\\begin{algorithm}[!htbp]\n' + contents
+                               + '\\end{algorithm}\n\\FloatBarrier\n')
+                else:
+                    optional_title = '[' + title + ']' if title else ''
+                    out.append('\n\\begin{' + kind + '}' + optional_title
+                               + label_tex + '\n' + converted
+                               + '\n\\end{' + kind + '}\n')
                 i = j
                 continue
             if s.startswith('#block(', i):

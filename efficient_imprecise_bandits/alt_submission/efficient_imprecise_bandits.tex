@@ -16,17 +16,12 @@
     \fbox{\rule{0pt}{0.57em}\rule{0.57em}{0pt}}%
   }}}\hspace{0.04em}%
 }
-% The source has independent theorem and lemma counters.
-\theorempostheader{.}
-\newtheorem{sourcetheorem}{Theorem}
-\newtheorem{sourcelemma}{Lemma}
-\newtheorem{sourceproblem}{Problem}
-\newcounter{sourcealgorithm}
-\newenvironment{sourcealgorithm}{%
-  \par\addvspace{1ex}\refstepcounter{sourcealgorithm}%
-  \hrule\nobreak\vspace{0.5em}\noindent
-  \textbf{Algorithm \thesourcealgorithm.}\par\nobreak\vspace{0.35em}%
-}{\par\nobreak\vspace{0.5em}\hrule\addvspace{1ex}}
+% Use the template's theorem environment, with separately numbered lemmas
+% to preserve the manuscript's existing references.
+\let\lemma\relax
+\let\endlemma\relax
+\newtheorem{lemma}{Lemma}
+\SetAlgoCaptionSeparator{.}
 \setlist[enumerate]{label=\arabic*.,leftmargin=2em}
 \setcitestyle{numbers,square}
 % Cross-references inherit the draft colour of their surrounding text.

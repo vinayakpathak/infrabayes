@@ -21,6 +21,10 @@
   welcome when they fit; they are not a checklist of phrases to insert.
 - Keep necessary qualifications, but put them where the argument needs
   them. Do not overload an introductory explanation with technical caveats.
+  Treat model assumptions established for the whole document as implicit in
+  later statements. In this manuscript, do not repeatedly assume that nature
+  follows a compatible adaptive policy; restate such assumptions only when
+  a result changes their scope.
   If an intuitive claim needs an assumption to be correct, state the
   assumption plainly or narrow the claim rather than glossing over it.
   When setting an issue aside temporarily, state the assumption directly
@@ -92,7 +96,12 @@ as a template to repeat verbatim in unrelated passages.
 
 ## Document style
 
-- End proof sketches with `$qed$`, just as for full proofs.
+- For LaTeX manuscripts, prefer the theorem, lemma, proof, and algorithm environments
+  supplied by the conference template. Use small numbering or style settings
+  where needed instead of introducing separate conversion-only environments.
+  Use the proof environment for full proofs and proof sketches, with its automatic
+  QED marker instead of a manually inserted black square.
+- In Typst, end proof sketches with `$qed$`, just as for full proofs.
 - By default, do not give lemmas names or title-like bold prefixes; begin a
   `#lemma[...]` block directly with its mathematical statement. Add a lemma
   name only when the user explicitly requests one. Internal reference labels
@@ -110,17 +119,30 @@ as a template to repeat verbatim in unrelated passages.
   branch applies; leave those checks to the detailed proof.
 - When introducing a learner, give a short description in words of how it
   works, in the order its steps happen, before the formal algorithm.
+  When introducing a refinement of an earlier learner, first explain the
+  guiding principle, where the earlier learner falls short, and what the
+  new score or rule will let us decide. Then introduce the formal quantity.
   Explain what each step does before referring to its outputs by
   shorthand: for example, explain that a block consists of repeated plays
   of one arm before referring to a "block mean." State the algorithm and
   the definitions needed to read it before presenting the lemmas and
-  proofs used to analyze it. For a regret analysis, put an informal
+  proofs used to analyze it. A short lemma giving the promised guarantee
+  of a new score can come immediately after its definition and arm-selection
+  rule, before the full algorithm. Reuse that lemma in the later analysis.
+  When a learner's regret analysis assumes exact maximization, keep its
+  algorithm, theorem, and proof under that assumption. Introduce numerical
+  approximation errors only in the later computational-tractability discussion,
+  where their effect on regret is explained.
+  For a regret analysis, put an informal
   theorem and a short proof sketch after the algorithm in the main body.
   Explain where each regret term comes from, how often its cost is incurred,
   and how balancing the terms gives the rate. Put the exact constants,
   technical lemmas, and detailed proofs in a dedicated appendix, with
-  explicit references from the main body. In proof sketches, simplify
-  asymptotic expressions and omit additive constants used only for small
+  explicit references from the main body. In informal explanations and proof
+  sketches, use asymptotic bounds to explain the main tradeoff before giving
+  exact constants or detailed algebra. State which dependencies or logarithmic
+  factors are being suppressed. Simplify asymptotic expressions and omit
+  additive constants used only for small
   parameter values: write `O(log T)` instead of `O(log(T+1))`. Keep such
   adjustments in the precise statements where needed. Omit routine
   bookkeeping, such as the final incomplete block, when it does not
@@ -133,6 +155,10 @@ as a template to repeat verbatim in unrelated passages.
   explain reuse of earlier lemmas there. State intermediate results in
   the form needed by the current algorithm; introduce extra parameters
   or generality for a later algorithm when that algorithm appears.
+- In NP-hardness sections, keep the theorem statements in the main body
+  and put reductions, supporting lemmas, and proofs in an appendix.
+  Include the definitions needed to read each theorem in its statement,
+  and give an explicit reference to the appendix containing the proofs.
 - When technical jargon is used only once, replace it with its operative
   mathematical definition instead of introducing the term and then defining
   it separately. For outcome sets in this manuscript, do not use "fiber"
@@ -157,6 +183,8 @@ as a template to repeat verbatim in unrelated passages.
   do not call the space, vectors, or means "lifted."
 - Include explanatory material when it is needed for the next step of the
   argument; omit details that merely repeat what was just displayed.
+  After revising a paragraph, check that the next paragraph continues from
+  its new ending rather than restarting the motivation.
   When motivating a lemma, say what it proves and why the next step
   needs that fact. Avoid vague descriptions such as "keeps track of"
   quantities without explaining the mathematical conclusion.
