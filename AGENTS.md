@@ -133,6 +133,8 @@ as a template to repeat verbatim in unrelated passages.
   algorithm, theorem, and proof under that assumption. Introduce numerical
   approximation errors only in the later computational-tractability discussion,
   where their effect on regret is explained.
+  In that discussion, state the decision and optimization problems the
+  algorithm must solve before explaining how to implement them.
   For a regret analysis, put an informal
   theorem and a short proof sketch after the algorithm in the main body.
   Explain where each regret term comes from, how often its cost is incurred,
@@ -188,6 +190,12 @@ as a template to repeat verbatim in unrelated passages.
   When motivating a lemma, say what it proves and why the next step
   needs that fact. Avoid vague descriptions such as "keeps track of"
   quantities without explaining the mathematical conclusion.
+
+## Submission artifacts
+
+- Create or refresh a submission ZIP only when the user explicitly asks for
+  it. Routine manuscript edits, PDF builds, and commits should not regenerate
+  submission archives.
 
 ## Typst mathematics
 

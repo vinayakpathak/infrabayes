@@ -83,10 +83,10 @@ h_{z} \left( x \right) \coloneqq \left\{ P \in \Delta D : \mathbb{E}_{y \sim P} 
 
 
 Let $z^{\star} \in Z$ represent the true
-hypothesis, so that $h^{\star} = h_{z^{\star}}$. The true feasible mean set is
+hypothesis, so that $h^{\star} = h_{z^{\star}}$. Define
 $K^{\star} \left( x \right) \coloneqq K_{z^{\star}} \left( x \right)$.
 
-\draft{We also assume a uniform non-tangency condition: there is a constant
+We also assume a transversality condition as in~\citep{kosoy2025imprecise}: there is a constant
 $S \in \left( 0 , 1 \right]$ such that, for every $x \in X$ and every
 $p \in \mathbb{R}^{d_{D}}$ satisfying
 $C_{z^{\star}} p + B_{z^{\star}} x + d_{z^{\star}} = 0$ with $p \notin D$,
@@ -99,9 +99,6 @@ $C_{z^{\star}} p + B_{z^{\star}} x + d_{z^{\star}} = 0$ with $p \notin D$,
 
 For a Euclidean ball, this says that the affine solution spaces defined by
 the true constraints remain uniformly bounded away from tangency to $D$.
-This is the transversality condition used in \citep{kosoy2025imprecise}.
-}
-
 
 Because $r$ is affine in its outcome argument, the value functions defined
 above satisfy
@@ -120,14 +117,10 @@ R_{T} \coloneqq T V^{\star} - \mathbb{E} \left[ \sum_{t = 1}^{T} r \left( x_{t} 
 \end{equation*}
 
 
-\draft{
-To define the computational problem, we fix a finite representation scheme
-for the data defining $\mathcal{M}$, and let $| \mathcal{M} |$ denote the length of its
-description. We represent $X$ and $D$ by their centres and radii, $r$ by its
-coefficients, and $H$ by a description of $Z$ together with the affine map
-$z \mapsto \left( B_{z} , C_{z} , d_{z} \right)$. We restrict attention to succinctly represented
-instances, for which $| \mathcal{M} | \le \operatorname{poly} \left( d_{X} , d_{D} , d_{Z} \right)$.
-}
+To define the computational problem, we assume that the numerical data defining $\mathcal{M}$ are rational and
+given explicitly, with total encoding length
+$|\mathcal{M}|\le\operatorname{poly}(d_X,d_D,d_Z)$.
+Running time is measured in bit operations.
 
 Now we state our main result.
 
@@ -273,6 +266,7 @@ x \in \operatorname{argmax}_{x^{\prime} \in X} H_{V} \left( x^{\prime} \right) .
 
 
 
+\draft{
 \begin{theorem}[Informal]\label{thm:hard-ellipsoid-warmup}
 
   For fixed problem parameters, Algorithm~\ref{alg:hard-ellipsoid-warmup} with exact
@@ -288,6 +282,7 @@ R_{T} \le \tilde{O} \left( n + \frac{T}{\sqrt{n}} \right) .
   $R_{T} \le \tilde{O} \left( T^{\frac{2}{3}} \right)$.
 
 \end{theorem}
+}
 
 }
 
@@ -330,41 +325,96 @@ $\tilde{O} \left( T^{\frac{2}{3}} \right)$ on the regret.
 The precise statement and proof are in Appendix~\ref{app:hard-ellipsoid-analysis}.
 }
 
-\draft{
-
 \subsection{Computational tractability}\label{sec:hard-computation}
+In this section we describe a polytime implementation of Algorithm~\ref{alg:hard-ellipsoid-warmup}.
 
-The matrix updates and the test $p_{V} \left( x , \overline{y} \right) > 1$ can be computed
-in polynomial time. The main issue is choosing an arm, since it involves solving a min-max optimization. To choose an arm, first we need to decide whether there exists an arm $x$ such that $\hat{K}_V(x)$ is empty. Exact emptiness tests can be unstable when the two constraints just
-touch. To allow some numerical slack, the implementation uses
+The matrix updates $V \leftarrow V + \overline{w}\overline{w}^{T}$ and the test $p_{V} \left( x , \overline{y} \right) > 1$ can be computed
+in polynomial time. The main issue is choosing an arm, which involves solving the following two computational problems:
 
+\begin{enumerate}
+\item Decide whether there exists an arm $x\in X$ with
+  $\hat{K}_V(x)=\varnothing$, and if so, find such an arm.
+\item If $\hat{K}_V(x)$ is nonempty for every $x\in X$, find an arm
+  $x\in\operatorname*{argmax}_{x'\in X}H_V(x')$, where
+  $H_V(x)=\min_{y\in\hat{K}_V(x)}r(x,y)$.
+\end{enumerate}
+
+\draft{
+We use the following consequence of Bienstock's theorem~\citep{bienstock2016cdt} for both problems.
+
+\begin{theorem}[Bienstock~\citep{bienstock2016cdt}]
+Consider a maximization problem with a nonempty feasible set that has: a) a fixed number of quadratic constraints with at least one of them being a bounded ellipsoid, b) a quadratic objective function, and c) rational coefficients for both the objective function and the constraints. Then, there exists an algorithm that, for every
+$\varepsilon\in(0,1)$, returns rational assignments to the variables that violate
+each constraint by at most $\varepsilon$ and achieve an objective value that is at
+least the optimum minus $\varepsilon$. Its running time is polynomial in
+the input size and $\log(1/\varepsilon)$.
+\end{theorem}
+
+The theorem allows small constraint violations, so its output does not
+directly settle the exact emptiness question. For the implementation,
+it is enough to find an arm whose original outcome set is empty, or to
+certify that every enlarged outcome set is nonempty and plan using those
+sets. To leave room for the numerical errors, define
 
 \begin{equation*}
-{\hat{K}}_{V}^{\text{\normalfont in}} \left( x \right) \coloneqq \left\{ y \in D : p_{V} \left( x , y \right) \le 4 \right\} , \quad {\hat{K}}_{V}^{\text{\normalfont out}} \left( x \right) \coloneqq \left\{ y \in D : p_{V} \left( x , y \right) \le 9 \right\} .
+\hat K_V^{\mathrm{in}}(x)\coloneqq\{y\in D:p_V(x,y)\le4\},
+\qquad
+\hat K_V^{\mathrm{out}}(x)\coloneqq\{y\in D:p_V(x,y)\le9\}.
 \end{equation*}
 
+We look for an arm whose inner set is empty, and otherwise plan using
+the outer sets. The update rule still uses $p_V>1$.
 
-It looks for an arm whose inner set is empty, and otherwise plans
-against the outer sets. The update rule still uses $p_{V} > 1$. Thus we
-only change the arm-selection rule by constant factors in the
-ellipsoid's radius.
-
-To find an empty inner set, let $d_{V} \left( x \right)$ be the Euclidean distance
-between $2 E_{V}$ and $\{ \left( 1 , x , y \right) : y \in D \}$. Writing $z = \left( z_{0} , z_{X} , z_{D} \right)$,
-the support functions of the ellipsoid and the unit ball give
-
+For a fixed arm $x$, let $S_x\coloneqq\{(1,x,y):y\in D\}$. Its inner
+set is empty precisely when $2E_V$ and $S_x$ are disjoint. Since both
+sets are compact and convex, this happens if and only if a direction
+$z=(z_0,z_X,z_D)$ separates them:
 
 \begin{equation*}
-d_{V} \left( x \right) = \operatorname*{max}_{{\left\Vert z \right\Vert}_{2} \le 1} \left[ z_{0} + z_{X}^{T} x - 2 \sqrt{z^{T} V z} - {\left\Vert z_{D} \right\Vert}_{2} \right] .
+\max_{w\in2E_V}z^T w<\min_{w\in S_x}z^T w.
 \end{equation*}
 
+We can compute both sides explicitly. On $S_x$, only $y$ varies, so
 
-In particular, $d_{V} \left( x \right) > 0$ certifies that the inner set is empty.
-Maximize this expression jointly over $x \in X$ and $z$, to additive
-accuracy $\eta \coloneqq \frac{1}{10 n}$. If the returned lower bound exceeds $\eta$,
-play the corresponding arm. Otherwise $d_{V} \left( x \right) \le 2 \eta$ for every arm.
-The gap between $2 E_{V}$ and $3 E_{V}$ then guarantees that every outer set
-is nonempty, with enough room to carry out the remaining optimization.
+\begin{equation*}
+\min_{w\in S_x}z^T w
+=z_0+z_X^T x+\min_{\|y\|_2\le1}z_D^T y
+=z_0+z_X^T x-\|z_D\|_2.
+\end{equation*}
+
+For the ellipsoid, write $w=2V^{1/2}u$ with $\|u\|_2\le1$. Then
+
+\begin{equation*}
+\max_{w\in2E_V}z^T w
+=2\max_{\|u\|_2\le1}(V^{1/2}z)^T u
+=2\sqrt{z^T Vz}.
+\end{equation*}
+
+Maximizing the separation gap over $\|z\|_2\le1$ gives the Euclidean
+distance $d_V(x)\coloneqq\operatorname{dist}(2E_V,S_x)$:
+
+\begin{equation*}
+d_V(x)=\max_{\|z\|_2\le1}
+\left[z_0+z_X^T x-2\sqrt{z^T Vz}-\|z_D\|_2\right].
+\end{equation*}
+
+We maximize this expression jointly over $x\in X$ and $z$, using
+Bienstock's theorem as described below. After rounding the output to
+valid rational points, we obtain an arm $x$ and a certified lower bound
+$\ell$ satisfying
+
+\begin{equation*}
+\ell\le d_V(x),\qquad
+\max_{x'\in X}d_V(x')\le\ell+\eta,
+\qquad \eta\coloneqq\frac{1}{10n}.
+\end{equation*}
+
+If $\ell>\eta$, then the returned arm has an empty inner set, so we
+play it. Otherwise $d_V(x')\le2\eta$ for every arm $x'$. The gap between
+$2E_V$ and $3E_V$ then guarantees that every outer set is nonempty, with
+a uniform margin for planning. This second outcome does not assert that
+every original set is nonempty; nonemptiness of the outer sets is all
+we need for the regret argument.
 
 Define the value used for planning by
 
@@ -384,20 +434,24 @@ H_{V}^{\text{\normalfont out}} \left( x \right) = a^{T} x + c + \operatorname*{m
 
 where $M \coloneqq 4 n \left( 1 + {\left\Vert b \right\Vert}_{1} \right)$ suffices. The strict margin obtained above
 is what lets us bound the dual variable uniformly over all arms.
+We maximize this expression jointly over $x\in X$ and $z$ to additive
+accuracy $\varepsilon$ to choose the next arm.
 
-Both maximizations reduce to a quadratic program with a fixed number
-of quadratic constraints. For example, replace the two norms in the
+Both maximizations reduce to quadratic programs with a fixed number
+of quadratic constraints. For planning, replace the two norms in the
 last display by nonnegative variables $t , s$ satisfying
 $z^{T} V z \le t^{2}$ and ${\left\Vert b + z_{D} \right\Vert}_{2}^{2} \le s^{2}$. The objective becomes
-quadratic in $\left( x , z , t , s \right)$. All variables have explicit bounds, so we
-can also add a redundant enclosing ball. Bienstock's theorem
-\citep{bienstock2016cdt}, stated in Appendix~\ref{app:qcqp}, solves these problems
-to weak additive accuracy in polynomial time. The dual formulas,
-the bound on $M$, and the conversion of a weak solution into a valid
-arm and a certified lower bound are justified in
+quadratic in $\left( x , z , t , s \right)$. For the distance problem, use
+$\|z_D\|_2^2\le s^2$ instead. All variables have explicit bounds, so we
+can add a redundant enclosing ball and apply Bienstock's theorem.
+Projecting and rounding the returned points into the $x$ and $z$ balls,
+and rounding the norm values upward, gives valid rational arms and
+certified lower bounds. The precision needed for these steps, the
+distance and planning formulas, and the bound on $M$ are justified in
 Appendix~\ref{app:hard-computation}.
 
-The regret argument still works. An empty inner set forces an update,
+The regret argument still works. An arm chosen by the emptiness test
+forces an update even after rounding,
 whereas an uninformative block has its empirical mean in the outer
 set. Points in $3 E_{V}$ are at most three times as far from $\mathcal{L}$
 as the earlier bound for $E_{V}$. Thus the two types of blocks still
@@ -1316,7 +1370,7 @@ ${\left\Vert b \right\Vert}_{2} T \tau_{y}$ for replacing the actual rewards by 
 The common grids keep all stored matrices rational with polynomial
 bit length. Matrix inversion and the comparison $p_{V} > 1$ can then be
 performed exactly in polynomial time. There are at most
-$\left\lceil \frac{T}{n} \right\rceil$ planning calls, each taking time polynomial in the input
+$\left\lceil \frac{T}{n} \right\rceil$ arm-selection calls, each taking time polynomial in the input
 bit length, $T$, and $\operatorname{log} \left( \frac{1}{\varepsilon} \right)$. This proves the claimed
 implementation and regret bound.
 \end{proof}
