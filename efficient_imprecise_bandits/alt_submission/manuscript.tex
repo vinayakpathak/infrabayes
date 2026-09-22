@@ -335,9 +335,7 @@ The precise statement and proof are in Appendix~\ref{app:hard-ellipsoid-analysis
 \subsection{Computational tractability}\label{sec:hard-computation}
 
 The matrix updates and the test $p_{V} \left( x , \overline{y} \right) > 1$ can be computed
-in polynomial time. The main issue is choosing an arm, since it involves solving a min-max optimization.
-
-Exact emptiness tests can be unstable when the two constraints just
+in polynomial time. The main issue is choosing an arm, since it involves solving a min-max optimization. To choose an arm, first we need to decide whether there exists an arm $x$ such that $\hat{K}_V(x)$ is empty. Exact emptiness tests can be unstable when the two constraints just
 touch. To allow some numerical slack, the implementation uses
 
 
