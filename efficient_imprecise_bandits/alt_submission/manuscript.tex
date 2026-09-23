@@ -1,11 +1,18 @@
 % Translated from the unchanged Typst manuscript; hardness proofs moved to Appendix D.
 
 \section{Introduction}
+Making sure that an artificial superintelligence does not pursue goals that are unaligned with humans is a challenging problem, and arguably one of the most important of our times~\citep{ngo2024alignment,bengio2024managing}. Several attempts have been made to get a handle on it and a recurring theme is that at its core it is a learning problem~\citep{hadfieldmenell2016cooperative,hadfieldmenell2017inverse}. Indeed, imagine several agents coexisting in the universe and interacting with each other with each agent trying to act in the interest of a subset of the agents. The agents only have partial information about each other's behaviours and goals as well as about the universe and must ensure the universe evolves towards desirable states~\citep{dafoe2020cooperative}. Given the role of learning, it is not unreasonable to imagine that learning theory might help us pave the way towards solving the problem~\citep{kosoy2018learningagenda}.
+
+However, the currently known results in learning theory are likely insufficient to solve alignment. For example, it has been suggested that designing better learners for unrealizable learning is crucial for solving the problem~\citep{kosoy2018learningagenda}. Realizability is a strong assumption in general, but it becomes even more questionable in the multiagent learning scenarios described above.
+
+One concrete issue with realizable learning is the grain of truth problem~\citep{hutter2009open,leike2016grain,wyeth2025grain,kosoy2023agenda}. Suppose Alice and Bob are playing a known game. Neither knows the other's strategy but assumes that they lie in a class $H$ of strategies~\citep{kalai1993rational,noguchi2015bayesian}. Can each player simultaneously achieve a low regret? The issue is that the strategy that achieves a low regret against all strategies in $H$ may not itself be a member of $H$~\citep{nachbar1997prediction,nachbar2005beliefs}. In that case, if Alice's strategy is in $H$, then Bob's strategy will have to be outside of $H$ and at least one of the players need to solve an unrealizable learning problem. Finding a general and natural class $H$ whose learner lies within $H$ is an open problem.
+
+
+
+
 
 
 \section{Setting}
-
-
 An instance of the imprecise bandits problem is a tuple $\mathcal{M} = \left( X , D , H , r \right)$, where $X$ is a set of arms, $D$ is a set of possible outcomes, $H$ is a set of mappings of type $X \to \credal D$ where $\credal D$ denotes the set of credal sets over $D$, and $r : X \times D \to \mathbb{R}$ is a reward function.
 
 The imprecise bandits game is played between a learner and an adversary for $T$ rounds (both adversary and learner know $T$). At the beginning of the game, the adversary picks some $h^{\star} \in H$. The learner knows $X , D , H , r$, and $T$, but does not have knowledge of $h^{\star}$. Then, at each round $t$:
@@ -222,7 +229,7 @@ choosing an arm exactly. We will consider the computational aspects
 of the algorithm later.
 
 
-\begin{algorithm}[!htbp]
+\begin{algorithm}
 \floatconts{alg:hard-ellipsoid-warmup}{\caption{}}{
 
   Fix a block length $n \in \left\{ 1 , \ldots , T \right\}$ and initialize $V \coloneqq n^{- 1} I_{q}$.

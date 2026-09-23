@@ -96,6 +96,10 @@ as a template to repeat verbatim in unrelated passages.
 
 ## Document style
 
+- For citation-only manuscript requests, preserve the existing prose exactly.
+  Include multiple directly relevant sources where available, placing them
+  beside the claims they support. Flag unsupported or contradicted claims
+  separately instead of attaching misleading citations.
 - For LaTeX manuscripts, prefer the theorem, lemma, proof, and algorithm environments
   supplied by the conference template. Use small numbering or style settings
   where needed instead of introducing separate conversion-only environments.
