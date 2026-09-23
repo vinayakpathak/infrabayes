@@ -112,6 +112,10 @@ as a template to repeat verbatim in unrelated passages.
   proof rather than restating its conclusion as a new assumption. Carry
   any probability qualification into the derived statement and use the
   same event throughout the proof.
+- Distinguish author attribution from established theorem names. When a
+  result has no established name, refer to "a result of [author]" or cite
+  its theorem number in prose. Author attribution in theorem headings is
+  fine.
 - Write for a mathematically mature reader. Keep the exposition compact but
   explicit, and do not expand routine specializations that the reader can
   immediately derive from a general statement. In proof sketches, do not
@@ -135,6 +139,9 @@ as a template to repeat verbatim in unrelated passages.
   where their effect on regret is explained.
   In that discussion, state the decision and optimization problems the
   algorithm must solve before explaining how to implement them.
+  Keep detailed reductions and finite-precision arguments in a relevant
+  appendix, consolidate overlapping explanations there, and give an
+  explicit reference from the main body.
   For a regret analysis, put an informal
   theorem and a short proof sketch after the algorithm in the main body.
   Explain where each regret term comes from, how often its cost is incurred,

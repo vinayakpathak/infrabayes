@@ -1,5 +1,8 @@
 % Translated from the unchanged Typst manuscript; hardness proofs moved to Appendix D.
 
+\section{Introduction}
+
+
 \section{Setting}
 
 
@@ -339,10 +342,10 @@ in polynomial time. The main issue is choosing an arm, which involves solving th
   $H_V(x)=\min_{y\in\hat{K}_V(x)}r(x,y)$.
 \end{enumerate}
 
-\draft{
-We use the following consequence of Bienstock's theorem~\citep{bienstock2016cdt} for both problems.
+We use the following result of Bienstock~\citep[Theorem~1.3]{bienstock2016cdt} for both problems.
 
 \begin{theorem}[Bienstock~\citep{bienstock2016cdt}]
+  \label{thm:bienstock}
 Consider a maximization problem with a nonempty feasible set that has: a) a fixed number of quadratic constraints with at least one of them being a bounded ellipsoid, b) a quadratic objective function, and c) rational coefficients for both the objective function and the constraints. Then, there exists an algorithm that, for every
 $\varepsilon\in(0,1)$, returns rational assignments to the variables that violate
 each constraint by at most $\varepsilon$ and achieve an objective value that is at
@@ -350,119 +353,7 @@ least the optimum minus $\varepsilon$. Its running time is polynomial in
 the input size and $\log(1/\varepsilon)$.
 \end{theorem}
 
-The theorem allows small constraint violations, so its output does not
-directly settle the exact emptiness question. For the implementation,
-it is enough to find an arm whose original outcome set is empty, or to
-certify that every enlarged outcome set is nonempty and plan using those
-sets. To leave room for the numerical errors, define
-
-\begin{equation*}
-\hat K_V^{\mathrm{in}}(x)\coloneqq\{y\in D:p_V(x,y)\le4\},
-\qquad
-\hat K_V^{\mathrm{out}}(x)\coloneqq\{y\in D:p_V(x,y)\le9\}.
-\end{equation*}
-
-We look for an arm whose inner set is empty, and otherwise plan using
-the outer sets. The update rule still uses $p_V>1$.
-
-For a fixed arm $x$, let $S_x\coloneqq\{(1,x,y):y\in D\}$. Its inner
-set is empty precisely when $2E_V$ and $S_x$ are disjoint. Since both
-sets are compact and convex, this happens if and only if a direction
-$z=(z_0,z_X,z_D)$ separates them:
-
-\begin{equation*}
-\max_{w\in2E_V}z^T w<\min_{w\in S_x}z^T w.
-\end{equation*}
-
-We can compute both sides explicitly. On $S_x$, only $y$ varies, so
-
-\begin{equation*}
-\min_{w\in S_x}z^T w
-=z_0+z_X^T x+\min_{\|y\|_2\le1}z_D^T y
-=z_0+z_X^T x-\|z_D\|_2.
-\end{equation*}
-
-For the ellipsoid, write $w=2V^{1/2}u$ with $\|u\|_2\le1$. Then
-
-\begin{equation*}
-\max_{w\in2E_V}z^T w
-=2\max_{\|u\|_2\le1}(V^{1/2}z)^T u
-=2\sqrt{z^T Vz}.
-\end{equation*}
-
-Maximizing the separation gap over $\|z\|_2\le1$ gives the Euclidean
-distance $d_V(x)\coloneqq\operatorname{dist}(2E_V,S_x)$:
-
-\begin{equation*}
-d_V(x)=\max_{\|z\|_2\le1}
-\left[z_0+z_X^T x-2\sqrt{z^T Vz}-\|z_D\|_2\right].
-\end{equation*}
-
-We maximize this expression jointly over $x\in X$ and $z$, using
-Bienstock's theorem as described below. After rounding the output to
-valid rational points, we obtain an arm $x$ and a certified lower bound
-$\ell$ satisfying
-
-\begin{equation*}
-\ell\le d_V(x),\qquad
-\max_{x'\in X}d_V(x')\le\ell+\eta,
-\qquad \eta\coloneqq\frac{1}{10n}.
-\end{equation*}
-
-If $\ell>\eta$, then the returned arm has an empty inner set, so we
-play it. Otherwise $d_V(x')\le2\eta$ for every arm $x'$. The gap between
-$2E_V$ and $3E_V$ then guarantees that every outer set is nonempty, with
-a uniform margin for planning. This second outcome does not assert that
-every original set is nonempty; nonemptiness of the outer sets is all
-we need for the regret argument.
-
-Define the value used for planning by
-
-
-\begin{equation*}
-H_{V}^{\text{\normalfont out}} \left( x \right) \coloneqq \operatorname*{min}_{y \in {\hat{K}}_{V}^{\text{\normalfont out}} \left( x \right)} r \left( x , y \right) .
-\end{equation*}
-
-
-Convex duality gives
-
-
-\begin{equation*}
-H_{V}^{\text{\normalfont out}} \left( x \right) = a^{T} x + c + \operatorname*{max}_{{\left\Vert z \right\Vert}_{2} \le M} \left[ z_{0} + z_{X}^{T} x - 3 \sqrt{z^{T} V z} - {\left\Vert b + z_{D} \right\Vert}_{2} \right] ,
-\end{equation*}
-
-
-where $M \coloneqq 4 n \left( 1 + {\left\Vert b \right\Vert}_{1} \right)$ suffices. The strict margin obtained above
-is what lets us bound the dual variable uniformly over all arms.
-We maximize this expression jointly over $x\in X$ and $z$ to additive
-accuracy $\varepsilon$ to choose the next arm.
-
-Both maximizations reduce to quadratic programs with a fixed number
-of quadratic constraints. For planning, replace the two norms in the
-last display by nonnegative variables $t , s$ satisfying
-$z^{T} V z \le t^{2}$ and ${\left\Vert b + z_{D} \right\Vert}_{2}^{2} \le s^{2}$. The objective becomes
-quadratic in $\left( x , z , t , s \right)$. For the distance problem, use
-$\|z_D\|_2^2\le s^2$ instead. All variables have explicit bounds, so we
-can add a redundant enclosing ball and apply Bienstock's theorem.
-Projecting and rounding the returned points into the $x$ and $z$ balls,
-and rounding the norm values upward, gives valid rational arms and
-certified lower bounds. The precision needed for these steps, the
-distance and planning formulas, and the bound on $M$ are justified in
-Appendix~\ref{app:hard-computation}.
-
-The regret argument still works. An arm chosen by the emptiness test
-forces an update even after rounding,
-whereas an uninformative block has its empirical mean in the outer
-set. Points in $3 E_{V}$ are at most three times as far from $\mathcal{L}$
-as the earlier bound for $E_{V}$. Thus the two types of blocks still
-cost $\tilde{O} \left( n \right)$ and $\tilde{O} \left( \sqrt{n} \right)$, respectively. Maximizing
-$H_{V}^{\text{\normalfont out}}$ to additive accuracy $\varepsilon$ adds at most $T \varepsilon$
-to the regret. Taking $\varepsilon = {\left( T + 1 \right)}^{- 2}$, and rounding the observations
-to the precision specified in the appendix, gives a polynomial-time
-implementation with the same $\tilde{O} \left( T^{\frac{2}{3}} \right)$ rate.
-
-}
-
+Since all our constraints and objective functions are quadratic, one can show that both problems above can be written in a way that Theorem~\ref{thm:bienstock} can be applied. One can choose the $\varepsilon$ as an appropriate function of $T$ such that the approximate solution is still good enough that it does not increase the regret. Details are in Appendix~\ref{app:hard-computation}.
 
 \section{A $\sqrt{T}$ learner}\label{sec:soft-square-root}
 
@@ -474,7 +365,7 @@ standard exploration block. The learner does not always need to wait for
 $n$ steps before identifying that the arm it is playing is problematic.
 If the outcomes collected so far have an empirical mean $\overline{y}$
 with $w(x,\overline{y})$ already far outside the current ellipsoid, then
-the block can be cut short more quickly. However, the current arm score
+the block can be cut short more quickly. However, the current arm score $H_V(x)$ 
 does not account for outcomes outside the ellipsoid. First, we design a
 score function that takes every outcome in $D$ into account, not just
 those represented inside our chosen ellipsoid. The score function will
@@ -497,13 +388,12 @@ U_{V} \left( x \right) \coloneqq \operatorname*{min}_{y \in D} \left[ r \left( x
 We pick the arm $x$ by maximizing $U_V$. For now, assume that we can
 maximize the score exactly.
 
-\newpage
 \noindent The following lemma gives us a way to control regret when the outcome $y$
 appears anywhere in $D$.
 
 \begin{lemma}\label{lem:soft-outcome-regret}
   Fix $\delta\in(0,1)$. With probability at least $1-\delta$, simultaneously
-  for every matrix $V$ at the start of a block of Algorithm~\ref{alg:soft-square-root},
+  for every matrix $V$ that Algorithm~\ref{alg:soft-square-root} considers,
   every $\lambda>0$, and every arm $x$ maximizing $U_V$ with this value of $\lambda$,
 
 \begin{equation*}
@@ -563,14 +453,9 @@ Before this happens, the block's regret is bounded by
 $\lambda+\tilde{O}(n/\lambda)$.
 
 A large empirical penalty can therefore make us update after only a
-few observations. A small one lets us keep playing the arm for longer.
-The factor $n$ accounts for how long we have been playing: we may need
-to update even while the empirical mean satisfies the ellipsoid
-constraint, because its penalty has been multiplied by a large block
-length. Thus we choose when to update $V$ by monitoring this bound
+few observations. A small one lets us keep playing the arm for longer. Thus we choose when to update $V$ by monitoring this bound
 throughout the block, rather than waiting for a fixed number of rounds.
 
-\newpage
 \begin{algorithm}[!htbp]
 {
 \floatconts{alg:soft-square-root}{\caption{}}{
@@ -655,6 +540,7 @@ order $T^{-2}$ gives the same $\tilde{O}(\sqrt{T})$ bound in expectation.
 The precise regret bound and detailed proof are in
 Appendix~\ref{app:soft-square-root-analysis}.
 
+\draft{
 \subsection{Computational tractability}\label{sec:soft-computation}
 
 To implement the learner, we allow an additive error $\varepsilon>0$
@@ -872,7 +758,7 @@ The polynomial-time conclusion for our nonconvex instance has two steps.
 
 \begin{enumerate}
 \item \draft{
-  First, fix the number $m$ of constraints. Bienstock's theorem states that,
+  First, fix the number $m$ of constraints. Bienstock shows that,
   for rational quadratics $g_{0} , \ldots , g_{m}$, if at least one constraint
   $g_{i} \left( z \right) \le 0$ has a positive-definite quadratic part, then for every
   $\varepsilon \in \left( 0 , 1 \right)$ an algorithm runs in time
@@ -890,7 +776,7 @@ g_{i} \left( \hat{z} \right) \le \varepsilon , \quad i = 1 , \ldots , m ,
 
   \draft{
   and $g_{0} \left( \hat{z} \right) \le g_{0} \left( z \right) + \varepsilon$ for every feasible $z$
-  \citep{bienstock2016cdt}. The underlying weak-feasibility step reduces to a fixed
+  \citep[Theorem~1.3]{bienstock2016cdt}. The underlying weak-feasibility step reduces to a fixed
   number of homogeneous quadratic equations on a sphere, handled by
   Barvinok's method; binary search then gives the objective guarantee
   \citep{bienstock2016cdt}, \citep{barvinok1993feasibility}.
@@ -900,7 +786,7 @@ g_{i} \left( \hat{z} \right) \le \varepsilon , \quad i = 1 , \ldots , m ,
   Second, the planning reduction in Appendix~\ref{app:soft-square-root-analysis} has six
   quadratic inequalities. The redundant ellipsoid constraint on
   $\left( x , z , s \right)$ has a positive-definite quadratic part, so the QCQP
-  satisfies Bienstock's hypotheses. Applying the theorem to the negative
+  satisfies the hypotheses of this result. Applying it to the negative
   objective computes the planning maximum to weak additive accuracy
   $\varepsilon$ in time $\operatorname{poly} \left( L , \operatorname{log} \left( \frac{1}{\varepsilon} \right) \right)$. The same appendix explains
   how to repair the solver's output to obtain a feasible arm. If either
@@ -1242,10 +1128,11 @@ adds at most $C_{r} T \delta$.
 \end{proof}
 
 
-\subsection{Finite-precision implementation}\label{app:hard-computation}
+\subsection{Computational tractability and finite-precision implementation}\label{app:hard-computation}
 
 \begin{proof}
-We justify the implementation in Section~\ref{sec:hard-computation}. The matrix
+
+We give the implementation promised in Section~\ref{sec:hard-computation}, using Theorem~\ref{thm:bienstock}. The matrix
 always satisfies
 
 
@@ -1258,7 +1145,55 @@ since each update adds a positive semidefinite matrix of operator norm
 at most three. In particular, $E_{V}$ contains the Euclidean ball of
 radius $\frac{1}{\sqrt{n}}$.
 
-The distance formula follows by writing distance to $2 E_{V}$ as
+Theorem~\ref{thm:bienstock} allows small constraint violations, so its output does not
+directly settle the exact emptiness question. For the implementation,
+it is enough to find an arm whose original outcome set is empty, or to
+certify that every enlarged outcome set is nonempty and plan using those
+sets. To leave room for the numerical errors, define
+
+\begin{equation*}
+\hat K_V^{\mathrm{in}}(x)\coloneqq\{y\in D:p_V(x,y)\le4\},
+\qquad
+\hat K_V^{\mathrm{out}}(x)\coloneqq\{y\in D:p_V(x,y)\le9\}.
+\end{equation*}
+
+We look for an arm whose inner set is empty, and otherwise plan using
+the outer sets. The update rule still uses $p_V>1$.
+
+For a fixed arm $x$, let $S_x\coloneqq\{(1,x,y):y\in D\}$. Its inner
+set is empty precisely when $2E_V$ and $S_x$ are disjoint. Since both
+sets are compact and convex, this happens if and only if a direction
+$z=(z_0,z_X,z_D)$ separates them:
+
+\begin{equation*}
+\max_{w\in2E_V}z^T w<\min_{w\in S_x}z^T w.
+\end{equation*}
+
+We can compute both sides explicitly. On $S_x$, only $y$ varies, so
+
+\begin{equation*}
+\min_{w\in S_x}z^T w
+=z_0+z_X^T x+\min_{\|y\|_2\le1}z_D^T y
+=z_0+z_X^T x-\|z_D\|_2.
+\end{equation*}
+
+For the ellipsoid, write $w=2V^{1/2}u$ with $\|u\|_2\le1$. Then
+
+\begin{equation*}
+\max_{w\in2E_V}z^T w
+=2\max_{\|u\|_2\le1}(V^{1/2}z)^T u
+=2\sqrt{z^T Vz}.
+\end{equation*}
+
+Maximizing the separation gap over $\|z\|_2\le1$ gives the Euclidean
+distance $d_V(x)\coloneqq\operatorname{dist}(2E_V,S_x)$:
+
+\begin{equation*}
+d_V(x)=\max_{\|z\|_2\le1}
+\left[z_0+z_X^T x-2\sqrt{z^T Vz}-\|z_D\|_2\right].
+\end{equation*}
+
+To justify this identity, write the distance to $2 E_{V}$ as
 
 
 \begin{equation*}
@@ -1271,6 +1206,24 @@ and maximum gives the claimed expression for $d_{V} \left( x \right)$. The excha
 is valid because the domains are compact and convex, and the
 objective is affine in $y$ and concave in $z$.
 
+We maximize this expression jointly over $x\in X$ and $z$, using
+Theorem~\ref{thm:bienstock}. After rounding the output to
+valid rational points, we obtain an arm $x$ and a certified lower bound
+$\ell$ satisfying
+
+\begin{equation*}
+\ell\le d_V(x),\qquad
+\max_{x'\in X}d_V(x')\le\ell+\eta,
+\qquad \eta\coloneqq\frac{1}{10n}.
+\end{equation*}
+
+If $\ell>\eta$, then the returned arm has an empty inner set, so we
+play it. Otherwise $d_V(x')\le2\eta$ for every arm $x'$. The gap between
+$2E_V$ and $3E_V$ then guarantees that every outer set is nonempty, with
+a uniform margin for planning. This second outcome does not assert that
+every original set is nonempty; nonemptiness of the outer sets is all
+we need for the regret argument.
+
 Suppose the empty-set test has not returned an arm. Its additive
 guarantee gives $d_{V} \left( x \right) \le 2 \eta$ for every $x$. Thus, for every arm,
 there is a $y_{0} \in D$ such that $w_{0} \coloneqq w \left( x , y_{0} \right)$ satisfies
@@ -1280,8 +1233,25 @@ there is a $y_{0} \in D$ such that $w_{0} \coloneqq w \left( x , y_{0} \right)$ 
 {\left\Vert w_{0} \right\Vert}_{V^{- 1}} \le 2 + 2 \eta \sqrt{n} \le \frac{11}{5} .
 \end{equation*}
 
+Define the value used for planning by
 
-This point lies strictly inside $3 E_{V}$. We may therefore apply convex
+
+\begin{equation*}
+H_{V}^{\text{\normalfont out}} \left( x \right) \coloneqq \operatorname*{min}_{y \in {\hat{K}}_{V}^{\text{\normalfont out}} \left( x \right)} r \left( x , y \right) .
+\end{equation*}
+
+
+We will use the following dual formula:
+
+
+\begin{equation*}
+H_{V}^{\text{\normalfont out}} \left( x \right) = a^{T} x + c + \operatorname*{max}_{{\left\Vert z \right\Vert}_{2} \le M} \left[ z_{0} + z_{X}^{T} x - 3 \sqrt{z^{T} V z} - {\left\Vert b + z_{D} \right\Vert}_{2} \right] ,
+\end{equation*}
+
+
+where $M \coloneqq 4 n \left( 1 + {\left\Vert b \right\Vert}_{1} \right)$ suffices. We justify this formula and the bound on $z$ below.
+
+The point $w_{0}$ lies strictly inside $3 E_{V}$. We may therefore apply convex
 duality to the constraint $w \left( x , y \right) \in 3 E_{V}$, whose indicator has the
 representation
 
@@ -1313,6 +1283,9 @@ F_{x} \left( z \right) & \le b^{T} y_{0} + z^{T} w_{0} - 3 \sqrt{z^{T} V z} \\
 Since $F_{x} \left( 0 \right) = - {\left\Vert b \right\Vert}_{2}$, the supremum is attained at a point with
 ${\left\Vert z \right\Vert}_{2} \le \left( \frac{5}{2} \right) \sqrt{n} {\left\Vert b \right\Vert}_{2}$. This is smaller than the bound
 $M$ used in the implementation.
+
+We maximize the dual formula for $H_{V}^{\text{\normalfont out}}(x)$ jointly over $x\in X$ and $z$ to additive
+accuracy $\varepsilon$ to choose the next arm.
 
 We next give the quadratic programs explicitly. For the distance
 problem take $\left( \alpha , g , R \right) = \left( 2 , 0 , 1 \right)$, and for the planning problem take
@@ -1359,13 +1332,19 @@ $\tau_{y} \coloneqq \frac{{\left( T + 1 \right)}^{- 4}}{1 + {\left\Vert b \right
 the block averages and updates. The interval bound in
 Lemma~\ref{lem:interval-noise} remains valid with $h_{T}^{2}$ replaced by
 $2 h_{T}^{2} + 2 T \tau_{y}^{2}$. The matrix-distance proof and the determinant
-argument therefore still apply. An uninformative rounded mean belongs
+argument therefore still apply. An arm chosen by the emptiness test
+still forces an update after rounding. An uninformative rounded mean belongs
 to $E_{V}$, and hence to both the inner and outer sets. Consequently
 such a block must have used the planning rule. Applying
 Lemma~\ref{lem:subspace-reward-bound} and the matrix-distance bound on $3 E_{V}$
 gives the same regret estimate with the geometric term multiplied
 by three, an additional $T \varepsilon$ for planning error, and at most
 ${\left\Vert b \right\Vert}_{2} T \tau_{y}$ for replacing the actual rewards by rounded ones.
+
+Thus informative and uninformative blocks still cost
+$\tilde{O}(n)$ and $\tilde{O}(\sqrt{n})$, respectively. Taking
+$\varepsilon=(T+1)^{-2}$ preserves the
+$\tilde{O}(T^{2/3})$ regret rate.
 
 The common grids keep all stored matrices rational with polynomial
 bit length. Matrix inversion and the comparison $p_{V} > 1$ can then be
@@ -1592,8 +1571,8 @@ constraint
 
 
 This gives six quadratic inequalities. The last has a positive-definite
-quadratic part in all variables, so we can apply Bienstock's
-weak-optimization theorem \citep{bienstock2016cdt} as described in Section~\ref{app:qcqp}.
+quadratic part in all variables, so we can apply the
+weak-optimization result of Bienstock~\citep[Theorem~1.3]{bienstock2016cdt} as described in Section~\ref{app:qcqp}.
 
 The solver may return a point that slightly violates the constraints.
 We can make its output $\left( \hat{x} , \hat{z} , \hat{s} \right)$ feasible by projecting
