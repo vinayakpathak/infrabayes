@@ -37,6 +37,11 @@
   into a generic conference-paper voice. Match their style,
   not the typos or shorthand in their chat messages. In particular,
   "polish" or "make this publishable" does not override this default.
+  When describing proof techniques in an introduction, explain the obstacle
+  and the idea that resolves it in the same plain voice. Do not substitute
+  a compressed inventory of technical mechanisms for that explanation;
+  introduce details such as penalties, determinant bounds, and optimization
+  reductions only when they help the reader understand the main idea.
 
 The user explicitly approved the following passage as matching their voice:
 
