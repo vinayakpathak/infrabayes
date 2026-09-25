@@ -22,7 +22,7 @@
 - Keep necessary qualifications, but put them where the argument needs
   them. Do not overload an introductory explanation with technical caveats.
   Treat model assumptions established for the whole document as implicit in
-  later statements. In this manuscript, do not repeatedly assume that nature
+  later statements. In this manuscript, do not repeatedly assume that the adversary
   follows a compatible adaptive policy; restate such assumptions only when
   a result changes their scope.
   If an intuitive claim needs an assumption to be correct, state the
@@ -46,10 +46,10 @@
 The user explicitly approved the following passage as matching their voice:
 
 > The learner’s task is to learn enough about \(\mathcal L\) to get low regret.
-> Of course, we may never learn all of \(\mathcal L\). For example, if nature
+> Of course, we may never learn all of \(\mathcal L\). For example, if the adversary
 > keeps choosing conditional means in a strictly smaller subspace, then we
 > cannot distinguish that subspace from the true \(\mathcal L\). But this is
-> fine: we do not need to learn directions that nature never uses.
+> fine: we do not need to learn directions that the adversary never uses.
 
 Use this as a reference for tone and the sequence of the explanation, not
 as a template to repeat verbatim in unrelated passages.
@@ -203,6 +203,20 @@ as a template to repeat verbatim in unrelated passages.
   quantity is instead of using the term. For outcome sets in this manuscript, do not use "fiber"
   or "fibre": name the set and say what it contains, such as the feasible
   outcomes $K_z(x)$ at arm $x$ or the affine solution space $Ax+e+N$.
+- In the imprecise bandits manuscripts, call the player who picks the
+  outcome distribution each round "the adversary" throughout, in the
+  setting, the theorem statements, and the proofs alike; write
+  "adversary policy", not "nature policy". Do not use "nature" for
+  this player, even though the original imprecise bandits paper uses
+  both names, because switching names between the definition and the
+  analysis reads as two different players.
+- In the same manuscripts, do not call the expected value of the
+  adversary's chosen distribution a "conditional mean". That term was
+  never defined and borrows a general word for a specific object. Say
+  what the object is in plain words, such as "the expected value of the
+  chosen distribution" or "the expected value for the arm", and where a
+  symbol such as $m_t$ is introduced, define it by its formula
+  $m_t := EE_(y ~ P_t)[y]$ rather than by a name.
 - State a general property once rather than enumerating its obvious special
   cases.
 - Integrate definitions and explanations into the proof's narrative.

@@ -135,10 +135,8 @@ Running time is measured in bit operations.
 
 Now we state our main result.
 
-\draft{
 \begin{theorem}[efficient $\sqrt{T}$ learning]\label{thm:efficient-upper-bound}
-
-  There exists a policy for linear imprecise bandits as defined above that,
+There exists a policy for linear imprecise bandits as defined above that,
   for every time horizon $T$ and every true hypothesis $h^{\star} \in H$,
   runs in time polynomial in $| \mathcal{M} |$ and $T$ and achieves regret
 
@@ -155,31 +153,39 @@ R_{T} \le \tilde{O} \left( \sqrt{T} \right) .
 \end{theorem}
 
 
-This dependence on $T$ is tight up to logarithmic factors: we can reuse
-the $\Omega \left( \sqrt{T} \right)$ worst-case lower bound for stochastic bandits
-\citep[Theorem 5.1]{auer2002nonstochastic}. To see this, take
-$X = \left[ - 1 , 1 \right]$, $D = \left[ 0 , 1 \right]$, $r \left( x , y \right) = y$, and, for unknown
-$\mu = \left( \mu_{1} , \mu_{2} \right) \in {\left[ 0 , 1 \right]}^{2}$, set
+This dependence on $T$ is tight up to logarithmic factors, because linear
+imprecise bandits contain stochastic linear bandits as a special case. In a
+stochastic linear bandit, the learner picks arms $x_{t}$ from the unit ball
+$X \subseteq \mathbb{R}^{d}$ and observes a reward in $\left[ - 1 , 1 \right]$ whose mean is
+$\theta^{T} x_{t}$, for an unknown $\theta$ in the unit ball of $\mathbb{R}^{d}$. To write
+this as a linear imprecise bandit, we let the outcome be the reward itself:
+take $D = \left[ - 1 , 1 \right]$, $r \left( x , y \right) = y$, let $Z$ be the unit ball of $\mathbb{R}^{d}$,
+and set
 
 
 \begin{equation*}
-K_{\mu} \left( x \right) = \frac{\{ \left( 1 - x \right)}{2} \mu_{1} + \frac{1 + x}{2} \mu_{2} \} .
+K_{\theta} \left( x \right) \coloneqq \left\{ y \in D : y - \theta^{T} x = 0 \right\} = \left\{ \theta^{T} x \right\} .
 \end{equation*}
 
 
-These are affine constraints of the required form, with $S = 1$.
-Given a two-armed Bernoulli bandit with means $\mu_{1}$ and $\mu_{2}$, we can
-simulate a play of $x$ by pulling its first arm with probability
-$\frac{1 - x}{2}$ and its second arm otherwise, and returning the observed reward
-as $y$. This gives a compatible outcome distribution at $x$ and preserves
-expected regret, since $V^{\star} = \operatorname*{max} \left( \mu_{1} , \mu_{2} \right)$. Thus a better worst-case
-regret bound here would give a better bound for two-armed stochastic bandits.
-}
+This has the required form with $C_{\theta} = 1$, $B_{\theta} = - \theta^{T}$, and
+$d_{\theta} = 0$. Since $\left| \theta^{T} x \right| \le 1$, the only solution of the constraint
+already lies in $D$, so transversality holds with $S = 1$. The hypothesis
+$h_{\theta} \left( x \right)$ now contains every distribution on $\left[ - 1 , 1 \right]$ with mean $\theta^{T} x$.
+In particular, it contains the reward distribution of the stochastic linear
+bandit at $x$, and the adversary may choose that distribution at every round.
+Against this adversary, the learner sees exactly what it would see in the
+stochastic linear bandit. The regret is also the same in both problems, since
+$v^{\ast} \left( x \right) = \theta^{T} x$ and $V^{\star} = \operatorname*{max}_{x \in X} \theta^{T} x$. So any learner for linear
+imprecise bandits is also a learner for stochastic linear bandits with the
+same regret. But stochastic linear bandits have a worst-case regret lower bound
+of $\Omega \left( \sqrt{T} \right)$~\citep{dani2008stochastic}, and therefore so do linear imprecise
+bandits.
 
 \section[Related work]{\draft{Related work}}\label{sec:related-work}
 
 \draft{
-\paragraph{Imprecise probabilities and credal sets} A hypothesis in our class assigns to each arm a credal set, a closed convex set of distributions, and our benchmark judges an arm by the worst distribution in that set. Both choices come from a long debate about how to represent an uncertain belief. The standard answer is a single probability distribution, which can be derived from axioms on rational preference~\citep{savage1954foundations, jaynes2003probability}. But a single distribution says more than the evidence often supports~\citep{ellsberg1961risk}. The natural repair is to keep every distribution that the evidence does not rule out. Levi called such a closed convex set of distributions a credal set~\citep{levi1974indeterminate,levi1980enterprise}, and Walley built a general theory of imprecise probability around these sets~\citep{walley1991statistical}. A credal set expresses the partial belief above directly. To act on it one needs a decision rule, and Gilboa and Schmeidler axiomatized the maximin rule, which evaluates an action under the worst distribution in the set~\citep{gilboa1989maxmin}. Our value $v_{h} \left( x \right)$ is this rule applied to $h \left( x \right)$. The one difference is what the set describes. In this literature a credal set is a belief, and evidence updates it. In our model $h \left( x \right)$ is a property of the environment: the adversary may pick any element of $h^{\star} \left( x \right)$ at every round, so no amount of data removes the uncertainty inside it. Credal sets play this role in robust Markov decision processes, where nature picks a transition kernel from a given set~\citep{iyengar2005robust,nilim2005robust}, and in infra-Bayesianism, which takes such sets as the hypotheses of a reinforcement learner~\citep{diffractor2020introduction}; the imprecise bandits problem~\citep{kosoy2025imprecise} is the bandit version of that proposal.
+\paragraph{Imprecise probabilities and credal sets} A hypothesis in our class assigns to each arm a credal set, a closed convex set of distributions, and our benchmark judges an arm by the worst distribution in that set. Both choices come from a long debate about how to represent an uncertain belief. The standard answer is a single probability distribution, which can be derived from axioms on rational preference~\citep{savage1954foundations, jaynes2003probability}. But a single distribution says more than the evidence often supports~\citep{ellsberg1961risk}. The natural repair is to keep every distribution that the evidence does not rule out. Levi called such a closed convex set of distributions a credal set~\citep{levi1974indeterminate,levi1980enterprise}, and Walley built a general theory of imprecise probability around these sets~\citep{walley1991statistical}. A credal set expresses the partial belief above directly. To act on it one needs a decision rule, and Gilboa and Schmeidler axiomatized the maximin rule, which evaluates an action under the worst distribution in the set~\citep{gilboa1989maxmin}. Our value $v_{h} \left( x \right)$ is this rule applied to $h \left( x \right)$. The one difference is what the set describes. In this literature a credal set is a belief, and evidence updates it. In our model $h \left( x \right)$ is a property of the environment: the adversary may pick any element of $h^{\star} \left( x \right)$ at every round, so no amount of data removes the uncertainty inside it. Credal sets play this role in robust Markov decision processes, where an adversary picks a transition kernel from a given set~\citep{iyengar2005robust,nilim2005robust}, and in infra-Bayesianism, which takes such sets as the hypotheses of a reinforcement learner~\citep{diffractor2020introduction}; the imprecise bandits problem~\citep{kosoy2025imprecise} is the bandit version of that proposal.
 
 \paragraph{Partial specifications of the environment} Our hypotheses say only part of what there is to say about the environment. The closest analogue is the theory of partial concept classes of Alon, Hanneke, Holzman, and Moran~\citep{alon2021theory}. A partial concept is undefined on part of the domain, and a learner only sees examples where the true concept is defined, so a partial class expresses an assumption on the data, such as a margin condition, without committing to one total classifier. They show that this changes the theory: some partial classes are easy to learn even though every learner of them must use hypotheses of unbounded VC dimension, so the problem cannot be reduced to a realizable one by completing the concepts. Our hypotheses are partial at every arm rather than undefined at some points, and they also cannot be completed: every choice of one element of $h^{\star} \left( x \right)$ per arm is a stochastic bandit, but the adversary may change its choice every round. Pour, Mansouri, and Ben-David~\citep{pour2026learning} study online learning where each instance has a set of valid labels and the learner must output one of them. Their hypotheses also map inputs to sets, but there the set relaxes the learner's task, whereas ours relaxes what the hypothesis promises and the learner must be ready for every element.
 
@@ -188,18 +194,17 @@ regret bound here would give a better bound for two-armed stochastic bandits.
 
 {
 
-\section{Warmup: A $T^{\frac{2}{3}}$ Learner}\label{sec:hard-ellipsoid-warmup}
+\section{Warmup: A $T^{2/3}$ Learner}\label{sec:hard-ellipsoid-warmup}
 
 For an arm $x$ and outcome $y$, consider the vector $w \left( x , y \right) = \left( 1 , x , y \right)$.
 This vector lies in $\mathbb{R}^{1 + d_{X} + d_{D}}$, and the constraints defining the
 feasible set of outcomes, $C_{z^{\star}} y + B_{z^{\star}} x + d_{z^{\star}} = 0$,
-determine a linear subspace of this vector space. Define $\mathcal{L} \coloneqq \operatorname{ker} \begin{pmatrix}d_{z^{\star}} & B_{z^{\star}} & C_{z^{\star}}\end{pmatrix} .$ A conditional mean $m$ is feasible at $x$ precisely when
-$m \in D$ and $w \left( x , m \right) \in \mathcal{L}$.
+determine a linear subspace of this vector space. Define $\mathcal{L} \coloneqq \operatorname{ker} \begin{pmatrix}d_{z^{\star}} & B_{z^{\star}} & C_{z^{\star}}\end{pmatrix} .$ A distribution is feasible for arm $x$ precisely when its expectation $m$ satisfies $m \in D$ and $w \left( x , m \right) \in \mathcal{L}$.
 }{The learner's task is to learn enough about $\mathcal{L}$ to get low regret.
-Of course, we may never learn all of $\mathcal{L}$. For example, if nature keeps
-choosing conditional means in a strictly smaller subspace, then we cannot
+Of course, we may never learn all of $\mathcal{L}$. For example, if the adversary keeps
+choosing distributions with expected values in a strictly smaller subspace, then we cannot
 distinguish that subspace from the true $\mathcal{L}$. But this is fine, since we do
-not need to learn directions that nature never uses.}
+not need to learn directions that the adversary never uses.}
 
 The fact that we never get to observe the true conditional mean, but only a noisy observation of it, adds an extra complication. In a noiseless world, a new observation tells us a new direction of $\mathcal{L}$. Thus we can simply maintain a linear subspace of $\mathbb{R}^{1 + d_{Z} + d_{D}}$, and incrementally grow it every time we get new information. However, in the presence of noise, no observation can be used to add an entire direction with certainty. Instead, we encode our knowledge of $\mathcal{L}$ with an \emph{ellipsoid}, and incrementally grow it as we get new information. The details are written below.
 
@@ -265,25 +270,12 @@ $V\leftarrow n^{-1}I_q$\;
 \end{algorithm2e}
 \FloatBarrier
 
-
-
-\draft{
 \begin{theorem}[Informal]\label{thm:hard-ellipsoid-warmup}
-
-  For fixed problem parameters, Algorithm~\ref{alg:hard-ellipsoid-warmup} with exact
-  planning has expected regret
-
-  
-\begin{equation*}
-R_{T} \le \tilde{O} \left( n + \frac{T}{\sqrt{n}} \right) .
-\end{equation*}
-
-
-  In particular, choosing $n = \left\lceil T^{\frac{2}{3}} \right\rceil$ gives
-  $R_{T} \le \tilde{O} \left( T^{\frac{2}{3}} \right)$.
+  Algorithm~\ref{alg:hard-ellipsoid-warmup} has expected regret $R_{T} \le \tilde{O} \left( n + \frac{T}{\sqrt{n}} \right)$. In particular, choosing $n = \left\lceil T^{2/3} \right\rceil$ gives
+  $R_{T} \le \tilde{O} \left( T^{2/3} \right)$.
 
 \end{theorem}
-}
+
 
 }
 
@@ -318,8 +310,8 @@ determinant, whose total growth is bounded by a polynomial in $T$
 uninformative blocks, so the total regret is about $n \operatorname{log} T + \sqrt{n} \frac{T}{n}$.
 
 Ignoring logarithmic factors, this bound is minimized by choosing
-$n = \left\lceil T^{\frac{2}{3}} \right\rceil$, giving an upper bound of
-$\tilde{O} \left( T^{\frac{2}{3}} \right)$ on the regret.
+$n = \left\lceil T^{2/3} \right\rceil$, giving an upper bound of
+$\tilde{O} \left( T^{2/3} \right)$ on the regret.
 \end{proof}
 \endgroup
 
@@ -669,9 +661,9 @@ P \left( | \mathcal{M} | \right) N^{1 - \beta}
 
   \draft{
   for every instance in this family, every true hypothesis, and every
-  compatible nature policy. Then $\text{\normalfont CLIQUE} \in \text{\normalfont RP}$ and hence
+  compatible adversary policy. Then $\text{\normalfont CLIQUE} \in \text{\normalfont RP}$ and hence
   $\text{\normalfont NP} = \text{\normalfont RP}$. The same conclusion holds if the guarantee is required
-  only against stationary deterministic nature policies. A deterministic
+  only against stationary deterministic adversary policies. A deterministic
   learner with the same guarantee would imply $\text{\normalfont P} = \text{\normalfont NP}$.
   }
 
@@ -826,7 +818,7 @@ Since the decision problem asks whether $M_{G} \ge k$, computing $M_{G}$ is NP-h
 
 \draft{
 
-\section{Regret analysis of the $T^{\frac{2}{3}}$ learner}\label{app:hard-ellipsoid-analysis}
+\section{Regret analysis of the $T^{2/3}$ learner}\label{app:hard-ellipsoid-analysis}
 
 We give the precise statement and proof of Theorem~\ref{thm:hard-ellipsoid-warmup}.
 We use the coordinates and notation from Section~\ref{sec:hard-ellipsoid-warmup},
@@ -1027,8 +1019,8 @@ T V^{\star} - \sum_{t = 1}^{T} r \left( x_{t} , y_{t} \right) \le C_{r} n \left(
 
 
   Its expected regret is at most the same expression plus
-  $C_{r} T \delta$. Taking $n = \left\lceil T^{\frac{2}{3}} \right\rceil$ and
-  $\delta = {\left( T + 1 \right)}^{- 2}$ give $R_{T} \le \tilde{O} \left( T^{\frac{2}{3}} \right)$ for fixed problem
+  $C_{r} T \delta$. Taking $n = \left\lceil T^{2/3} \right\rceil$ and
+  $\delta = {\left( T + 1 \right)}^{- 2}$ give $R_{T} \le \tilde{O} \left( T^{2/3} \right)$ for fixed problem
   parameters.
 
 \end{theorem}
@@ -1658,7 +1650,7 @@ T \coloneqq \left\lceil \operatorname*{max} \left( 1 , {\left( 6 \frac{P \left( 
 }
 
 \draft{
-rounds. Whenever the learner plays $x_{t}$, let nature use the point mass at
+rounds. Whenever the learner plays $x_{t}$, let the adversary use the point mass at
 $y_{z , \eta} \left( x_{t} \right)$. This is allowed because
 $y_{z , \eta} \left( x_{t} \right) \in K_{z} \left( x_{t} \right)$. Record the rewards and choose the round
 with the largest reward:
@@ -1690,7 +1682,7 @@ $v_{z} \left( \hat{x} \right) \ge {\tilde{v}}_{\hat{t}} - \eta$. Our choice of $
 }
 
 \draft{
-Taking expectations and using the definition of $R_{T}$ for this nature policy,
+Taking expectations and using the definition of $R_{T}$ for this adversary policy,
 }
 
 \draft{
@@ -2232,7 +2224,7 @@ polynomial time such that
 }
 
 \draft{
-Let nature return the point
+Let the adversary return the point
 }
 
 \draft{
@@ -2769,7 +2761,7 @@ planning claim.
 \draft{
 Given any rational arm, we can compute the unique point in $K_{z} \left( x \right)$
 exactly in polynomial time using the equations above; $x_{0} \ge \frac{2}{3}$ ensures
-that we can divide by $x_{0}$. We can therefore simulate nature by returning
+that we can divide by $x_{0}$. We can therefore simulate the adversary by returning
 this point. Applying Lemma~\ref{lem:planning-from-learning} with the chosen $\varepsilon$
 gives an estimate of $V_{z}$ with additive error at most $\varepsilon$, with
 probability at least $\frac{2}{3}$. Comparing it with $\tau_{k}$ decides CLIQUE, so
@@ -2919,7 +2911,7 @@ Equality holds at $z_{0} = \frac{16}{15}$ and ${\left\Vert u \right\Vert}_{2} = 
 Also, ${\left\Vert \mathcal{T} \left( u , x \right) \right\Vert}_{2} \le H {\left\Vert u \right\Vert}_{2} {\left\Vert x \right\Vert}_{2}$, so the constraint fixes
 $w$ to a vector of norm at most $3 \alpha \frac{H}{4} = \frac{3}{8}$. Thus every $K_{z} \left( x \right)$ is
 nonempty, and the uniform non-tangency condition holds with
-$S \ge \frac{\sqrt{55}}{8}$. To minimize the reward, nature chooses the smallest
+$S \ge \frac{\sqrt{55}}{8}$. To minimize the reward, the adversary chooses the smallest
 feasible $s$, namely $s = - \sqrt{1 - {\left\Vert w \right\Vert}_{2}^{2}}$. If we write
 $h \left( t \right) \coloneqq \frac{1}{2} \left( 1 - \sqrt{1 - t^{2}} \right)$, then
 }
@@ -3145,7 +3137,7 @@ r \left( x , \left( y_{0} , g , s \right) \right) \coloneqq \sum_{e \in E_{n}} x
 \draft{
 The learner is given a succinct description of the entire instance
 $\mathcal{M} = \left( X , D , H , r \right)$, including $Z$, $F_{0}$, and $F_{1}$; only the true $U$ is hidden.
-The reward lies in $\left[ 0 , 1 \right]$ on $X \times D$. For an arm $x^{T}$, nature
+The reward lies in $\left[ 0 , 1 \right]$ on $X \times D$. For an arm $x^{T}$, the adversary
 minimizes it by setting every graph coordinate not forced by $U$ to zero, so
 }
 
@@ -3181,7 +3173,7 @@ g_{e}^{G} \coloneqq \begin{cases}
 }
 
 \draft{
-If $U$ is a $k$-clique of $G$, nature can return $y^{G}$ on every round
+If $U$ is a $k$-clique of $G$, the adversary can return $y^{G}$ on every round
 under hypothesis $z^{U}$: every edge inside $U$ has $g_{e}^{G} = 1$, and all the
 $s_{e}$ coordinates are zero. For every candidate $T$,
 }

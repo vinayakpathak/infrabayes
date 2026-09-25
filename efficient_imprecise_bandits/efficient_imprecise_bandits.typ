@@ -262,15 +262,15 @@ regret bound here would give a better bound for two-armed stochastic bandits.
 For an arm $x$ and outcome $y$, consider the vector $w(x,y) = (1,x,y)$.
 This vector lies in $RR^(1+d_X+d_D)$, and the constraints defining the
 feasible set of outcomes, $C_(z^star) y + B_(z^star) x + d_(z^star) = 0$,
-determine a linear subspace of this vector space. Define $cal(L):=opker mat(d_(z^star), B_(z^star), C_(z^star)).$ A conditional mean $m$ is feasible at $x$ precisely when
+determine a linear subspace of this vector space. Define $cal(L):=opker mat(d_(z^star), B_(z^star), C_(z^star)).$ A distribution is feasible for arm $x$ precisely when its expectation $m$ satisfies
 $m in D$ and $w(x,m) in cal(L)$.
 ]#[The learner’s task is to learn enough about $cal(L)$ to get low regret.
-Of course, we may never learn all of $cal(L)$. For example, if nature keeps
-choosing conditional means in a strictly smaller subspace, then we cannot
+Of course, we may never learn all of $cal(L)$. For example, if the adversary keeps
+choosing distributions with expected values in a strictly smaller subspace, then we cannot
 distinguish that subspace from the true $cal(L)$. But this is fine, since we do
-not need to learn directions that nature never uses.]
+not need to learn directions that the adversary never uses.]
 
-The fact that we never get to observe the true conditional mean, but only a noisy observation of it, adds an extra complication. In a noiseless world, a new observation tells us a new direction of $cal(L)$. Thus we can simply maintain a linear subspace of $RR^(1+d_Z+d_D)$, and incrementally grow it every time we get new information. However, in the presence of noise, no observation can be used to add an entire direction with certainty. Instead, we encode our knowledge of $cal(L)$ with an _ellipsoid_, and incrementally grow it as we get new information. The details are written below.
+The fact that we never get to observe the expected value of the chosen distribution, but only a noisy observation of it, adds an extra complication. In a noiseless world, a new observation tells us a new direction of $cal(L)$. Thus we can simply maintain a linear subspace of $RR^(1+d_Z+d_D)$, and incrementally grow it every time we get new information. However, in the presence of noise, no observation can be used to add an entire direction with certainty. Instead, we encode our knowledge of $cal(L)$ with an _ellipsoid_, and incrementally grow it as we get new information. The details are written below.
 
 #[
 We first translate and rescale the balls so that
@@ -293,11 +293,11 @@ to get a small regret). At the beginning of each block, we choose an
 arm $x$ and play the same arm throughout the block.
 The ellipsoid $E_V$ stays fixed during these rounds.
 
-To choose an arm, we use our current guess for the feasible conditional
-means. For each $x$, this consists of the $m in D$ with
+To choose an arm, we use our current guess for the feasible expected
+values. For each $x$, this consists of the $m in D$ with
 $(1,x,m) in E_V$. If some arm has no such $m$, we choose it to learn
 more about it. Otherwise, we choose the arm with the largest worst-case
-reward over its guessed feasible means.
+reward over its guessed feasible expected values.
 
 At the end of a full block, we average its $n$ observations to get
 $overline(y)$. We then check whether $(1,x,overline(y))$ lies in $E_V$.
@@ -547,7 +547,7 @@ We use the concentration bound from @lem:interval-noise and adapt the
 proof of @lem:subspace-distance-bound to the new matrix update.
 
 #theorem[
-  Suppose nature follows any compatible adaptive policy. Then
+  Suppose the adversary follows any compatible adaptive policy. Then
   @alg:soft-square-root, run in exact arithmetic, satisfies with
   probability at least $1-delta$,
 
@@ -596,8 +596,8 @@ $ n p_V (x,overline(y))<=4. $
 
 We now adapt the proof of @lem:subspace-distance-bound. Number the
 completed blocks $j=1,dots,J$, and let $n_j$ be the length of block $j$. Write $x_j$
-for its arm, $overline(y)_j$ and $overline(m)_j$ for its average
-observation and conditional mean, and
+for its arm, $overline(y)_j$ and $overline(m)_j$ for the averages
+of $y_t$ and $m_t$ over that block, and
 $overline(w)_j:=w(x_j,overline(y)_j)$. The matrix now has the form
 
 $ V=I_q+sum_(j=1)^J n_j overline(w)_j overline(w)_j^T. $
@@ -785,7 +785,7 @@ $ T:=ceil(max(1,(6P(|cM|)/epsilon)^(1/beta))) $
 ]
 
 #draft[
-rounds. Whenever the learner plays $x_t$, let nature use the point mass at
+rounds. Whenever the learner plays $x_t$, let the adversary use the point mass at
 $y_(z,eta) (x_t)$. This is allowed because
 $y_(z,eta) (x_t) in K_z (x_t)$. Record the rewards and choose the round
 with the largest reward:
@@ -812,7 +812,7 @@ $ 0<=V_z-v_z (hat(x))
 ]
 
 #draft[
-Taking expectations and using the definition of $R_T$ for this nature policy,
+Taking expectations and using the definition of $R_T$ for this adversary policy,
 ]
 
 #draft[
@@ -1218,7 +1218,7 @@ $ 0<=sqrt(1-epsilon^2 q(x_t))-a_t<=eta, quad
 ]
 
 #draft[
-Let nature return the point
+Let the adversary return the point
 ]
 
 #draft[
@@ -1639,7 +1639,7 @@ planning claim.
 #draft[
 Given any rational arm, we can compute the unique point in $K_z (x)$
 exactly in polynomial time using the equations above; $x_0>=2/3$ ensures
-that we can divide by $x_0$. We can therefore simulate nature by returning
+that we can divide by $x_0$. We can therefore simulate the adversary by returning
 this point. Applying @lem:planning-from-learning with the chosen $epsilon$
 gives an estimate of $V_z$ with additive error at most $epsilon$, with
 probability at least $2/3$. Comparing it with $tau_k$ decides CLIQUE, so
@@ -1752,7 +1752,7 @@ Equality holds at $z_0=16/15$ and $norm(u)_2=4/5$ in every direction.
 Also, $norm(cal(T)(u,x))_2<=H norm(u)_2 norm(x)_2$, so the constraint fixes
 $w$ to a vector of norm at most $3alpha H/4=3/8$. Thus every $K_z (x)$ is
 nonempty, and the uniform non-tangency condition holds with
-$S>=sqrt(55)/8$. To minimize the reward, nature chooses the smallest
+$S>=sqrt(55)/8$. To minimize the reward, the adversary chooses the smallest
 feasible $s$, namely $s=-sqrt(1-norm(w)_2^2)$. If we write
 $h(t):=1/2(1-sqrt(1-t^2))$, then
 ]
@@ -1833,9 +1833,9 @@ coordinates.
 
   #draft[
   for every instance in this family, every true hypothesis, and every
-  compatible nature policy. Then $"CLIQUE" in "RP"$ and hence
+  compatible adversary policy. Then $"CLIQUE" in "RP"$ and hence
   $"NP"="RP"$. The same conclusion holds if the guarantee is required
-  only against stationary deterministic nature policies. A deterministic
+  only against stationary deterministic adversary policies. A deterministic
   learner with the same guarantee would imply $"P"="NP"$.
   ]
 ] <thm:easy-planning-hard-learning>
@@ -1949,7 +1949,7 @@ $ r(x,(y_0,g,s)):=sum_(e in E_n) x_e g_e. $
 #draft[
 The learner is given a succinct description of the entire instance
 $cM=(X,D,H,r)$, including $Z$, $F_0$, and $F_1$; only the true $U$ is hidden.
-The reward lies in $[0,1]$ on $X times D$. For an arm $x^T$, nature
+The reward lies in $[0,1]$ on $X times D$. For an arm $x^T$, the adversary
 minimizes it by setting every graph coordinate not forced by $U$ to zero, so
 ]
 
@@ -1978,7 +1978,7 @@ $ g_e^G:=cases(
 ]
 
 #draft[
-If $U$ is a $k$-clique of $G$, nature can return $y^G$ on every round
+If $U$ is a $k$-clique of $G$, the adversary can return $y^G$ on every round
 under hypothesis $z^U$: every edge inside $U$ has $g_e^G=1$, and all the
 $s_e$ coordinates are zero. For every candidate $T$,
 ]
@@ -2235,11 +2235,11 @@ Moving $y$ to the nearest point in $K^star (x)$ changes the reward by
 at most $norm(b)_2$ times this distance, which proves the claim. $qed$
 
 We also need to know how close a block average is to the average of the
-true conditional means.
+expected values of the chosen distributions.
 
 #lemma[
-  Let $m_t$ be the conditional mean of $y_t$ given the history and the
-  chosen arm on round $t$. For each interval in the first $T$ rounds,
+  #draft[Let $m_t := EE_(y ~ P_t) [y]$ be the expected value of the
+  distribution $P_t$ that the adversary chooses on round $t$.] For each interval in the first $T$ rounds,
   write $n$ for its length and $overline(y)$ and $overline(m)$ for the
   averages of $y_t$ and $m_t$ over that interval. With probability at
   least $1-delta$, the bound
@@ -2278,7 +2278,7 @@ the learner treats as feasible.
 
 *Proof.* Number the informative blocks $j=1,dots,J$. Write $x_j$ for
 the arm played in block $j$, and $overline(y)_j$ and $overline(m)_j$
-for its average observation and average conditional mean. With
+for the averages of $y_t$ and $m_t$ over that block. With
 $overline(w)_j:=w(x_j,overline(y)_j)$, the update rule gives
 
 $ V=n^(-1)I_q+sum_(j=1)^J overline(w)_j overline(w)_j^T. $
@@ -2298,7 +2298,7 @@ Taking the supremum over the unit ball of $cal(L)^perp$ proves the
 claim. $qed$
 
 #theorem[
-  Suppose nature follows any compatible adaptive policy. Then
+  Suppose the adversary follows any compatible adaptive policy. Then
   @alg:hard-ellipsoid-warmup satisfies, with probability at least $1-delta$,
 
   $ T V^star-sum_(t=1)^T r(x_t,y_t)
