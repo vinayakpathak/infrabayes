@@ -74,6 +74,7 @@ The reward is affine in the arm and outcome:
 r \left( x , y \right) \coloneqq a^{T} x + b^{T} y + c .
 \end{equation*}
 
+{Write $C_{r} \coloneqq \operatorname*{max}_{X \times D} r - \operatorname*{min}_{X \times D} r$ for the range of the reward. Since $r$ is affine and $X$ and $D$ are balls, $C_{r} = 2 R_{X} {\left\Vert a \right\Vert}_{2} + 2 R_{D} {\left\Vert b \right\Vert}_{2}$.}
 
 Let the hypothesis class $H$ be parametrized by $Z \subseteq \mathbb{R}^{d_{Z}}$.
 For every $z \in Z$, we define the hypothesis $h_{z}$ by first defining the possible expected values of the distributions that $h_{z}$ is allowed to choose. In particular, let
@@ -84,9 +85,9 @@ For every $z \in Z$, we define the hypothesis $h_{z}$ by first defining the poss
 K_{z} \left( x \right) \coloneqq \left\{ y \in D : C_{z} y + B_{z} x + d_{z} = 0 \right\} .\label{eq:setting-compatible-set}
 \end{equation}
 
-Here $B_{z}$, $C_{z}$, and $d_{z}$ are matrices and vectors of fixed
+\draft{Here $B_{z}$, $C_{z}$, and $d_{z}$ are matrices and vectors of fixed
 dimensions, whose entries are affine functions of $z$. Now, hypothesis
-$h_{z} : X \to \credal D$ is given by
+$h_{z} : X \to \credal D$ is given by}
 
 \begin{equation*}
 h_{z} \left( x \right) \coloneqq \left\{ P \in \Delta D : \mathbb{E}_{y \sim P} \left[ y \right] \in K_{z} \left( x \right) \right\} .
@@ -147,14 +148,18 @@ R_{T} \le \tilde{O} \left( \sqrt{T} \right) .
 
 
   The hidden factor depends polynomially on the dimensions, $S^{- 1}$,
-  and the reward range. The precise dependence is given in
+  and $C_{r}$. The precise dependence is given in
   Theorem~\ref{thm:soft-square-root-regret}.
 
 \end{theorem}
 
 
-This dependence on $T$ is tight up to logarithmic factors, because linear
-imprecise bandits contain stochastic linear bandits as a special case. In a
+This dependence on $T$ is tight up to logarithmic factors. We first observe that
+linear imprecise bandits contain stochastic linear bandits as a special case, and then
+transfer the known lower bound for stochastic linear bandits.
+
+\begin{remark}\label{rem:stochastic-linear-bandits}
+Linear imprecise bandits contain stochastic linear bandits as a special case. In a
 stochastic linear bandit, the learner picks arms $x_{t}$ from the unit ball
 $X \subseteq \mathbb{R}^{d}$ and observes a reward in $\left[ - 1 , 1 \right]$ whose mean is
 $\theta^{T} x_{t}$, for an unknown $\theta$ in the unit ball of $\mathbb{R}^{d}$. To write
@@ -178,9 +183,19 @@ Against this adversary, the learner sees exactly what it would see in the
 stochastic linear bandit. The regret is also the same in both problems, since
 $v^{\ast} \left( x \right) = \theta^{T} x$ and $V^{\star} = \operatorname*{max}_{x \in X} \theta^{T} x$. So any learner for linear
 imprecise bandits is also a learner for stochastic linear bandits with the
-same regret. But stochastic linear bandits have a worst-case regret lower bound
-of $\Omega \left( \sqrt{T} \right)$~\citep{dani2008stochastic}, and therefore so do linear imprecise
-bandits.
+same regret.
+\end{remark}
+{
+\begin{theorem}[lower bound, informal]\label{thm:lower-bound-informal}
+Every learner for linear imprecise bandits has worst-case regret $\Omega \left( \sqrt{T} \right)$.
+\end{theorem}
+
+\begin{proof}
+Stochastic linear bandits have a worst-case regret lower bound of
+$\Omega \left( \sqrt{T} \right)$~\citep{dani2008stochastic}. By
+Remark~\ref{rem:stochastic-linear-bandits}, the same bound holds for linear imprecise bandits.
+\end{proof}
+}
 
 \section[Related work]{\draft{Related work}}\label{sec:related-work}
 
@@ -229,10 +244,9 @@ to get a small regret). At the beginning of each block, we choose an
 arm $x$ and play the same arm throughout the block.
 The ellipsoid $E_{V}$ stays fixed during these rounds.
 
-To choose an arm, we use our current guess for the feasible conditional
-means. For each $x$, this consists of the $m \in D$ with
+To choose an arm, we use our current guess for the feasible expected values. For each $x$, this consists of the $m \in D$ with
 $\left( 1 , x , m \right) \in E_{V}$. If some arm has no such $m$, we choose it to learn
-more about it. Otherwise, we choose the arm with the largest worst-case
+more about it. Otherwise, we use ``optimism in the face of uncertainty'' and choose the arm with the largest worst-case
 reward over its guessed feasible means.
 
 At the end of a full block, we average its $n$ observations to get
@@ -283,17 +297,36 @@ $V\leftarrow n^{-1}I_q$\;
 \begingroup
 \renewcommand{\proofname}{Proof sketch}
 \begin{proof}
-We will show that, with high probability, throughout the
-$T$ time steps, every point in $E_{V}$ is at most about $\frac{1}{\sqrt{n}}$ away
-from the true $\mathcal{L}$ (Lemma~\ref{lem:subspace-distance-bound}). We ignore
-constants depending on the fixed problem parameters and logarithmic
-factors in this sketch.
+The sketch relies on three lemmas, which we state here without proof. Their
+precise versions, with explicit constants, and their proofs are in
+Appendix~\ref{app:hard-ellipsoid-analysis}: see, respectively, Lemma~\ref{lem:subspace-distance-bound},
+Lemma~\ref{lem:subspace-reward-bound}, and the proof of Theorem~\ref{thm:hard-ellipsoid-regret}.
+
+\begin{lemma}\label{lem:sketch-ellipsoid-close}
+With probability at least $1 - \delta$, every ellipsoid $E_{V}$ that
+Algorithm~\ref{alg:hard-ellipsoid-warmup} maintains during the $T$ rounds satisfies
+$\operatorname{dist} \left( w , \mathcal{L} \right) \le \tilde{O} \left( \frac{1}{\sqrt{n}} \right)$ for all
+$w \in E_{V}$, where $\tilde{O}$ hides a factor polynomial in the dimensions and
+logarithmic in $T$ and $\frac{1}{\delta}$.
+\end{lemma}
+
+\begin{lemma}\label{lem:sketch-close-reward}
+There is a constant $G$, depending only on $S$ and ${\left\Vert b \right\Vert}_{2}$, such that
+for every $x \in X$ and $y \in D$,
+$r \left( x , y \right) \ge v^{\star} \left( x \right) - G \operatorname{dist} \left( w \left( x , y \right) , \mathcal{L} \right)$.
+\end{lemma}
+
+\begin{lemma}\label{lem:sketch-few-updates}
+Algorithm~\ref{alg:hard-ellipsoid-warmup} updates $V$ at most $O \left( \log n  \right)$ times.
+\end{lemma}
+
+Lemma~\ref{lem:sketch-close-reward} is a straightforward consequence of the fact that $r$ is affine. Lemmas~\ref{lem:sketch-ellipsoid-close} and~\ref{lem:sketch-few-updates} are due to the specific way we update $V$. Adding $\overline{w} \, \overline{w}^{T}$ to $V$ has the effect that it expands $E_{V}$ in the correct direction. {This ensures that the distance between $E_{V}$ and the true $\mathcal{L}$ grows only by the noise in $\overline{w}$, which is about $\frac{1}{\sqrt{n}}$.} Also, one can show that each update increases the volume of $E_{V}$ by a constant factor, which explains why we can have at most a logarithmic number of updates.
 
 Now consider an uninformative block, meaning a full block in which we
 do not update $V$. The arm $x$ that we play during this block is picked
 by maximizing $H_{V}$. Since the block is uninformative, its
 empirical mean outcome satisfies $w \left( x , \overline{y} \right) \in E_{V}$. These two
-facts, together with the distance bound and Lemma~\ref{lem:subspace-reward-bound},
+facts, together with {Lemmas~\ref{lem:sketch-ellipsoid-close} and~\ref{lem:sketch-close-reward}},
 imply that the average reward is at least $V^{\star}$ minus about
 $\frac{1}{\sqrt{n}}$. Thus the block's regret (the best arm's guaranteed reward
 $n V^{\star}$ minus the reward we actually achieved) is at most about
@@ -303,11 +336,8 @@ On the other hand, for an informative block, the empirical mean can
 lie outside the ellipsoid, so we only have the trivial regret bound
 of $O \left( n \right)$.
 
-Finally, the update rule for $V$ ensures that there are at most
-$O \left( \operatorname{log} T \right)$ informative blocks: each update more than doubles the
-determinant, whose total growth is bounded by a polynomial in $T$
-(see the proof of Theorem~\ref{thm:hard-ellipsoid-regret}). There are at most $\frac{T}{n}$
-uninformative blocks, so the total regret is about $n \operatorname{log} T + \sqrt{n} \frac{T}{n}$.
+Finally, by Lemma~\ref{lem:sketch-few-updates} there are at most $O(\log n)$ informative and $O\left( \frac{T}{n}\right)$
+uninformative blocks, so the total regret is about {$n \operatorname{log} n + \sqrt{n} \frac{T}{n}$}.
 
 Ignoring logarithmic factors, this bound is minimized by choosing
 $n = \left\lceil T^{2/3} \right\rceil$, giving an upper bound of
@@ -343,7 +373,7 @@ least the optimum minus $\varepsilon$. Its running time is polynomial in
 the input size and $\log(1/\varepsilon)$.
 \end{theorem}
 
-Since all our constraints and objective functions are quadratic, one can show that both problems above can be written in a way that Theorem~\ref{thm:bienstock} can be applied. One can choose the $\varepsilon$ as an appropriate function of $T$ such that the approximate solution is still good enough that it does not increase the regret. Details are in Appendix~\ref{app:hard-computation}.
+Since all our constraints and objective functions are quadratic, one can show that both problems above can be written in a way that Theorem~\ref{thm:bienstock} can be applied. Of course, this only gives us an approximate solution. However, one can choose the $\varepsilon$ as an appropriate function of $T$ such that the approximate solution is still good enough that it does not increase the regret. Since the runtime depends logarithmically on $1/\varepsilon$, this only costs us an extra $\log T$ factor in the runtime. Details are in Appendix~\ref{app:hard-computation}.
 
 \section{A $\sqrt{T}$ learner}\label{sec:soft-square-root}
 
@@ -371,11 +401,11 @@ choose later to get a small regret, define
 
 
 \begin{equation*}
-U_{V} \left( x \right) \coloneqq \operatorname*{min}_{y \in D} \left[ r \left( x , y \right) + \lambda p_{V} \left( x , y \right) \right] .
+U_{V , \lambda} \left( x \right) \coloneqq \operatorname*{min}_{y \in D} \left[ r \left( x , y \right) + \lambda p_{V} \left( x , y \right) \right] .
 \end{equation*}
 
 
-We pick the arm $x$ by maximizing $U_V$. For now, assume that we can
+We pick the arm $x$ by maximizing $U_{V,\lambda}$. For now, assume that we can
 maximize the score exactly.
 
 \noindent The following lemma gives us a way to control regret when the outcome $y$
@@ -384,7 +414,7 @@ appears anywhere in $D$.
 \begin{lemma}\label{lem:soft-outcome-regret}
   Fix $\delta\in(0,1)$. With probability at least $1-\delta$, simultaneously
   for every matrix $V$ that Algorithm~\ref{alg:soft-square-root} considers,
-  every $\lambda>0$, and every arm $x$ maximizing $U_V$ with this value of $\lambda$,
+  every $\lambda>0$, and every arm $x$ maximizing $U_{V,\lambda}$,
 
 \begin{equation*}
 V^\star-r(x,y)
@@ -398,10 +428,24 @@ V^\star-r(x,y)
 
 \draft{
 \begin{proof}
-On the event of Lemma~\ref{lem:interval-noise}, the distance
-bound in Equation~\ref{eq:soft-subspace-certificate}, proved in
-Appendix~\ref{app:soft-square-root-analysis}, and
-Lemma~\ref{lem:subspace-reward-bound} give, for every arm $x'$ and
+The proof relies on the following lemma, which we state without proof. Its
+precise version and proof are in Appendix~\ref{app:soft-square-root-analysis},
+as Equation~\ref{eq:soft-subspace-certificate}.
+
+\begin{lemma}\label{lem:sketch-soft-certificate}
+With probability at least $1-\delta$, every matrix $V$ that
+Algorithm~\ref{alg:soft-square-root} considers during the $T$ rounds satisfies
+$\operatorname{dist}\left(w(x,y),\mathcal{L}\right)\le\tilde{O}\left(\sqrt{p_V(x,y)}\right)$
+for all $x\in X$ and $y\in D$, where $\tilde{O}$ hides a factor polynomial in the
+dimensions and logarithmic in $T$ and $\frac{1}{\delta}$.
+\end{lemma}
+
+This is the counterpart of Lemma~\ref{lem:sketch-ellipsoid-close}. There the bound
+held for the points of the ellipsoid $E_V$; here it holds for every point, with
+$\sqrt{p_V(x,y)}$ measuring how far outside the ellipsoid the point lies.
+
+On the event of Lemma~\ref{lem:sketch-soft-certificate},
+Lemma~\ref{lem:sketch-close-reward} gives, for every arm $x'$ and
 outcome $y\in D$,
 
 \begin{equation*}
@@ -413,11 +457,11 @@ bound grows linearly. In particular,
 $\lambda p-\tilde{O}(\sqrt p)\ge-\tilde{O}(1/\lambda)$ for every $p\ge0$
 and every $\lambda>0$.
 Adding the penalty and minimizing over $y$ therefore gives
-$U_V(x')\ge v^\star(x')-\tilde{O}(1/\lambda)$.
+$U_{V,\lambda}(x')\ge v^\star(x')-\tilde{O}(1/\lambda)$.
 Since $x$ maximizes the score,
-$U_V(x)\ge V^\star-\tilde{O}(1/\lambda)$.
+$U_{V,\lambda}(x)\ge V^\star-\tilde{O}(1/\lambda)$.
 Finally, the definition of the score gives
-$U_V(x)\le r(x,y)+\lambda p_V(x,y)$ for every $y\in D$.
+$U_{V,\lambda}(x)\le r(x,y)+\lambda p_V(x,y)$ for every $y\in D$.
 Combining these bounds proves the claim. Since the distance bound is
 independent of $\lambda$, the argument holds for all $\lambda>0$ on the
 same event.
@@ -451,8 +495,8 @@ throughout the block, rather than waiting for a fixed number of rounds.
 \KwIn{Horizon $T$ and penalty parameter $\lambda>0$.}
 $V\leftarrow I_q$,\quad $t\leftarrow0$\;
 \While{$t<T$}{
-  Define $U_V(x)\coloneqq\min_{y\in D}[r(x,y)+\lambda p_V(x,y)]$ for every $x\in X$\;
-  Choose $x\in\operatorname*{argmax}_{x'\in X}U_V(x')$\;
+  Define $U_{V,\lambda}(x)\coloneqq\min_{y\in D}[r(x,y)+\lambda p_V(x,y)]$ for every $x\in X$\;
+  Choose $x\in\operatorname*{argmax}_{x'\in X}U_{V,\lambda}(x')$\;
   $n\leftarrow0$\;
   \Repeat{$n p_V(x,\overline{y}_n)\ge1$ or $t=T$}{
     Play $x$ and observe $y_{n+1}$\;
@@ -511,7 +555,7 @@ Appendix~\ref{app:soft-square-root-analysis}.
 \subsection{Computational tractability}\label{sec:soft-computation}
 
 To implement the learner, we allow an additive error $\varepsilon>0$
-when maximizing $U_V$. This adds at most $n\varepsilon$ to the regret
+when maximizing $U_{V,\lambda}$. This adds at most $n\varepsilon$ to the regret
 of a block of length $n$, and at most $T\varepsilon$ over all rounds.
 Taking $\varepsilon=(T+1)^{-2}$ therefore preserves the
 $\tilde{O}(\sqrt{T})$ regret bound.
@@ -832,11 +876,10 @@ For the analysis, fix $\delta \in \left( 0 , 1 \right)$ and define
 
 \begin{equation*}
 \begin{aligned}
-J_{\text{\normalfont max}} & \coloneqq \left\lceil q \operatorname{log}_{2} \left( 1 + 3 \frac{T}{q} \right) \right\rceil , \\
+J_{\text{\normalfont max}} & \coloneqq \left\lceil q \left( 4 + 2 \operatorname{log}_{2} n \right) \right\rceil , \\
  h_{T}^{2} & \coloneqq 8 d_{D} \operatorname{log} \left( \frac{2 d_{D} T^{2}}{\delta} \right) , \\
  B_{T}^{2} & \coloneqq 1 + J_{\text{\normalfont max}} h_{T}^{2} , \\
- G & \coloneqq \sqrt{3} \left( 1 + S^{- 1} \right) {\left\Vert b \right\Vert}_{2} , \\
- C_{r} & \coloneqq \operatorname*{max}_{X \times D} r - \operatorname*{min}_{X \times D} r .
+ G & \coloneqq \sqrt{3} \left( 1 + S^{- 1} \right) {\left\Vert b \right\Vert}_{2} .
 \end{aligned}
 \end{equation*}
 
@@ -1036,15 +1079,23 @@ more than doubles the determinant:
 \end{equation*}
 
 
-If there are $J$ updates, then $J \le \frac{T}{n}$. Each update adds at most three
-to the trace, so $\operatorname{tr} V \le \frac{q}{n} + 3 J \le \frac{q + 3 T}{n}$. The initial determinant
+\draft{Each update adds at most three to the trace, since ${\left\Vert \overline{w} \right\Vert}_{2}^{2} \le 3$,
+so after $J$ updates $\operatorname{tr} V \le \frac{q}{n} + 3 J$. The initial determinant
 is $n^{- q}$. Using the arithmetic--geometric mean inequality on the
 eigenvalues, we get
 
 
 \begin{equation*}
-2^{J} \le \frac{\operatorname{det} V}{\operatorname{det} \left( n^{- 1} I_{q} \right)} \le {\left( 1 + 3 \frac{T}{q} \right)}^{q} , \quad J \le J_{\text{\normalfont max}} .
+2^{J} \le \frac{\operatorname{det} V}{\operatorname{det} \left( n^{- 1} I_{q} \right)} \le {\left( 1 + 3 \frac{n J}{q} \right)}^{q} .
 \end{equation*}
+
+
+Write $\xi \coloneqq \frac{J}{q}$, so that $\xi \le \operatorname{log}_{2} \left( 1 + 3 n \xi \right)$. If $\xi \ge 4$, then
+$\operatorname{log}_{2} \left( 1 + 3 n \xi \right) \le \operatorname{log}_{2} \left( 4 n \xi \right) = 2 + \operatorname{log}_{2} n + \operatorname{log}_{2} \xi \le 2 + \operatorname{log}_{2} n + \frac{\xi}{2}$,
+using $\operatorname{log}_{2} \xi \le \frac{\xi}{2}$ for $\xi \ge 4$, and hence $\xi \le 4 + 2 \operatorname{log}_{2} n$. In either case
+$J \le q \left( 4 + 2 \operatorname{log}_{2} n \right) \le J_{\text{\normalfont max}}$. Note that the horizon $T$ does not enter:
+the count is the logarithm of the ratio between the final volume of $E_{V}$, which is bounded
+in terms of $J$ alone, and its initial volume, which is set by the block length $n$.}
 
 
 Since $J \le J_{\text{\normalfont max}}$, Lemma~\ref{lem:subspace-distance-bound} gives, with probability
@@ -1331,8 +1382,19 @@ We give the precise statement and proof of Theorem~\ref{thm:soft-square-root}.
 We use the coordinates and notation from Section~\ref{sec:soft-square-root},
 including $\lambda = \lceil\sqrt{T}\rceil$.
 
-For the analysis, fix $\delta \in \left( 0 , 1 \right)$ and use the quantities
-$J_{\text{\normalfont max}} , h_{T} , B_{T} , G , C_{r}$ defined in Appendix~\ref{app:hard-ellipsoid-analysis}.
+For the analysis, fix $\delta \in \left( 0 , 1 \right)$, use $h_{T}$ and $G$ from
+Appendix~\ref{app:hard-ellipsoid-analysis}, \draft{and define
+
+
+\begin{equation*}
+J_{\text{\normalfont max}}^{\prime} \coloneqq \left\lceil q \operatorname{log}_{2} \left( 1 + 3 \frac{T}{q} \right) \right\rceil , \quad
+{B_{T}^{\prime}}^{2} \coloneqq 1 + J_{\text{\normalfont max}}^{\prime} h_{T}^{2} .
+\end{equation*}
+
+
+These play the roles of $J_{\text{\normalfont max}}$ and $B_{T}$ in Appendix~\ref{app:hard-ellipsoid-analysis}.
+The horizon $T$ takes the place of the block length $n$ because this learner starts from
+$V = I_{q}$ and weights each block by its length, so the trace of $V$ can grow to $q + 3 T$.}
 We use the concentration bound from Lemma~\ref{lem:interval-noise} and adapt the
 proof of Lemma~\ref{lem:subspace-distance-bound} to the new matrix update.
 
@@ -1340,12 +1402,12 @@ proof of Lemma~\ref{lem:subspace-distance-bound} to the new matrix update.
 \begin{theorem}\label{thm:soft-square-root-regret}
 
   Consider the variant of Algorithm~\ref{alg:soft-square-root} in which
-  each planning call maximizes $U_V$ to within $\varepsilon\ge0$.
+  each planning call maximizes $U_{V,\lambda}$ to within $\varepsilon\ge0$.
   Run in exact arithmetic, it satisfies with probability at least $1-\delta$,
 
 
 \begin{equation*}
-T V^{\star} - \sum_{t = 1}^{T} r \left( x_{t} , y_{t} \right) \le 4 \lambda \left( J_{\text{\normalfont max}} + 1 \right) + \frac{G^{2} B_{T}^{2} T}{4 \lambda} + T \varepsilon ,
+T V^{\star} - \sum_{t = 1}^{T} r \left( x_{t} , y_{t} \right) \le 4 \lambda \left( J_{\text{\normalfont max}}^{\prime} + 1 \right) + \frac{G^{2} {B_{T}^{\prime}}^{2} T}{4 \lambda} + T \varepsilon ,
 \end{equation*}
 
 
@@ -1360,7 +1422,7 @@ R_{T} \le \tilde{O} \left( \left[ q + {\left( 1 + S^{- 1} \right)}^{2} {\left\Ve
 
 
   The learner does not need to know $S$ or the analysis quantities
-  $J_{\text{\normalfont max}} , h_{T} , B_{T} , G$.
+  $J_{\text{\normalfont max}}^{\prime} , h_{T} , B_{T}^{\prime} , G$.
 
 \end{theorem}
 
@@ -1377,7 +1439,7 @@ determinant. The stopping rule gives
 
 Since ${\left\Vert \overline{w} \right\Vert}_{2}^{2} \le 3$, the final trace is at most $q + 3 T$.
 Thus, if we complete $J$ blocks,
-$2^{J} \le \operatorname{det} V \le {\left( 1 + 3 \frac{T}{q} \right)}^{q}$, so $J \le J_{\text{\normalfont max}}$.
+$2^{J} \le \operatorname{det} V \le {\left( 1 + 3 \frac{T}{q} \right)}^{q}$, so $J \le J_{\text{\normalfont max}}^{\prime}$.
 
 We also need to bound how far $n p_{V} \left( x , {\overline{y}}_{n} \right)$ can jump above
 one on the last observation. For $n \ge 2$, convexity gives
@@ -1420,7 +1482,7 @@ blocks and all $u \in {\mathcal{L}}^{\perp}$ with ${\left\Vert u \right\Vert}_{2
 
 
 \begin{equation*}
-u^{T} V u \le 1 + \sum_{j = 1}^{J} n_{j} \left( \frac{h_{T}^{2}}{n_{j}} \right) = 1 + J h_{T}^{2} \le B_{T}^{2} .
+u^{T} V u \le 1 + \sum_{j = 1}^{J} n_{j} \left( \frac{h_{T}^{2}}{n_{j}} \right) = 1 + J h_{T}^{2} \le {B_{T}^{\prime}}^{2} .
 \end{equation*}
 
 
@@ -1432,7 +1494,7 @@ $u$ gives
 
 
 \begin{equation}
-\operatorname{dist} \left( w , \mathcal{L} \right) \le B_{T} {\left\Vert w \right\Vert}_{V^{- 1}} .\label{eq:soft-subspace-certificate}
+\operatorname{dist} \left( w , \mathcal{L} \right) \le B_{T}^{\prime} {\left\Vert w \right\Vert}_{V^{- 1}} .\label{eq:soft-subspace-certificate}
 \end{equation}
 
 
@@ -1442,7 +1504,7 @@ Lemma~\ref{lem:subspace-reward-bound} gives, for every $x \in X$ and $y \in D$,
 
 
 \begin{equation*}
-v^{\star} \left( x \right) \le r \left( x , y \right) + G B_{T} \sqrt{p_{V} \left( x , y \right)} .
+v^{\star} \left( x \right) \le r \left( x , y \right) + G B_{T}^{\prime} \sqrt{p_{V} \left( x , y \right)} .
 \end{equation*}
 
 
@@ -1451,7 +1513,7 @@ $p_{V} \left( x , y \right)$. Writing $u \coloneqq \sqrt{p_{V} \left( x , y \rig
 
 
 \begin{equation*}
-r \left( x , y \right) + \lambda p_{V} \left( x , y \right) \ge v^{\star} \left( x \right) + \lambda u^{2} - G B_{T} u \ge v^{\star} \left( x \right) - \frac{G^{2} B_{T}^{2}}{4 \lambda} .
+r \left( x , y \right) + \lambda p_{V} \left( x , y \right) \ge v^{\star} \left( x \right) + \lambda u^{2} - G B_{T}^{\prime} u \ge v^{\star} \left( x \right) - \frac{G^{2} {B_{T}^{\prime}}^{2}}{4 \lambda} .
 \end{equation*}
 
 
@@ -1461,13 +1523,13 @@ the true value by at most $\zeta_{T}$:
 
 
 \begin{equation}
-U_{V} \left( x \right) \ge v^{\star} \left( x \right) - \zeta_{T} , \quad \zeta_{T} \coloneqq \frac{G^{2} B_{T}^{2}}{4 \lambda} .\label{eq:soft-optimism}
+U_{V , \lambda} \left( x \right) \ge v^{\star} \left( x \right) - \zeta_{T} , \quad \zeta_{T} \coloneqq \frac{G^{2} {B_{T}^{\prime}}^{2}}{4 \lambda} .\label{eq:soft-optimism}
 \end{equation}
 
 
 
 We choose an arm whose score is within $\varepsilon$ of the highest score,
-so $U_{V} \left( x \right) \ge V^{\star} - \zeta_{T} - \varepsilon$. The block's empirical mean is in
+so $U_{V , \lambda} \left( x \right) \ge V^{\star} - \zeta_{T} - \varepsilon$. The block's empirical mean is in
 $D$, and the reward is affine. Its regret is therefore at most
 
 
@@ -1476,7 +1538,7 @@ n \left( V^{\star} - r \left( x , \overline{y} \right) \right) \le \lambda n p_{
 \end{equation*}
 
 
-Adding this over at most $J_{\text{\normalfont max}} + 1$ blocks proves the high-probability
+Adding this over at most $J_{\text{\normalfont max}}^{\prime} + 1$ blocks proves the high-probability
 bound. If the noise bound fails, regret is still at most $C_{r} T$,
 so taking expectations adds at most $C_{r} T \delta$.
 
@@ -1484,7 +1546,7 @@ The difference from the warmup is that we now pay at most $4 \lambda$
 in penalty per block, no matter how long the block lasts. We also pay
 for the score underestimating the true value, but this costs only
 $\zeta_{T}$ per round, which decreases as $\frac{1}{\lambda}$. The two terms to
-balance are therefore $\lambda J_{\text{\normalfont max}}$ and $\frac{T}{\lambda}$, giving the
+balance are therefore $\lambda J_{\text{\normalfont max}}^{\prime}$ and $\frac{T}{\lambda}$, giving the
 square-root rate.
 
 We still need to implement the planning step. First, rewrite the penalty as
@@ -1505,13 +1567,13 @@ maximum. Writing $z = \left( z_{0} , z_{X} , z_{D} \right)$ gives
 
 
 \begin{equation}
-U_{V} \left( x \right) = a^{T} x + c + \operatorname*{max}_{{\left\Vert z \right\Vert}_{2} \le 4 \lambda} \left[ z_{0} + z_{X}^{T} x - {\left\Vert b + z_{D} \right\Vert}_{2} - \frac{z^{T} V z}{4 \lambda} \right] .\label{eq:soft-conjugate-planner}
+U_{V , \lambda} \left( x \right) = a^{T} x + c + \operatorname*{max}_{{\left\Vert z \right\Vert}_{2} \le 4 \lambda} \left[ z_{0} + z_{X}^{T} x - {\left\Vert b + z_{D} \right\Vert}_{2} - \frac{z^{T} V z}{4 \lambda} \right] .\label{eq:soft-conjugate-planner}
 \end{equation}
 
 
 
 
-We can now maximize $U_{V}$ by solving the QCQP
+We can now maximize $U_{V , \lambda}$ by solving the QCQP
 
 
 \begin{equation*}
@@ -1567,13 +1629,13 @@ K_{T} \coloneqq 20 \left( 1 + {\left\Vert a \right\Vert}_{1} + \lambda + T \righ
 Choose $\tau \le \operatorname*{min} \left( \frac{1}{4} , {\left( \frac{\varepsilon}{4 \left( K_{T} + 1 \right)} \right)}^{2} \right)$. Including the solver's
 objective error, the objective at the repaired point is then within
 $\frac{\varepsilon}{2}$ of the optimum. By Equation~\ref{eq:soft-conjugate-planner}, the same lower bound holds for
-$U_{V} \left( x^{\prime} \right)$. The number of precision bits we need is polynomial in
+$U_{V , \lambda} \left( x^{\prime} \right)$. The number of precision bits we need is polynomial in
 $\left| \mathcal{M} \right|$, $\operatorname{log} \left( T + 1 \right)$, and $\operatorname{log} \left( \frac{1}{\varepsilon} \right)$, even when the reward
 coefficients are large.
 
 Finally, we round the played arms and observed outcomes to common
 rational grids inside their unit balls. Truncating each coordinate
-toward zero keeps these points in the balls. The function $U_{V}$ is
+toward zero keeps these points in the balls. The function $U_{V , \lambda}$ is
 Lipschitz in $x$ with constant at most
 ${\left\Vert a \right\Vert}_{2} + 2 \sqrt{3} \lambda$, so we choose the arm grid finely enough
 that rounding costs at most $\frac{\varepsilon}{2}$. For outcomes, keep the
@@ -1589,7 +1651,7 @@ to the displayed high-probability constants.
 The stored matrices are rational, with eigenvalues between $1$ and
 $1 + 3 T$. The common grids keep bit lengths polynomial when we form block
 averages, update and invert the matrices, and compare the stopping
-quantity with its threshold exactly. There are at most $J_{\text{\normalfont max}} + 1$
+quantity with its threshold exactly. There are at most $J_{\text{\normalfont max}}^{\prime} + 1$
 planning calls, and the QCQP reduction above makes each call run in
 polynomial time. This proves the computational claim.
 \end{proof}
