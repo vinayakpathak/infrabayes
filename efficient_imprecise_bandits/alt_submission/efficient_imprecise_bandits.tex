@@ -10,11 +10,13 @@
 % Like #draft[...] in Typst, this accepts paragraphs and displayed math.
 % To accept a passage, remove only "draft": \draft{...} becomes {...}.
 \long\def\draft#1{{\color{draftblue}#1}}
+% A 0.68em square that sits on the baseline, like the Typst box with
+% baseline: bottom. \raisebox lifts the frame's lower rule onto the baseline.
 \newcommand{\credal}{%
-  \mathord{\vcenter{\hbox{%
+  \mathord{\raisebox{0.055em}{%
     \setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.055em}%
     \fbox{\rule{0pt}{0.57em}\rule{0.57em}{0pt}}%
-  }}}\hspace{0.04em}%
+  }}\hspace{0.04em}%
 }
 % Use the template's theorem environment, with separately numbered lemmas
 % to preserve the manuscript's existing references.
@@ -22,6 +24,7 @@
 \let\endlemma\relax
 \newtheorem{lemma}{Lemma}
 \SetAlgoCaptionSeparator{.}
+\DontPrintSemicolon
 \setlist[enumerate]{label=\arabic*.,leftmargin=2em}
 \setcitestyle{numbers,square}
 % Cross-references inherit the draft colour of their surrounding text.

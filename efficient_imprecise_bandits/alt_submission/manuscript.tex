@@ -1,11 +1,11 @@
 % Translated from the unchanged Typst manuscript; hardness proofs moved to Appendix D.
 
 \section{Introduction}
-Making sure that an artificial superintelligence does not pursue goals that are unaligned with humans is a challenging problem, and arguably one of the most important of our times~\citep{ngo2024alignment,bengio2024managing}. Several attempts have been made to get a handle on it and a recurring theme is that at its core it is a learning problem~\citep{hadfieldmenell2016cooperative,hadfieldmenell2017inverse}. Indeed, imagine several agents coexisting in the universe and interacting with each other with each agent trying to act in the interest of a subset of the agents. The agents only have partial information about each other's behaviours and goals as well as about the universe, and must ensure the universe evolves towards desirable states~\citep{dafoe2020cooperative}. Given the role of learning, it is not unreasonable to imagine that learning theory might help us pave the way towards solving the problem~\citep{kosoy2018learningagenda}.
+Making sure that an artificial superintelligence does not pursue goals that are unaligned with humans is a challenging problem, and arguably one of the most important of our times~\citep{ngo2024alignment,bengio2024managing}. Several attempts have been made to get a handle on it~\citep{russell2015research,amodei2016concrete,everitt2018agi,ji2023alignment} and a recurring theme is that at its core it is a learning problem~\citep{dewey2011learning,bostrom2014superintelligence,soares2016value,russell2019human,ng2000algorithms,hadfieldmenell2016cooperative,hadfieldmenell2017inverse,milli2017obedient,jeon2020reward,christiano2017deep,leike2018scalable,ouyang2022training,bai2022training,shah2019preferences,armstrong2018occam,hubinger2019risks,casper2023open}. Indeed, imagine several agents coexisting in the universe and interacting with each other, with each agent trying to act in the interest of a subset of the agents. The agents only have partial information about each other's behaviours and goals as well as about the universe, and must ensure the universe evolves towards desirable states. Given the role of learning, it is not unreasonable to imagine that learning theory might help us pave the way towards solving the problem~\citep{kosoy2018learningagenda}.
 
 However, the currently known results in learning theory are likely insufficient to solve alignment. For example, it has been suggested that designing better learners for unrealizable learning is crucial for solving the problem~\citep{kosoy2018learningagenda, demski2019embedded}. Realizability is a strong assumption in general, but it becomes even more questionable in the multiagent learning scenarios described above.
 
-One concrete issue with realizable learning is the grain of truth problem~\citep{hutter2009open,leike2016grain,wyeth2025grain,kosoy2023agenda}. Suppose Alice and Bob are playing a known game. Neither knows the other's strategy but assumes that they lie in a class $H$ of strategies~\citep{kalai1993rational,noguchi2015bayesian}. Can each player simultaneously achieve a low regret? The issue is that the strategy that achieves a low regret against all strategies in $H$ may not itself be a member of $H$~\citep{nachbar1997prediction,nachbar2005beliefs}. In that case, if Alice's strategy is in $H$, then Bob's strategy will have to be outside of $H$ and at least one of the players need to solve an unrealizable learning problem. Finding a general and natural class $H$ whose learner lies within $H$ is called the grain of truth problem that remains open despite some recent progress using \emph{reflective oracles}~\citep{fallenstein2015reflective,leike2016grain,wyeth2025grain}.
+One concrete issue with realizable learning is the grain of truth problem~\citep{hutter2009open,leike2016grain,wyeth2025grain,kosoy2023agenda}. Suppose Alice and Bob are playing a known game. Neither knows the other's strategy but assumes that they lie in a class $H$ of strategies~\citep{kalai1993rational,noguchi2015bayesian}. Can each player simultaneously achieve a low regret? The issue is that the strategy that achieves a low regret against all strategies in $H$ may not itself be a member of $H$~\citep{nachbar1997prediction,nachbar2005beliefs}. In that case, if Alice's strategy is in $H$, then Bob's strategy will have to be outside of $H$ and at least one of the players needs to solve an unrealizable learning problem. Finding a general and natural class $H$ whose learner lies within $H$ is called the grain of truth problem that remains open despite some recent progress using \emph{reflective oracles}~\citep{fallenstein2015reflective,leike2016grain,wyeth2025grain}.
 
 More generally, realizability works only when the agent is more expressive than its environment. However, if the environment contains other agents that are similar or more powerful than the agent doing the learning then realizability fails. This can happen, for example, when Alice and Bob are running similar source codes~\citep{tennenholtz2004program,barasz2014robust}, or when Bob is able to predict Alice's actions~\citep{critch2019bounded,oesterheld2019robust}. 
 
@@ -17,7 +17,9 @@ Closer to our current work, in an ``agnostic'' version of the bandits problem, o
 
 \section{Setting}
 \label{sec:setting}
-An instance of the imprecise bandits problem is a tuple $\mathcal{M} = \left( X , D , H , r \right)$, where $X$ is a set of arms, $D$ is a set of possible outcomes, $H$ is a set of mappings of type $X \to \credal D$ where $\credal D$ denotes the set of credal sets over $D$, and $r : X \times D \to \mathbb{R}$ is a reward function.
+A \emph{credal set} over a domain $D$ is a set of probability distributions over $D$ that is closed under convex combinations. We denote by $\credal D$ the set of all credal sets over $D$.
+
+An instance of the imprecise bandits problem is a tuple $\mathcal{M} = \left( X , D , H , r \right)$, where $X$ is a set of arms, $D$ is a set of possible outcomes, $H$ is a set of mappings of type $X \to \credal D$, and $r : X \times D \to \mathbb{R}$ is a reward function.
 
 The imprecise bandits game is played between a learner and an adversary for $T$ rounds (both adversary and learner know $T$). At the beginning of the game, the adversary picks some $h^{\star} \in H$. The learner knows $X , D , H , r$, and $T$, but does not have knowledge of $h^{\star}$. Then, at each round $t$:
 
@@ -82,14 +84,9 @@ For every $z \in Z$, we define the hypothesis $h_{z}$ by first defining the poss
 K_{z} \left( x \right) \coloneqq \left\{ y \in D : C_{z} y + B_{z} x + d_{z} = 0 \right\} .\label{eq:setting-compatible-set}
 \end{equation}
 
-
-
-\draft{
-Here $B_{z}$, $C_{z}$, and $d_{z}$ are matrices and vectors of appropriate
-dimensions that depend affinely on $z$. Now, hypothesis
+Here $B_{z}$, $C_{z}$, and $d_{z}$ are matrices and vectors of fixed
+dimensions, whose entries are affine functions of $z$. Now, hypothesis
 $h_{z} : X \to \credal D$ is given by
-}
-
 
 \begin{equation*}
 h_{z} \left( x \right) \coloneqq \left\{ P \in \Delta D : \mathbb{E}_{y \sim P} \left[ y \right] \in K_{z} \left( x \right) \right\} .
@@ -179,6 +176,16 @@ expected regret, since $V^{\star} = \operatorname*{max} \left( \mu_{1} , \mu_{2}
 regret bound here would give a better bound for two-armed stochastic bandits.
 }
 
+\section[Related work]{\draft{Related work}}\label{sec:related-work}
+
+\draft{
+\paragraph{Imprecise probabilities and credal sets} A hypothesis in our class assigns to each arm a credal set, a closed convex set of distributions, and our benchmark judges an arm by the worst distribution in that set. Both choices come from a long debate about how to represent an uncertain belief. The standard answer is a single probability distribution, which can be derived from axioms on rational preference~\citep{savage1954foundations, jaynes2003probability}. But a single distribution says more than the evidence often supports~\citep{ellsberg1961risk}. The natural repair is to keep every distribution that the evidence does not rule out. Levi called such a closed convex set of distributions a credal set~\citep{levi1974indeterminate,levi1980enterprise}, and Walley built a general theory of imprecise probability around these sets~\citep{walley1991statistical}. A credal set expresses the partial belief above directly. To act on it one needs a decision rule, and Gilboa and Schmeidler axiomatized the maximin rule, which evaluates an action under the worst distribution in the set~\citep{gilboa1989maxmin}. Our value $v_{h} \left( x \right)$ is this rule applied to $h \left( x \right)$. The one difference is what the set describes. In this literature a credal set is a belief, and evidence updates it. In our model $h \left( x \right)$ is a property of the environment: the adversary may pick any element of $h^{\star} \left( x \right)$ at every round, so no amount of data removes the uncertainty inside it. Credal sets play this role in robust Markov decision processes, where nature picks a transition kernel from a given set~\citep{iyengar2005robust,nilim2005robust}, and in infra-Bayesianism, which takes such sets as the hypotheses of a reinforcement learner~\citep{diffractor2020introduction}; the imprecise bandits problem~\citep{kosoy2025imprecise} is the bandit version of that proposal.
+
+\paragraph{Partial specifications of the environment} Our hypotheses say only part of what there is to say about the environment. The closest analogue is the theory of partial concept classes of Alon, Hanneke, Holzman, and Moran~\citep{alon2021theory}. A partial concept is undefined on part of the domain, and a learner only sees examples where the true concept is defined, so a partial class expresses an assumption on the data, such as a margin condition, without committing to one total classifier. They show that this changes the theory: some partial classes are easy to learn even though every learner of them must use hypotheses of unbounded VC dimension, so the problem cannot be reduced to a realizable one by completing the concepts. Our hypotheses are partial at every arm rather than undefined at some points, and they also cannot be completed: every choice of one element of $h^{\star} \left( x \right)$ per arm is a stochastic bandit, but the adversary may change its choice every round. Pour, Mansouri, and Ben-David~\citep{pour2026learning} study online learning where each instance has a set of valid labels and the learner must output one of them. Their hypotheses also map inputs to sets, but there the set relaxes the learner's task, whereas ours relaxes what the hypothesis promises and the learner must be ready for every element.
+
+\paragraph{Stochastic linear bandits and outcome feedback} Our linear instances generalize stochastic linear bandits~\citep{auer2002using,dani2008stochastic,rusmevichientong2010linearly,abbasi2011improved,chu2011contextual,lattimore2020bandit} in two ways. A hypothesis does not determine the mean outcome at an arm but only restricts it to the affine set $K_{z} \left( x \right)$, and the learner observes an outcome $y_{t}$ from which the reward is computed rather than the reward alone. When every $K_{z} \left( x \right)$ is a single point, the mean outcome is affine in the arm and we recover a linear bandit with vector-valued observations. Observing an outcome and computing the reward from it is the feedback structure of combinatorial semi-bandits~\citep{gyorgy2007online,chen2013combinatorial,kveton2015tight}, of partial monitoring~\citep{rustichini1999minimizing,cesabianchi2006regret,bartok2014partial,lattimore2019information}, whose linear version~\citep{kirschner2020information} is closest to our linear instances, and of the decision making with structured observations framework of Foster et al.~\citep{foster2021statistical}, which contains all of these. These models assume either that the true environment lies in the class or that the outcomes are arbitrary and the benchmark is the best fixed action. Ours sits between the two: the class contains a hypothesis that the environment satisfies, and the environment may change within it every round. Bandits with adversarial corruptions~\citep{lykouris2018stochastic,bogunovic2021stochastic} also let an adversary modify a stochastic environment, but there the adversary has a budget and the benchmark is the uncorrupted environment, whereas here the adversary is limited only by the credal set and the benchmark takes the worst case within it.
+}
+
 {
 
 \section{Warmup: A $T^{\frac{2}{3}}$ Learner}\label{sec:hard-ellipsoid-warmup}
@@ -233,49 +240,29 @@ choosing an arm exactly. We will consider the computational aspects
 of the algorithm later.
 
 
-\begin{algorithm}
-\floatconts{alg:hard-ellipsoid-warmup}{\caption{}}{
-
-  Fix a block length $n \in \left\{ 1 , \ldots , T \right\}$ and initialize $V \coloneqq n^{- 1} I_{q}$.
-  At the start of each block:
-
-
-\begin{enumerate}
-\item For each arm, let
-
-    
-\begin{equation*}
-{\hat{K}}_{V} \left( x \right) \coloneqq \left\{ y \in D : p_{V} \left( x , y \right) \le 1 \right\} .
-\end{equation*}
-
-
-    If any of these sets is empty, choose an arm $x$ with
-    ${\hat{K}}_{V} \left( x \right) = \varnothing$. Otherwise, define
-
-    
-\begin{equation*}
-H_{V} \left( x \right) \coloneqq \operatorname*{min}_{y \in {\hat{K}}_{V} \left( x \right)} r \left( x , y \right) ,
-\end{equation*}
-
-
-    and choose
-
-    
-\begin{equation*}
-x \in \operatorname{argmax}_{x^{\prime} \in X} H_{V} \left( x^{\prime} \right) .
-\end{equation*}
-
-\item Play $x$ for $n$ rounds, or until the horizon if fewer rounds remain.
-    Let $\overline{y}$ be the empirical mean of observed outcomes and
-    $\overline{w} \coloneqq w \left( x , \overline{y} \right)$.
-
-\item If the block has length $n$ and $p_{V} \left( x , \overline{y} \right) > 1$, update
-    $V \leftarrow V + \overline{w} {\overline{w}}^{T}$. Otherwise leave $V$ unchanged.
-
-\end{enumerate}
-
+\begin{algorithm2e}
+\caption{}\label{alg:hard-ellipsoid-warmup}
+\KwIn{Horizon $T$ and block length $n\in\{1,\ldots,T\}$.}
+$V\leftarrow n^{-1}I_q$\;
+\For{$j\leftarrow 1$ \KwTo $\lceil T/n\rceil$}{
+  Define $\hat{K}_V(x)\coloneqq\{y\in D:p_V(x,y)\le1\}$ for every $x\in X$\;
+  \eIf{there exists $x\in X$ with $\hat{K}_V(x)=\varnothing$}{
+    Choose an arm $x\in X$ with $\hat{K}_V(x)=\varnothing$\;
+  }{
+    Define $H_V(x)\coloneqq\min_{y\in\hat{K}_V(x)}r(x,y)$ for every $x\in X$\;
+    Choose $x\in\operatorname*{argmax}_{x'\in X}H_V(x')$\;
+  }
+  $n_j\leftarrow\min\{n,T-(j-1)n\}$\;
+  \For{$i\leftarrow1$ \KwTo $n_j$}{
+    Play $x$ and observe $y_i$\;
+  }
+  $\overline{y}\leftarrow\frac{1}{n_j}\sum_{i=1}^{n_j}y_i$,\quad
+  $\overline{w}\leftarrow w(x,\overline{y})$\;
+  \If{$n_j=n$ and $p_V(x,\overline{y})>1$}{
+    $V\leftarrow V+\overline{w}\,\overline{w}^{T}$\;
+  }
 }
-\end{algorithm}
+\end{algorithm2e}
 \FloatBarrier
 
 
@@ -467,48 +454,25 @@ A large empirical penalty can therefore make us update after only a
 few observations. A small one lets us keep playing the arm for longer. Thus we choose when to update $V$ by monitoring this bound
 throughout the block, rather than waiting for a fixed number of rounds.
 
-\begin{algorithm}[!htbp]
-{
-\floatconts{alg:soft-square-root}{\caption{}}{
-
-  Initialize $V \coloneqq I_{q}$. At the start of each block:
-
-
-\begin{enumerate}
-\item Define
-
-    
-\begin{equation*}
-U_{V} \left( x \right) \coloneqq \operatorname*{min}_{y \in D} \left[ r \left( x , y \right) + \lambda p_{V} \left( x , y \right) \right] ,
-\end{equation*}
-
-
-    and choose an arm
-    $x \in \operatorname*{argmax}_{x^{\prime} \in X} U_{V} \left( x^{\prime} \right)$.
-
-\item Play $x$ repeatedly. After $n$ observations in the block, let
-
-    
-\begin{equation*}
-{\overline{y}}_{n} \coloneqq \frac{1}{n} \sum_{i = 1}^{n} y_{i} , \quad {\overline{w}}_{n} \coloneqq w \left( x , {\overline{y}}_{n} \right) .
-\end{equation*}
-
-
-    End the block the first time
-
-    
-\begin{equation*}
-n p_{V} \left( x , {\overline{y}}_{n} \right) \ge 1 .
-\end{equation*}
-
-\item Update $V \leftarrow V + n {\overline{w}}_{n} {\overline{w}}_{n}^{T}$ and start a new block.
-    At the horizon, stop even if the current block has not ended.
-
-\end{enumerate}
-
+\begin{algorithm2e}[!htbp]
+\caption{}\label{alg:soft-square-root}
+\KwIn{Horizon $T$ and penalty parameter $\lambda>0$.}
+$V\leftarrow I_q$,\quad $t\leftarrow0$\;
+\While{$t<T$}{
+  Define $U_V(x)\coloneqq\min_{y\in D}[r(x,y)+\lambda p_V(x,y)]$ for every $x\in X$\;
+  Choose $x\in\operatorname*{argmax}_{x'\in X}U_V(x')$\;
+  $n\leftarrow0$\;
+  \Repeat{$n p_V(x,\overline{y}_n)\ge1$ or $t=T$}{
+    Play $x$ and observe $y_{n+1}$\;
+    $n\leftarrow n+1$,\quad $t\leftarrow t+1$\;
+    $\overline{y}_n\leftarrow\frac{1}{n}\sum_{i=1}^n y_i$\;
+  }
+  \If{$n p_V(x,\overline{y}_n)\ge1$}{
+    $\overline{w}_n\leftarrow w(x,\overline{y}_n)$\;
+    $V\leftarrow V+n\overline{w}_n\overline{w}_n^{T}$\;
+  }
 }
-}
-\end{algorithm}
+\end{algorithm2e}
 % \FloatBarrier
 
 \begin{theorem}[Informal]\label{thm:soft-square-root}

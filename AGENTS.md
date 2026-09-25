@@ -108,6 +108,8 @@ as a template to repeat verbatim in unrelated passages.
 - For LaTeX manuscripts, prefer the theorem, lemma, proof, and algorithm environments
   supplied by the conference template. Use small numbering or style settings
   where needed instead of introducing separate conversion-only environments.
+  Write algorithms with the package's pseudocode commands for loops, branches,
+  and instructions rather than an `enumerate` list of prose steps.
   Use the proof environment for full proofs and proof sketches, with its automatic
   QED marker instead of a manually inserted black square.
 - In Typst, end proof sketches with `$qed$`, just as for full proofs.
@@ -177,9 +179,28 @@ as a template to repeat verbatim in unrelated passages.
   and put reductions, supporting lemmas, and proofs in an appendix.
   Include the definitions needed to read each theorem in its statement,
   and give an explicit reference to the appendix containing the proofs.
+- Keep related-work sections short: about one paragraph per theme. Choose a
+  small number of the most relevant concepts and cite one or two sources for
+  each, rather than crowding the paragraph with papers. Say in a sentence or
+  two how each concept relates to our model, and do not summarize individual
+  papers beyond what that comparison needs.
+- When a related-work paragraph concerns a foundational topic, such as how
+  to represent uncertain beliefs, write it as a narrative rather than a list
+  of papers: pose the underlying question, give the standard answer and who
+  argued for it, state its shortcomings, and then introduce the alternatives
+  that lead to the object we use. State the connection to our work in the
+  first sentence or two and keep it visible as the narrative develops, so
+  that a reader does not need to reach the end of the paragraph to see why
+  the topic matters for us. Even then, keep it to one paragraph of moderate
+  length; a paragraph of about 500 words is too long.
+- Cite published papers or books rather than blog or forum posts whenever a
+  published source makes the same point. Use a forum post only when no such
+  source exists.
 - When technical jargon is used only once, replace it with its operative
   mathematical definition instead of introducing the term and then defining
-  it separately. For outcome sets in this manuscript, do not use "fiber"
+  it separately. The same applies to informal terms with a specific meaning
+  the reader may not share, such as "hedging": say what the choice or
+  quantity is instead of using the term. For outcome sets in this manuscript, do not use "fiber"
   or "fibre": name the set and say what it contains, such as the feasible
   outcomes $K_z(x)$ at arm $x$ or the affine solution space $Ax+e+N$.
 - State a general property once rather than enumerating its obvious special
@@ -199,6 +220,8 @@ as a template to repeat verbatim in unrelated passages.
   coordinates to repeated technical adjectives. In particular, refer to
   $(1,x,y)$ or $(1,x,m)$ directly and explain what the coordinates mean;
   do not call the space, vectors, or means "lifted."
+  When describing parameterized matrices or vectors, distinguish their fixed
+  dimensions from how their entries depend on the parameter.
 - Include explanatory material when it is needed for the next step of the
   argument; omit details that merely repeat what was just displayed.
   After revising a paragraph, check that the next paragraph continues from
