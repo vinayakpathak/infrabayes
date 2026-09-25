@@ -205,6 +205,8 @@ Remark~\ref{rem:stochastic-linear-bandits}, the same bound holds for linear impr
 \paragraph{Partial specifications of the environment} Our hypotheses say only part of what there is to say about the environment. The closest analogue is the theory of partial concept classes of Alon, Hanneke, Holzman, and Moran~\citep{alon2021theory}. A partial concept is undefined on part of the domain, and a learner only sees examples where the true concept is defined, so a partial class expresses an assumption on the data, such as a margin condition, without committing to one total classifier. They show that this changes the theory: some partial classes are easy to learn even though every learner of them must use hypotheses of unbounded VC dimension, so the problem cannot be reduced to a realizable one by completing the concepts. Our hypotheses are partial at every arm rather than undefined at some points, and they also cannot be completed: every choice of one element of $h^{\star} \left( x \right)$ per arm is a stochastic bandit, but the adversary may change its choice every round. Pour, Mansouri, and Ben-David~\citep{pour2026learning} study online learning where each instance has a set of valid labels and the learner must output one of them. Their hypotheses also map inputs to sets, but there the set relaxes the learner's task, whereas ours relaxes what the hypothesis promises and the learner must be ready for every element.
 
 \paragraph{Stochastic linear bandits and outcome feedback} Our linear instances generalize stochastic linear bandits~\citep{auer2002using,dani2008stochastic,rusmevichientong2010linearly,abbasi2011improved,chu2011contextual,lattimore2020bandit} in two ways. A hypothesis does not determine the mean outcome at an arm but only restricts it to the affine set $K_{z} \left( x \right)$, and the learner observes an outcome $y_{t}$ from which the reward is computed rather than the reward alone. When every $K_{z} \left( x \right)$ is a single point, the mean outcome is affine in the arm and we recover a linear bandit with vector-valued observations. Observing an outcome and computing the reward from it is the feedback structure of combinatorial semi-bandits~\citep{gyorgy2007online,chen2013combinatorial,kveton2015tight}, of partial monitoring~\citep{rustichini1999minimizing,cesabianchi2006regret,bartok2014partial,lattimore2019information}, whose linear version~\citep{kirschner2020information} is closest to our linear instances, and of the decision making with structured observations framework of Foster et al.~\citep{foster2021statistical}, which contains all of these. These models assume either that the true environment lies in the class or that the outcomes are arbitrary and the benchmark is the best fixed action. Ours sits between the two: the class contains a hypothesis that the environment satisfies, and the environment may change within it every round. Bandits with adversarial corruptions~\citep{lykouris2018stochastic,bogunovic2021stochastic} also let an adversary modify a stochastic environment, but there the adversary has a budget and the benchmark is the uncorrupted environment, whereas here the adversary is limited only by the credal set and the benchmark takes the worst case within it.
+
+\paragraph{Smoothed analysis and smoothed adversaries} Our hypotheses restrict the adversary to a convex set of distributions at each arm. Smoothed online learning restricts the adversary in the same way, with a single known set. Smoothed analysis was introduced by Spielman and Teng to explain why the simplex method is fast in practice: the input is a worst-case instance perturbed by a small amount of random noise~\citep{spielman2004smoothed}. Rakhlin, Sridharan, and Tewari brought this idea to online learning~\citep{rakhlin2011online}, and Haghtalab, Roughgarden, and Shetty developed it into the smoothed adversary model: on every round the adversary picks a distribution over instances whose density relative to a fixed base measure is at most $1/\sigma$, and the instance is drawn from it~\citep{haghtalab2020smoothed,haghtalab2024smoothed}. The set of $\sigma$-smooth distributions is a credal set, so a smoothed adversary is an adversary of our kind, for one particular hypothesis. The main finding is that this restriction makes online learning as easy as statistical learning, with regret governed by the VC dimension rather than the Littlestone dimension~\citep{block2022smoothed}, and, closest to our question, that it admits learners that run in polynomial time given an offline optimization oracle for the class, where no such learner exists against a worst-case adversary~\citep{haghtalab2022oracle}. In contextual bandits, smooth contexts make the greedy algorithm nearly optimal, because the perturbations explore on their own~\citep{kannan2018smoothed,raghavan2023greedy}. Two things are different in our model. The credal set is not known: the learner must learn which set applies at each arm. And the benchmark is different: smoothed online learning competes with the best fixed predictor in hindsight, whereas we compete with the worst-case value of the true hypothesis, which is easier to reach. Taking the predictors as arms and the smooth set as the only hypothesis, a learner with low smoothed regret also has low regret in our sense, but not conversely.
 }
 
 {
@@ -373,7 +375,115 @@ least the optimum minus $\varepsilon$. Its running time is polynomial in
 the input size and $\log(1/\varepsilon)$.
 \end{theorem}
 
-Since all our constraints and objective functions are quadratic, one can show that both problems above can be written in a way that Theorem~\ref{thm:bienstock} can be applied. Of course, this only gives us an approximate solution. However, one can choose the $\varepsilon$ as an appropriate function of $T$ such that the approximate solution is still good enough that it does not increase the regret. Since the runtime depends logarithmically on $1/\varepsilon$, this only costs us an extra $\log T$ factor in the runtime. Details are in Appendix~\ref{app:hard-computation}.
+\draft{
+Both problems contain a minimum over $y$ inside a maximum over $x$. The
+second maximizes $H_V(x)$, which is itself a minimum over $y$. The first
+asks whether some arm $x$ has $\hat K_V(x)=\varnothing$, that is, whether
+every $y\in D$ has $w(x,y)$ outside $E_V$, and deciding this also means
+minimizing over $y$ for each $x$. Theorem~\ref{thm:bienstock} handles a
+single maximization, so we first need to convert each maximum of a
+minimum into a maximum. The following lemma does this by writing the
+inner minimum over $y$ in closed form, as a maximum over a new vector
+$z=(z_0,z_X,z_D)\in\mathbb{R}^q$ whose coordinates match those of
+$w(x,y)=(1,x,y)$.
+
+\begin{lemma}\label{lem:hard-dual-forms}
+Fix $x\in X$ and write $z=(z_0,z_X,z_D)\in\mathbb{R}^q$.
+\begin{enumerate}
+\item[(a)] $\hat K_V(x)=\varnothing$ if and only if
+\begin{equation*}
+\max_{\|z\|_2\le1}\left[z_0+z_X^Tx-\sqrt{z^TVz}-\|z_D\|_2\right]>0 .
+\end{equation*}
+\item[(b)] If $\hat K_V(x)\ne\varnothing$, then
+\begin{equation*}
+H_V(x)=a^Tx+c+\sup_{z\in\mathbb{R}^q}\left[z_0+z_X^Tx-\sqrt{z^TVz}-\|b+z_D\|_2\right].
+\end{equation*}
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+We use two facts. First, since $D$ is the unit ball, for every $z$,
+\begin{equation*}
+\min_{y\in D} z^Tw(x,y)=z_0+z_X^Tx+\min_{\|y\|_2\le1}z_D^Ty=z_0+z_X^Tx-\|z_D\|_2 .
+\end{equation*}
+Second, the largest value of $z^Tw$ over the ellipsoid $E_V$ is
+\begin{equation*}
+\max_{w\in E_V}z^Tw=\sqrt{z^TVz} ,
+\end{equation*}
+because writing $w=V^{1/2}u$ with $\|u\|_2\le1$ gives
+$z^Tw=(V^{1/2}z)^Tu\le\|V^{1/2}z\|_2$, with equality at
+$u=V^{1/2}z/\|V^{1/2}z\|_2$ when $z\ne0$; both sides vanish when $z=0$.
+
+For (a), the set $\hat K_V(x)$ is empty exactly when the sets
+$S_x\coloneqq\{w(x,y):y\in D\}$ and $E_V$ are disjoint. Both are compact
+and convex. If they are disjoint, then a hyperplane strictly separates
+them: there is a unit vector $z$ with
+$\min_{w\in S_x}z^Tw>\max_{w\in E_V}z^Tw$. If they share a point $w$,
+then $\min_{w'\in S_x}z^Tw'\le z^Tw\le\max_{w'\in E_V}z^Tw'$ for every
+$z$. By the two facts, the difference
+$\min_{w\in S_x}z^Tw-\max_{w\in E_V}z^Tw$ is the bracket in (a). The
+bracket is continuous in $z$, so its maximum over the unit ball is
+attained, and it is positive if and only if the sets are disjoint.
+
+For (b), let $\iota(w)$ be $0$ if $w\in E_V$ and $+\infty$ otherwise, so
+that $H_V(x)=\min_{y\in D}\left[r(x,y)+\iota(w(x,y))\right]$. We claim
+that
+\begin{equation*}
+\iota(w)=\sup_{z\in\mathbb{R}^q}\left[z^Tw-\sqrt{z^TVz}\right] .
+\end{equation*}
+If $w\in E_V$, then $z^Tw\le\sqrt{z^TVz}$ for every $z$ by the second
+fact, so every bracket is at most $0$, and $z=0$ gives $0$. If
+$w\notin E_V$, then a hyperplane strictly separates $w$ from $E_V$: there
+is a $z$ with $z^Tw>\sqrt{z^TVz}$. Replacing $z$ by $tz$ with $t>0$
+multiplies the bracket by $t$, so letting $t\to\infty$ shows that the
+supremum is $+\infty$. This proves the claim.
+Substituting it into $H_V(x)$ gives
+\begin{equation*}
+H_V(x)=\min_{y\in D}\ \sup_{z\in\mathbb{R}^q}\ \phi(y,z),
+\qquad
+\phi(y,z)\coloneqq r(x,y)+z^Tw(x,y)-\sqrt{z^TVz} .
+\end{equation*}
+Here $\phi$ is affine in $y$, because $r(x,y)$ and
+$z^Tw(x,y)=z_0+z_X^Tx+z_D^Ty$ are, and concave in $z$, because
+$\sqrt{z^TVz}$ is a norm. Since $D$ is compact and convex, Sion's minimax
+theorem~\citep{sion1958minimax} lets us exchange the minimum and the
+supremum:
+\begin{equation*}
+H_V(x)=\sup_{z\in\mathbb{R}^q}\ \min_{y\in D}\ \phi(y,z) .
+\end{equation*}
+For fixed $z$, the terms of $\phi$ that involve $y$ are $b^Ty+z_D^Ty$,
+so the first fact, applied to $b+z_D$ in place of $z_D$, gives
+$\min_{y\in D}\phi(y,z)=a^Tx+c+z_0+z_X^Tx-\sqrt{z^TVz}-\|b+z_D\|_2$.
+This proves (b).
+\end{proof}
+
+With the lemma, both problems become a single maximization over $x$ and
+$z$ jointly. For the first problem, maximize
+$z_0+z_X^Tx-\sqrt{z^TVz}-\|z_D\|_2$ over $x\in X$ and $\|z\|_2\le1$. By
+part (a), some arm has an empty guessed outcome set if and only if the
+maximum is positive, and in that case the $x$-component of a maximizer
+is such an arm. For the second problem, take the supremum of
+$a^Tx+c+z_0+z_X^Tx-\sqrt{z^TVz}-\|b+z_D\|_2$ over $x\in X$ and
+$z\in\mathbb{R}^q$. By part (b), this supremum equals
+$\max_{x\in X}H_V(x)$, and if the objective at some $(x,z)$ is within
+$\varepsilon$ of the supremum, then $H_V(x)\ge\max_{x'\in X}H_V(x')-\varepsilon$.
+Both objectives contain the product $z_X^Tx$, so neither problem is
+convex. However, after replacing the two square roots by variables
+$t,s\ge0$ with $z^TVz\le t^2$ and $\|z_D\|_2^2\le s^2$ (respectively
+$\|b+z_D\|_2^2\le s^2$), each becomes a quadratic objective with a fixed
+number of quadratic constraints. This is the form required by
+Theorem~\ref{thm:bienstock}, except that the theorem also needs the
+feasible region to be bounded, whereas $t$ and $s$ are only bounded from
+below and, in the second problem, $z$ ranges over all of $\mathbb{R}^q$.
+
+Of course, Theorem~\ref{thm:bienstock} also only gives us an approximate
+solution. Appendix~\ref{app:hard-computation} handles both issues: it
+bounds the variables, and it shows that one can choose the $\varepsilon$
+as an appropriate function of $T$ such that the approximate solution is
+still good enough that it does not change the regret rate. Since the
+runtime depends logarithmically on $1/\varepsilon$, this only costs us
+an extra $\log T$ factor in the runtime.
+}
 
 \section{A $\sqrt{T}$ learner}\label{sec:soft-square-root}
 
@@ -426,47 +536,40 @@ V^\star-r(x,y)
 
 \end{lemma}
 
-\draft{
 \begin{proof}
-The proof relies on the following lemma, which we state without proof. Its
-precise version and proof are in Appendix~\ref{app:soft-square-root-analysis},
-as Equation~\ref{eq:soft-subspace-certificate}.
-
-\begin{lemma}\label{lem:sketch-soft-certificate}
-With probability at least $1-\delta$, every matrix $V$ that
-Algorithm~\ref{alg:soft-square-root} considers during the $T$ rounds satisfies
-$\operatorname{dist}\left(w(x,y),\mathcal{L}\right)\le\tilde{O}\left(\sqrt{p_V(x,y)}\right)$
-for all $x\in X$ and $y\in D$, where $\tilde{O}$ hides a factor polynomial in the
-dimensions and logarithmic in $T$ and $\frac{1}{\delta}$.
-\end{lemma}
-
-This is the counterpart of Lemma~\ref{lem:sketch-ellipsoid-close}. There the bound
-held for the points of the ellipsoid $E_V$; here it holds for every point, with
-$\sqrt{p_V(x,y)}$ measuring how far outside the ellipsoid the point lies.
-
-On the event of Lemma~\ref{lem:sketch-soft-certificate},
-Lemma~\ref{lem:sketch-close-reward} gives, for every arm $x'$ and
-outcome $y\in D$,
+We first claim that, with probability at least $1-\delta$, for every matrix
+$V$ that Algorithm~\ref{alg:soft-square-root} considers, every arm $x'\in X$,
+and every outcome $y\in D$,
 
 \begin{equation*}
-r(x',y)\ge v^\star(x')-\tilde{O}\left(\sqrt{p_V(x',y)}\right).
+v^\star(x')-r(x',y)\le c\sqrt{p_V(x',y)},
 \end{equation*}
 
-The penalty grows quadratically in $\sqrt{p_V(x',y)}$, while the error
-bound grows linearly. In particular,
-$\lambda p-\tilde{O}(\sqrt p)\ge-\tilde{O}(1/\lambda)$ for every $p\ge0$
-and every $\lambda>0$.
-Adding the penalty and minimizing over $y$ therefore gives
-$U_{V,\lambda}(x')\ge v^\star(x')-\tilde{O}(1/\lambda)$.
-Since $x$ maximizes the score,
-$U_{V,\lambda}(x)\ge V^\star-\tilde{O}(1/\lambda)$.
+where $c$ does not depend on $x'$, $y$, or $\lambda$; it is polynomial in
+the dimensions and logarithmic in $T/\delta$, so $c=\tilde{O}(1)$. We prove
+this in Appendix~\ref{app:soft-square-root-analysis}, as
+Equation~\ref{eq:soft-reward-certificate}.
+
+Now fix any arm $x'$ and outcome $y\in D$. Rearranging the claim and adding
+the penalty $\lambda p_V(x',y)$ to both sides,
+
+\begin{equation*}
+r(x',y)+\lambda p_V(x',y)\ge v^\star(x')+\lambda p_V(x',y)-c\sqrt{p_V(x',y)}.
+\end{equation*}
+
+By the AM--GM inequality,
+$\lambda p+\frac{c^2}{4\lambda}\ge2\sqrt{\lambda p\cdot\frac{c^2}{4\lambda}}=c\sqrt{p}$
+for every $p\ge0$, so the right-hand side is at least
+$v^\star(x')-\frac{c^2}{4\lambda}$. Minimizing over $y$ gives
+$U_{V,\lambda}(x')\ge v^\star(x')-\frac{c^2}{4\lambda}$, and since $x$
+maximizes the score, $U_{V,\lambda}(x)\ge V^\star-\frac{c^2}{4\lambda}$.
 Finally, the definition of the score gives
-$U_{V,\lambda}(x)\le r(x,y)+\lambda p_V(x,y)$ for every $y\in D$.
-Combining these bounds proves the claim. Since the distance bound is
-independent of $\lambda$, the argument holds for all $\lambda>0$ on the
-same event.
+$U_{V,\lambda}(x)\le r(x,y)+\lambda p_V(x,y)$ for every $y\in D$. Combining
+the last two bounds,
+$V^\star-r(x,y)\le\lambda p_V(x,y)+\frac{c^2}{4\lambda}$, which is the claim
+with $\tilde{O}(1/\lambda)=\frac{c^2}{4\lambda}$. Since $c$ does not depend on
+$\lambda$, the argument holds for all $\lambda>0$ on the same event.
 \end{proof}
-}
 
 To use this bound during a block, we keep $V$ fixed and play the same
 arm $x$ repeatedly, but recompute the empirical mean after every
@@ -512,22 +615,11 @@ $V\leftarrow I_q$,\quad $t\leftarrow0$\;
 % \FloatBarrier
 
 \begin{theorem}[Informal]\label{thm:soft-square-root}
-
-  For fixed problem parameters,
   Algorithm~\ref{alg:soft-square-root}, with $\lambda = \lceil \sqrt{T} \rceil$,
-  has expected regret
-
-\begin{equation*}
-R_T \le \tilde{O}\left(\sqrt{T}\right).
-\end{equation*}
-
-  The learner does not need to know $S$.
-
+  has expected regret $R_T \le \tilde{O}\left(\sqrt{T}\right)$.
 \end{theorem}
-
 \begingroup
 \renewcommand{\proofname}{Proof sketch}
-\draft{
 \begin{proof}
 As before, each completed block at least doubles
 the determinant of $V$, so there are
@@ -542,10 +634,8 @@ The remaining term costs about $1/\lambda$ per round.
 Summing both costs gives regret
 at most about $\lambda \log T + T/\lambda$. Ignoring
 logarithmic factors, choosing $\lambda = \lceil\sqrt{T}\rceil$ balances
-the two terms. Taking the concentration failure probability of
-order $T^{-2}$ gives the same $\tilde{O}(\sqrt{T})$ bound in expectation.
+the two terms.
 \end{proof}
-}
 \endgroup
 
 The precise regret bound and detailed proof are in
@@ -554,18 +644,47 @@ Appendix~\ref{app:soft-square-root-analysis}.
 \draft{
 \subsection{Computational tractability}\label{sec:soft-computation}
 
-To implement the learner, we allow an additive error $\varepsilon>0$
-when maximizing $U_{V,\lambda}$. This adds at most $n\varepsilon$ to the regret
-of a block of length $n$, and at most $T\varepsilon$ over all rounds.
-Taking $\varepsilon=(T+1)^{-2}$ therefore preserves the
-$\tilde{O}(\sqrt{T})$ regret bound.
+In this section we describe a polytime implementation of Algorithm~\ref{alg:soft-square-root}.
 
-Dualizing the penalty turns the planning step into a quadratic program
-with a fixed number of quadratic constraints. The weak-optimization
-result in Appendix~\ref{app:qcqp} and sufficiently fine rounding give
-an implementation under the weak finite-precision model that runs in
-time polynomial in $|\mathcal{M}|$ and $T$ and retains the same regret
-rate. The details are in Appendix~\ref{app:soft-square-root-analysis}.
+As in Section~\ref{sec:hard-ellipsoid-warmup}, the matrix updates and the stopping test can be computed
+in polynomial time, and the main issue is choosing an arm. This now requires
+solving a single problem: find an arm
+$x\in\operatorname*{argmax}_{x'\in X}U_{V,\lambda}(x')$. The learner of
+Section~\ref{sec:hard-ellipsoid-warmup} also had to
+decide whether some arm has an empty guessed outcome set, because the hard
+constraint $p_V(x,y)\le1$ can exclude every $y\in D$. Here the penalty
+$\lambda p_V(x,y)$ is finite for every $y\in D$, so $U_{V,\lambda}(x)$ is
+defined for every arm and no such test is needed.
+
+The score is a minimum over $y$, so maximizing it over $x$ is not directly
+a problem of the form in Theorem~\ref{thm:bienstock}. To fix this, we rewrite
+the penalty as a maximum,
+$\lambda w^{T}V^{-1}w=\max_{z}\left[z^{T}w-\frac{z^{T}Vz}{4\lambda}\right]$,
+whose maximizer is $z=2\lambda V^{-1}w$. Exchanging the minimum over $y$
+with this maximum, and writing $z=(z_0,z_X,z_D)$ to match the coordinates of
+$w(x,y)=(1,x,y)$, gives
+
+\begin{equation*}
+U_{V,\lambda}(x)=a^{T}x+c+\max_{\|z\|_2\le4\lambda}
+\left[z_0+z_X^{T}x-\|b+z_D\|_2-\frac{z^{T}Vz}{4\lambda}\right].
+\end{equation*}
+
+We maximize this expression jointly over $x\in X$ and $z$. Replacing the
+norm $\|b+z_D\|_2$ by a variable $s\ge0$ with $\|b+z_D\|_2^2\le s^2$ and
+adding a redundant ball constraint gives a quadratic objective with a fixed
+number of quadratic constraints, one of which is a bounded ellipsoid, so
+Theorem~\ref{thm:bienstock} applies.
+
+Of course, this only gives us an approximate maximizer. Allowing an additive
+error $\varepsilon>0$ when maximizing $U_{V,\lambda}$ adds at most
+$n\varepsilon$ to the regret of a block of length $n$, and at most
+$T\varepsilon$ over all rounds. Taking $\varepsilon=(T+1)^{-2}$ therefore
+preserves the $\tilde{O}(\sqrt{T})$ regret bound, and since the runtime
+depends logarithmically on $1/\varepsilon$, this only costs us an extra
+$\log T$ factor in the runtime. Repairing the solver's slightly infeasible
+output and keeping all numbers rational with polynomial bit length work
+exactly as in Appendix~\ref{app:hard-computation}; the details are in
+Appendix~\ref{app:soft-square-root-analysis}.
 
 }
 
@@ -1503,9 +1622,9 @@ Next, we compare the score with the true value of an arm.
 Lemma~\ref{lem:subspace-reward-bound} gives, for every $x \in X$ and $y \in D$,
 
 
-\begin{equation*}
-v^{\star} \left( x \right) \le r \left( x , y \right) + G B_{T}^{\prime} \sqrt{p_{V} \left( x , y \right)} .
-\end{equation*}
+\begin{equation}
+v^{\star} \left( x \right) \le r \left( x , y \right) + G B_{T}^{\prime} \sqrt{p_{V} \left( x , y \right)} .\label{eq:soft-reward-certificate}
+\end{equation}
 
 
 The error bound grows with $\sqrt{p_{V} \left( x , y \right)}$, while the penalty grows with
@@ -1542,7 +1661,7 @@ Adding this over at most $J_{\text{\normalfont max}}^{\prime} + 1$ blocks proves
 bound. If the noise bound fails, regret is still at most $C_{r} T$,
 so taking expectations adds at most $C_{r} T \delta$.
 
-The difference from the warmup is that we now pay at most $4 \lambda$
+The difference from the learner of Section~\ref{sec:hard-ellipsoid-warmup} is that we now pay at most $4 \lambda$
 in penalty per block, no matter how long the block lasts. We also pay
 for the score underestimating the true value, but this costs only
 $\zeta_{T}$ per round, which decreases as $\frac{1}{\lambda}$. The two terms to

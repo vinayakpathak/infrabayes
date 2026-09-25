@@ -34,5 +34,32 @@
 
 \begin{document}
 \maketitle
+
+\begin{abstract}%
+\draft{Understanding how to learn when the environment does not belong to the
+learner's hypothesis class is important for alignment, and the learners
+we design for this unrealizable case need to be computationally efficient.
+Imprecise bandits were introduced as one approach to unrealizable
+learning. Each hypothesis in a known class is only a partial
+specification of the environment: it assigns to every arm a set of
+distributions over outcomes, and an adversary may pick any distribution
+from that set on every round. The learner's task is to compete with the
+worst-case environment that the true hypothesis allows. Earlier work
+showed that a linear version of this problem, which generalizes
+stochastic linear bandits, has $\Theta(\sqrt{T})$ regret, but we do not
+know when a learner can also be made computationally efficient. In this
+paper we show that the problem is computationally intractable in
+general, and we identify a special case, where the arm and outcome sets
+are Euclidean balls and each hypothesis places affine constraints on the
+expected outcome, that admits a polynomial-time learner with
+$\tilde{O}(\sqrt{T})$ regret. We also show that several small
+generalizations of this special case are NP-hard: allowing the outcome
+set to be a simplex, allowing the arm set to be a polytope, or allowing
+the constraints to be trilinear. Even computing the first arm of the
+natural optimistic learner is NP-hard, and efficient planning for a
+known hypothesis does not give efficient learning. The special case is
+therefore at the boundary of what is tractable.}%
+\end{abstract}
+
 \input{manuscript.tex}
 \end{document}

@@ -30,6 +30,10 @@
   When setting an issue aside temporarily, state the assumption directly
   and say that the issue will be addressed later; do not use a label such
   as "warmup" in place of that explanation.
+- Refer to other parts of the manuscript by number, with a reference such
+  as `Section~\ref{...}` or `Appendix~\ref{...}`, never by an informal name
+  such as "the warmup". Write "the learner of Section 4" rather than "the
+  warmup learner".
 - Preserve the user's wording, rhythm, and order of ideas when editing.
   When they provide a rough draft or outline, keep its structure and make
   local corrections for accuracy and readability rather than replacing it
@@ -149,12 +153,24 @@ as a template to repeat verbatim in unrelated passages.
   approximation errors only in the later computational-tractability discussion,
   where their effect on regret is explained.
   In that discussion, state the decision and optimization problems the
-  algorithm must solve before explaining how to implement them.
+  algorithm must solve before explaining how to implement them. In the
+  main body, explain the reduction of those problems to a solver's input
+  under the assumption that the solver optimizes exactly; keep the
+  devices that absorb approximation error, such as enlarged ellipsoids,
+  inner and outer sets, and thresholds, in the appendix. When a
+  reduction step is really an identity, such as writing an inner
+  minimum in closed form as a maximum over a dual vector, state it as a
+  lemma with a proof rather than describing it in words.
   Keep detailed reductions and finite-precision arguments in a relevant
   appendix, consolidate overlapping explanations there, and give an
   explicit reference from the main body.
   For a regret analysis, put an informal
   theorem and a short proof sketch after the algorithm in the main body.
+  Do not state a formal lemma inside a proof sketch. When the sketch needs
+  a fact that is proved in the appendix, state the fact in a sentence, with
+  its probability qualification and the constants it depends on, say that
+  it is proved in the appendix with a reference to the equation or lemma
+  there, and continue the argument directly from that fact.
   Explain where each regret term comes from, how often its cost is incurred,
   and how balancing the terms gives the rate. Put the exact constants,
   technical lemmas, and detailed proofs in a dedicated appendix, with
@@ -243,6 +259,12 @@ as a template to repeat verbatim in unrelated passages.
   When motivating a lemma, say what it proves and why the next step
   needs that fact. Avoid vague descriptions such as "keeps track of"
   quantities without explaining the mathematical conclusion.
+  Likewise, when a step in a proof or proof sketch follows from a standard
+  inequality, name the inequality and display the one-line computation
+  instead of describing how the two sides grow. For example, to bound an
+  error term $c sqrt(p)$ by a penalty $lambda p$, write that the AM--GM
+  inequality gives $c sqrt(p) <= lambda p + c^2 / (4 lambda)$; do not say
+  that the penalty grows quadratically while the error grows linearly.
 
 ## Submission artifacts
 
